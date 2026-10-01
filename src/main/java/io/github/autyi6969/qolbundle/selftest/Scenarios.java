@@ -4,6 +4,7 @@ import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.config.ConfigManager;
 import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
+import io.github.autyi6969.qolbundle.gui.ChestMemoryScreen;
 import io.github.autyi6969.qolbundle.gui.HotbarLayoutScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
@@ -14,6 +15,7 @@ import io.github.autyi6969.qolbundle.modules.AfkClickerModule;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
+import io.github.autyi6969.qolbundle.modules.ChestMemoryModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
@@ -41,6 +43,7 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
@@ -110,6 +113,7 @@ public final class Scenarios {
 		test.scenario("item_search", false, Scenarios::itemSearch);
 		test.scenario("hotbar_layouts", false, Scenarios::hotbarLayouts);
 		test.scenario("nether_roof", false, Scenarios::netherRoof);
+		test.scenario("chest_memory", false, Scenarios::chestMemory);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -969,6 +973,54 @@ public final class Scenarios {
 		s.waitUntil("back in the overworld", client -> client.world != null
 				&& client.world.getRegistryKey() == World.OVERWORLD && client.player != null && client.currentScreen == null, 20 * 30);
 		s.waitTicks(20);
+	}
+
+	private static void chestMemory(SelfTest.Script s) {
+		ChestMemoryModule module = module("chest_memory");
+		BlockPos chestPos = new BlockPos(2, GROUND_Y, -3);
+		isolate(s, module);
+		s.run("forget chests remembered by earlier runs", client -> module.forgetAll());
+		// A chest holding 12 diamonds and a shulker box with a diamond pickaxe inside.
+		s.command("setblock 2 " + GROUND_Y + " -3 chest[facing=south]{Items:["
+				+ "{Slot:0b,id:\"minecraft:diamond\",count:12},"
+				+ "{Slot:1b,id:\"minecraft:shulker_box\",count:1,components:{\"minecraft:container\":"
+				+ "[{slot:0,item:{id:\"minecraft:diamond_pickaxe\",count:1}}]}}]}");
+		s.command("tp @a 2.5 " + GROUND_Y + " -1.0 180 45");
+		s.waitTicks(15);
+		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.waitTicks(15);
+		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.waitTicks(5);
+		s.check("the chest is remembered at its position", client -> module.getChests().size() == 1
+				&& chestPos.equals(module.getChests().get(0).pos));
+		s.check("its 12 diamonds and the box with the pickaxe are recorded", client -> module.getChests().size() == 1
+				&& module.getChests().get(0).items.stream().anyMatch(item -> item.id().equals("minecraft:diamond") && item.count() == 12)
+				&& module.getChests().get(0).boxes.size() == 1
+				&& module.getChests().get(0).boxes.get(0).items().get(0).id().equals("minecraft:diamond_pickaxe"));
+		s.check("searching 'zs' finds 13 items there (12 diamonds + the pickaxe in the box)", client -> {
+			List<ChestMemoryModule.Hit> hits = module.search("zs", client.player, "minecraft:overworld");
+			return hits.size() == 1 && hits.get(0).count() == 13 && hits.get(0).inShulkerBox();
+		});
+		s.check("searching for something that is not there finds nothing",
+				client -> module.search("netherite", client.player, "minecraft:overworld").isEmpty());
+		s.run("open the search screen and search for diamond", client -> {
+			ChestMemoryScreen screen = new ChestMemoryScreen(null, module);
+			client.setScreen(screen);
+			screen.setQuery("diamond");
+		});
+		s.waitTicks(5);
+		s.screenshot("29_chest_memory_search");
+		s.run("click the result", client -> ((ChestMemoryScreen) client.currentScreen).choose(0));
+		s.command("tp @a 6.5 " + GROUND_Y + " 6.5 0 0");
+		s.waitTicks(15);
+		s.check("the HUD now points at the chest", client -> module.getTarget() != null && chestPos.equals(module.getTarget().pos));
+		s.screenshot("29_chest_memory_pointer");
+		s.command("setblock 2 " + GROUND_Y + " -3 air");
+		s.command("tp @a 2.5 " + GROUND_Y + " -1.0 180 45");
+		s.waitTicks(60);
+		s.check("a chest that no longer exists is forgotten", client -> module.getChests().isEmpty());
+		s.command("kill @e[type=item]");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

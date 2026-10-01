@@ -11,6 +11,7 @@ import io.github.autyi6969.qolbundle.modules.AfkClickerModule;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
+import io.github.autyi6969.qolbundle.modules.ChestMemoryModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
@@ -118,6 +119,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ChatEnhancementsModule());
 		ModuleRegistry.register(new ItemSearchModule());
 		ModuleRegistry.register(new HotbarLayoutsModule());
+		ModuleRegistry.register(new ChestMemoryModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());
