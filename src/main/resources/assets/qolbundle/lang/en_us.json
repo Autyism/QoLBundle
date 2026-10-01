@@ -433,5 +433,21 @@
 	"qolbundle.module.shulker_manager.setting.show_tag.desc": "Grey = building blocks, cyan = ores and ingots, red = redstone, orange = food, purple = tools and armor, pink = potions and enchanting, white = mixed.",
 	"qolbundle.module.shulker_manager.setting.show_icon": "Small picture of the main item",
 	"qolbundle.module.shulker_manager.setting.search_inside": "Search inside boxes",
-	"qolbundle.module.shulker_manager.setting.search_inside.desc": "With the item search box: boxes that contain a match get an orange frame."
+	"qolbundle.module.shulker_manager.setting.search_inside.desc": "With the item search box: boxes that contain a match get an orange frame.",
+
+	"qolbundle.module.recipe_helper.name": "Recipe Book Helper",
+	"qolbundle.module.recipe_helper.desc": "Pick a recipe you cannot craft yet: shows which ingredients you are missing and which chest you know has them. Click a missing ingredient to be led to that chest.",
+	"qolbundle.module.recipe_helper.setting.slot_frames": "Green / red frames on the recipe preview",
+	"qolbundle.module.recipe_helper.setting.slot_frames.desc": "Green frame: you have this ingredient. Red frame: this one is missing.",
+	"qolbundle.module.recipe_helper.label": "Missing:",
+	"qolbundle.module.recipe_helper.missing": "Missing %s × %s",
+	"qolbundle.module.recipe_helper.alternatives": "(any of %s kinds will do)",
+	"qolbundle.module.recipe_helper.nowhere": "Not in any container you have opened",
+	"qolbundle.module.recipe_helper.no_memory": "(Chest Memory is off, so chests are not searched)",
+	"qolbundle.module.recipe_helper.in_carried_box": "Shulker box you carry, %s: %s",
+	"qolbundle.module.recipe_helper.in_ender_chest": "Your ender chest: %s",
+	"qolbundle.module.recipe_helper.in_chest": "%s at %s (%s blocks): %s",
+	"qolbundle.module.recipe_helper.in_chest_other": "%s in %s at %s: %s",
+	"qolbundle.module.recipe_helper.more": "... and %s more place(s)",
+	"qolbundle.module.recipe_helper.click": "Click: lead me to the nearest chest"
 }

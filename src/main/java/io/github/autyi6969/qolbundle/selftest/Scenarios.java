@@ -33,6 +33,7 @@ import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
 import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
+import io.github.autyi6969.qolbundle.modules.RecipeHelperModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
@@ -53,6 +54,9 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.tutorial.TutorialStep;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.display.SlotDisplayContexts;
+import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.text.Text;
@@ -118,6 +122,7 @@ public final class Scenarios {
 		test.scenario("nether_roof", false, Scenarios::netherRoof);
 		test.scenario("chest_memory", false, Scenarios::chestMemory);
 		test.scenario("shulker_manager", false, Scenarios::shulkerManager);
+		test.scenario("recipe_helper", false, Scenarios::recipeHelper);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1027,6 +1032,88 @@ public final class Scenarios {
 		s.waitTicks(60);
 		s.check("a chest that no longer exists is forgotten", client -> module.getChests().isEmpty());
 		s.command("kill @e[type=item]");
+	}
+
+	/** Clicks a recipe of the recipe book the way the book itself does; the server answers with the preview. */
+	private static void clickRecipe(MinecraftClient client, net.minecraft.item.Item result) {
+		for (RecipeResultCollection collection : client.player.getRecipeBook().getOrderedResults()) {
+			for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
+				if (entry.getStacks(SlotDisplayContexts.createParameters(client.world)).stream().anyMatch(stack -> stack.isOf(result))) {
+					client.interactionManager.clickRecipe(client.player.currentScreenHandler.syncId, entry.id(), false);
+					return;
+				}
+			}
+		}
+		throw new IllegalStateException("recipe not in the recipe book: " + result);
+	}
+
+	private static void recipeHelper(SelfTest.Script s) {
+		RecipeHelperModule module = module("recipe_helper");
+		ChestMemoryModule chests = module("chest_memory");
+		BlockPos chestPos = new BlockPos(2, GROUND_Y, -3);
+		isolate(s, module);
+		s.run("chest memory on as well, nothing remembered", client -> {
+			chests.setEnabled(true);
+			chests.forgetAll();
+		});
+		// A chest with 20 iron ingots that the player has looked into.
+		s.command("setblock 2 " + GROUND_Y + " -3 chest[facing=south]{Items:[{Slot:0b,id:\"minecraft:iron_ingot\",count:20}]}");
+		s.command("tp @a 2.5 " + GROUND_Y + " -1.0 180 45");
+		s.waitTicks(15);
+		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.waitTicks(15);
+		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.waitTicks(5);
+		// Flint and steel = flint + iron ingot. The player has the flint only.
+		s.command("gamemode survival @a");
+		s.command("recipe give @a minecraft:flint_and_steel");
+		s.command("give @a flint 1");
+		s.command("tp @a 6.5 " + GROUND_Y + " 6.5 0 0");
+		s.waitTicks(15);
+		s.run("open the inventory", client -> client.setScreen(new InventoryScreen(client.player)));
+		s.waitTicks(10);
+		s.check("nothing is shown before a recipe is picked", client -> module.getMissing().isEmpty());
+		s.run("pick the flint and steel recipe", client -> clickRecipe(client, Items.FLINT_AND_STEEL));
+		s.waitTicks(15);
+		s.info("missing", client -> module.getMissing().stream().map(entry -> entry.count + "x" + entry.accepts.get(0).getItem()
+				+ " sources=" + entry.sources.size()).toList());
+		s.check("exactly one thing is missing: 1 iron ingot (the flint is there)", client -> module.getMissing().size() == 1
+				&& module.getMissing().get(0).count == 1 && module.getMissing().get(0).accepts.get(0).isOf(Items.IRON_INGOT));
+		s.check("the known chest with 20 iron ingots is named as the place to get it", client -> module.getMissing().size() == 1
+				&& module.getMissing().get(0).sources.size() == 1
+				&& module.getMissing().get(0).sources.get(0).chest() != null
+				&& chestPos.equals(module.getMissing().get(0).sources.get(0).chest().pos)
+				&& module.getMissing().get(0).sources.get(0).count() == 20);
+		s.screenshot("32_recipe_helper_frames");
+		s.run("keep the details open", client -> module.showDetailsFor(0));
+		s.waitTicks(3);
+		s.screenshot("32_recipe_helper");
+		// A shulker box in the backpack that holds iron counts as a place too, and comes first.
+		s.command("give @a shulker_box[container=[{slot:0,item:{id:\"minecraft:iron_ingot\",count:5}}]]");
+		s.waitTicks(15);
+		s.check("a carried shulker box with iron is listed first", client -> module.getMissing().size() == 1
+				&& module.getMissing().get(0).sources.size() == 2 && module.getMissing().get(0).sources.get(0).isCarried()
+				&& module.getMissing().get(0).sources.get(0).count() == 5);
+		s.screenshot("32_recipe_helper_box");
+		s.run("click the missing ingredient", client -> module.activate(module.getMissing().get(0)));
+		s.waitTicks(10);
+		s.check("the inventory closed and chest memory points at the chest", client -> client.currentScreen == null
+				&& chests.getTarget() != null && chestPos.equals(chests.getTarget().pos));
+		s.screenshot("32_recipe_helper_pointer");
+		// With the iron in the backpack the recipe can be made: no preview, nothing reported.
+		s.command("give @a iron_ingot 1");
+		s.waitTicks(10);
+		s.run("open the inventory and pick the recipe again", client -> client.setScreen(new InventoryScreen(client.player)));
+		s.waitTicks(10);
+		s.run("pick the recipe", client -> clickRecipe(client, Items.FLINT_AND_STEEL));
+		s.waitTicks(15);
+		s.check("with all ingredients nothing is reported missing", client -> module.getMissing().isEmpty());
+		s.run("close the inventory", client -> client.player.closeHandledScreen());
+		s.command("setblock 2 " + GROUND_Y + " -3 air");
+		s.command("kill @e[type=item]");
+		s.command("gamemode creative @a");
+		s.run("forget the chest", client -> chests.forgetAll());
 	}
 
 	private static void shulkerManager(SelfTest.Script s) {

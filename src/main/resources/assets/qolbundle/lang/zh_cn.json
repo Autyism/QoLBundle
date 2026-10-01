@@ -433,5 +433,21 @@
 	"qolbundle.module.shulker_manager.setting.show_tag.desc": "灰 = 建筑方块，青 = 矿物和锭，红 = 红石，橙 = 食物，紫 = 工具和盔甲，粉 = 药水和附魔，白 = 混装。",
 	"qolbundle.module.shulker_manager.setting.show_icon": "显示主要物品的小图",
 	"qolbundle.module.shulker_manager.setting.search_inside": "搜索时也搜盒子里面",
-	"qolbundle.module.shulker_manager.setting.search_inside.desc": "配合物品搜索框使用：里面有匹配物品的盒子会有橙色框。"
+	"qolbundle.module.shulker_manager.setting.search_inside.desc": "配合物品搜索框使用：里面有匹配物品的盒子会有橙色框。",
+
+	"qolbundle.module.recipe_helper.name": "合成书增强",
+	"qolbundle.module.recipe_helper.desc": "在合成书里点一个现在做不了的配方：显示你缺哪些材料、哪个你开过的箱子里有。点一下缺的材料，就带你去那个箱子。",
+	"qolbundle.module.recipe_helper.setting.slot_frames": "配方预览上的绿 / 红框",
+	"qolbundle.module.recipe_helper.setting.slot_frames.desc": "绿框：这个材料你有。红框：这个材料缺。",
+	"qolbundle.module.recipe_helper.label": "缺：",
+	"qolbundle.module.recipe_helper.missing": "缺 %s 个 %s",
+	"qolbundle.module.recipe_helper.alternatives": "（%s 种里任意一种都行）",
+	"qolbundle.module.recipe_helper.nowhere": "你开过的箱子里都没有",
+	"qolbundle.module.recipe_helper.no_memory": "（箱子记忆模块没开，所以没查箱子）",
+	"qolbundle.module.recipe_helper.in_carried_box": "你身上的潜影盒（%s）：%s 个",
+	"qolbundle.module.recipe_helper.in_ender_chest": "你的末影箱：%s 个",
+	"qolbundle.module.recipe_helper.in_chest": "%s，位置 %s（%s 格远）：%s 个",
+	"qolbundle.module.recipe_helper.in_chest_other": "%s，在%s %s：%s 个",
+	"qolbundle.module.recipe_helper.more": "……还有 %s 处",
+	"qolbundle.module.recipe_helper.click": "点击：带我去最近的那个箱子"
 }

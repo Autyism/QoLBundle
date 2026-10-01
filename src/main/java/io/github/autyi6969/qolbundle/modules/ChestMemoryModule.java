@@ -60,6 +60,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Remembers what was in every chest, barrel, shulker box, hopper, dispenser and your ender chest
@@ -348,6 +350,15 @@ public class ChestMemoryModule extends Module {
 
 	/** Containers holding something that matches, nearest first (other dimensions and the ender chest last). */
 	public List<Hit> search(String query, @Nullable ClientPlayerEntity player, String currentDimension) {
+		return find(item -> matches(item, query), player, currentDimension);
+	}
+
+	/** Containers holding any of these items (ids like "minecraft:iron_ingot"), in the same order as {@link #search}. */
+	public List<Hit> findItems(Set<String> itemIds, @Nullable ClientPlayerEntity player, String currentDimension) {
+		return find(item -> itemIds.contains(item.id), player, currentDimension);
+	}
+
+	private List<Hit> find(Predicate<StoredItem> wanted, @Nullable ClientPlayerEntity player, String currentDimension) {
 		syncWorldData();
 		List<Hit> hits = new ArrayList<>();
 		for (Chest chest : chests) {
@@ -355,7 +366,7 @@ public class ChestMemoryModule extends Module {
 			Text name = null;
 			boolean inBox = false;
 			for (StoredItem item : chest.items) {
-				if (matches(item, query)) {
+				if (wanted.test(item)) {
 					count += item.count;
 					if (name == null) {
 						name = displayName(item);
@@ -364,7 +375,7 @@ public class ChestMemoryModule extends Module {
 			}
 			for (StoredBox box : chest.boxes) {
 				for (StoredItem item : box.items) {
-					if (matches(item, query)) {
+					if (wanted.test(item)) {
 						count += item.count;
 						inBox = true;
 						if (name == null) {

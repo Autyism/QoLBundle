@@ -181,16 +181,17 @@ public class ChestMemoryScreen extends Screen {
 
 	/** "in the shulker box in your hotbar, slot 5". */
 	private static Text carriedWhere(ShulkerManagerModule.InventoryHit box) {
-		int slot = box.slot();
-		Text place;
+		return Text.translatable(KEY + "carried", box.box().getName(), slotPlace(box.slot()));
+	}
+
+	/** An inventory slot in words: "hotbar slot 5", "backpack row 2, column 3", "off hand". */
+	public static Text slotPlace(int slot) {
 		if (slot < 9) {
-			place = Text.translatable(KEY + "slot.hotbar", slot + 1);
+			return Text.translatable(KEY + "slot.hotbar", slot + 1);
 		} else if (slot < 36) {
-			place = Text.translatable(KEY + "slot.backpack", (slot - 9) / 9 + 1, (slot - 9) % 9 + 1);
-		} else {
-			place = Text.translatable(KEY + "slot.offhand");
+			return Text.translatable(KEY + "slot.backpack", (slot - 9) / 9 + 1, (slot - 9) % 9 + 1);
 		}
-		return Text.translatable(KEY + "carried", box.box().getName(), place);
+		return Text.translatable(KEY + "slot.offhand");
 	}
 
 	/** "at 12, 64, -30 (35 blocks, 2 hours ago)" plus a note when the record is old. */
@@ -229,7 +230,7 @@ public class ChestMemoryScreen extends Screen {
 		return Text.translatable(KEY + "age.days", minutes / (60 * 24));
 	}
 
-	private static Text dimensionName(String id) {
+	public static Text dimensionName(String id) {
 		String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
 		String key = "qolbundle.dimension." + path.toLowerCase(Locale.ROOT);
 		return I18n.hasTranslation(key) ? Text.translatable(key) : Text.literal(id);
