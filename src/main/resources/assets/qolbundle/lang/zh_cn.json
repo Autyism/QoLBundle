@@ -291,5 +291,17 @@
 	"qolbundle.module.villager_trades.hud.stock": "（还能换 %s 次）",
 	"qolbundle.module.villager_trades.hud.sold_out": "（已售罄）",
 	"qolbundle.module.villager_trades.setting.max_trades": "最多列出几条交易",
-	"qolbundle.module.villager_trades.setting.show_stock": "显示还能换几次"
+	"qolbundle.module.villager_trades.setting.show_stock": "显示还能换几次",
+
+	"qolbundle.module.projectile_landing.name": "投掷物落点",
+	"qolbundle.module.projectile_landing.desc": "手持珍珠、雪球、鸡蛋、喷溅 / 滞留药水时画出抛物线和落点；药水显示范围，珍珠有红绿灯。",
+	"qolbundle.module.projectile_landing.hud.distance": "落点 %s 格外",
+	"qolbundle.module.projectile_landing.hud.pearl_green": "珍珠：落点正常，%s 格",
+	"qolbundle.module.projectile_landing.hud.pearl_yellow": "珍珠：会撞墙，%s 格",
+	"qolbundle.module.projectile_landing.hud.pearl_red": "珍珠：会撞到头顶或落在脚边（%s 格）",
+	"qolbundle.module.projectile_landing.hud.out_of_range": "落点：超出已加载范围",
+	"qolbundle.module.projectile_landing.setting.show_arc": "画抛物线",
+	"qolbundle.module.projectile_landing.setting.show_landing": "标出落点",
+	"qolbundle.module.projectile_landing.setting.show_radius": "显示药水范围",
+	"qolbundle.module.projectile_landing.setting.show_hud": "显示距离 / 红绿灯文字"
 }

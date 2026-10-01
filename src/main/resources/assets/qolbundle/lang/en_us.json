@@ -291,5 +291,17 @@
 	"qolbundle.module.villager_trades.hud.stock": " (%s left)",
 	"qolbundle.module.villager_trades.hud.sold_out": " (sold out)",
 	"qolbundle.module.villager_trades.setting.max_trades": "Most trades to list",
-	"qolbundle.module.villager_trades.setting.show_stock": "Show how many times a trade is left"
+	"qolbundle.module.villager_trades.setting.show_stock": "Show how many times a trade is left",
+
+	"qolbundle.module.projectile_landing.name": "Throw Landing Preview",
+	"qolbundle.module.projectile_landing.desc": "Holding a pearl, snowball, egg or throwable potion shows its arc and landing spot; potions show their reach, pearls get a traffic light.",
+	"qolbundle.module.projectile_landing.hud.distance": "Lands %s blocks away",
+	"qolbundle.module.projectile_landing.hud.pearl_green": "Pearl: clear landing, %s blocks",
+	"qolbundle.module.projectile_landing.hud.pearl_yellow": "Pearl: hits a wall, %s blocks",
+	"qolbundle.module.projectile_landing.hud.pearl_red": "Pearl: hits the ceiling / lands at your feet (%s blocks)",
+	"qolbundle.module.projectile_landing.hud.out_of_range": "Landing: beyond loaded chunks",
+	"qolbundle.module.projectile_landing.setting.show_arc": "Draw the arc",
+	"qolbundle.module.projectile_landing.setting.show_landing": "Mark the landing spot",
+	"qolbundle.module.projectile_landing.setting.show_radius": "Show potion reach",
+	"qolbundle.module.projectile_landing.setting.show_hud": "Show distance / traffic light text"
 }

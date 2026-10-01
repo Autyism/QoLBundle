@@ -22,6 +22,7 @@ import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
+import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
@@ -91,6 +92,7 @@ public final class Scenarios {
 		test.scenario("sound_compass", false, Scenarios::soundCompass);
 		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
 		test.scenario("villager_trades", false, Scenarios::villagerTrades);
+		test.scenario("projectile_landing", false, Scenarios::projectileLanding);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("freecam", false, Scenarios::freecam);
 		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
@@ -666,6 +668,48 @@ public final class Scenarios {
 
 	private static VillagerEntity lookedAtVillager(MinecraftClient client) {
 		return client.crosshairTarget instanceof EntityHitResult hit && hit.getEntity() instanceof VillagerEntity villager ? villager : null;
+	}
+
+	private static void projectileLanding(SelfTest.Script s) {
+		ProjectileLandingModule module = module("projectile_landing");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("give @a ender_pearl 4");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -15");
+		s.waitTicks(15);
+		s.check("a landing spot is predicted north of the player, on the ground, green light", client -> module.getLanding() != null
+				&& module.getLanding().z < -10 && Math.abs(module.getLanding().y - GROUND_Y) < 0.1
+				&& module.getLight() == ProjectileLandingModule.Light.GREEN);
+		s.screenshot("22_projectile_pearl");
+
+		// Throw it for real and compare where the pearl takes the player with the prediction.
+		Vec3d[] predicted = new Vec3d[1];
+		s.run("remember the prediction and throw", client -> {
+			predicted[0] = module.getLanding();
+			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey));
+		});
+		s.waitUntil("the pearl has teleported the player", client -> client.player.getZ() < -5, 200);
+		s.waitTicks(5);
+		s.info("pearl", client -> "landed=" + client.player.getEntityPos() + " predicted=" + predicted[0]);
+		s.check("the player arrived within 1.5 blocks of the predicted spot", client -> predicted[0] != null
+				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 1.5);
+
+		// A low ceiling ahead: the pearl would hit it, so the light must turn red.
+		resetPlayer(s);
+		s.command("give @a ender_pearl 4");
+		s.command("fill -2 " + (GROUND_Y + 3) + " -4 2 " + (GROUND_Y + 3) + " -1 stone");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -50");
+		s.waitTicks(15);
+		s.check("a pearl aimed at a low ceiling shows red", client -> module.getLight() == ProjectileLandingModule.Light.RED);
+		s.screenshot("22_projectile_pearl_ceiling");
+
+		resetPlayer(s);
+		s.command("give @a splash_potion");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -10");
+		s.waitTicks(15);
+		s.check("a splash potion gets a landing spot too", client -> module.isHoldingThrowable() && module.getLanding() != null);
+		s.screenshot("22_projectile_potion");
+		s.command("effect clear @a");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

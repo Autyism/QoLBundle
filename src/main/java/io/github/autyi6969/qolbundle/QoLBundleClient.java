@@ -21,6 +21,7 @@ import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
+import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
@@ -101,6 +102,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new RespawnPointModule());
 		ModuleRegistry.register(new VillagerTradesModule());
+		ModuleRegistry.register(new ProjectileLandingModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
 		ModuleRegistry.register(new ElytraDashboardModule());
 		ModuleRegistry.register(new SoundCompassModule());
