@@ -25,6 +25,7 @@ import io.github.autyi6969.qolbundle.modules.HotbarLayoutsModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
+import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
@@ -101,6 +102,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ArmorHudModule());
 		ModuleRegistry.register(new BreakProgressModule());
 		ModuleRegistry.register(new PortalCalculatorModule());
+		ModuleRegistry.register(new NetherRoofModule());
 		ModuleRegistry.register(new EffectRangeModule());
 		ModuleRegistry.register(new EntityCounterModule());
 		ModuleRegistry.register(new ChunkBordersModule());

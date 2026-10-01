@@ -28,6 +28,7 @@ import io.github.autyi6969.qolbundle.modules.HotbarLayoutsModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
+import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
@@ -108,6 +109,7 @@ public final class Scenarios {
 		test.scenario("effect_range", false, Scenarios::effectRange);
 		test.scenario("item_search", false, Scenarios::itemSearch);
 		test.scenario("hotbar_layouts", false, Scenarios::hotbarLayouts);
+		test.scenario("nether_roof", false, Scenarios::netherRoof);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -944,6 +946,29 @@ public final class Scenarios {
 			module.setLayout(1, new String[] {"", "", "", "", "", "", "", "", ""});
 		});
 		s.command("gamemode creative @a");
+	}
+
+	private static void netherRoof(SelfTest.Script s) {
+		NetherRoofModule module = module("nether_roof");
+		isolate(s, module);
+		s.check("not active in the Overworld", client -> !module.isActive());
+		// On top of the bedrock ceiling (its top layer is y 127).
+		s.command("execute in minecraft:the_nether run tp @a 12.5 128 -43.5 135 0");
+		s.waitUntil("arrived in the nether", client -> client.world != null
+				&& client.world.getRegistryKey() == World.NETHER && client.player != null && client.currentScreen == null, 20 * 30);
+		s.run("destination: Overworld 1200, -340", client -> module.destinationSetting().set("1200, -340"));
+		s.waitTicks(40);
+		s.clearChat();
+		s.info("roof", client -> "active=" + module.isActive() + " y=" + client.player.getY()
+				+ " overworld=" + module.getOverworldX() + "," + module.getOverworldZ());
+		s.check("active on the roof", client -> module.isActive());
+		s.check("12.5, -43.5 in the Nether is 100, -348 in the Overworld", client -> module.getOverworldX() == 100 && module.getOverworldZ() == -348);
+		s.screenshot("28_nether_roof");
+		s.run("clear the destination", client -> module.destinationSetting().reset());
+		s.command("execute in minecraft:overworld run tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		s.waitUntil("back in the overworld", client -> client.world != null
+				&& client.world.getRegistryKey() == World.OVERWORLD && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitTicks(20);
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

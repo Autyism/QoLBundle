@@ -123,6 +123,16 @@ public class PortalCalculatorModule extends Module {
 		return list == null ? 0 : list.size();
 	}
 
+	/**
+	 * Where a new Nether portal whose Overworld-side target is the given position would come out:
+	 * the nearest block of a known Overworld portal within 128 blocks, or null if none is known.
+	 */
+	@Nullable
+	public BlockPos predictOverworldExit(BlockPos overworldTarget) {
+		Portal link = findLink(known.get(OVERWORLD), overworldTarget, 128);
+		return link == null ? null : link.nearestTo(overworldTarget);
+	}
+
 	/** Forgets every remembered portal of the current world (used by the self-test). */
 	public void forgetAll() {
 		known.clear();

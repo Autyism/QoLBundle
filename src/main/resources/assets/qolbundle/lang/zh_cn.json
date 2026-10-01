@@ -367,5 +367,18 @@
 	"qolbundle.module.hotbar_layouts.screen.name": "布局 %s",
 	"qolbundle.module.hotbar_layouts.screen.save": "保存",
 	"qolbundle.module.hotbar_layouts.screen.apply": "应用",
-	"qolbundle.module.hotbar_layouts.setting.inventory_button": "背包界面显示按钮"
+	"qolbundle.module.hotbar_layouts.setting.inventory_button": "背包界面显示按钮",
+
+	"qolbundle.module.nether_roof.name": "下界顶层辅助",
+	"qolbundle.module.nether_roof.desc": "在下界基岩顶上时：显示方向带、下界和主世界坐标并排、以及在这里搭门会连到哪。",
+	"qolbundle.module.nether_roof.hud.coords": "下界 %s, %s  =  主世界 %s, %s",
+	"qolbundle.module.nether_roof.hud.portal_known": "在这里搭门会连到已知的门：%s, %s, %s",
+	"qolbundle.module.nether_roof.hud.portal_new": "在这里搭门：主世界 128 格内没有已知的门，会新建一个",
+	"qolbundle.module.nether_roof.hud.destination": "目的地 主世界 %s, %s：在这里还要走 %s 格",
+	"qolbundle.module.nether_roof.setting.show_tape": "方向带",
+	"qolbundle.module.nether_roof.setting.show_coords": "坐标并排",
+	"qolbundle.module.nether_roof.setting.show_portal": "搭门会连到哪",
+	"qolbundle.module.nether_roof.setting.show_portal.desc": "需要开着传送门计算器；只认得你见过的门。",
+	"qolbundle.module.nether_roof.setting.destination": "目的地（主世界 x, z）",
+	"qolbundle.module.nether_roof.setting.destination.desc": "例如 1200, -340。填了以后方向带上会出现一个标记。"
 }

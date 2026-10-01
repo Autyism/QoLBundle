@@ -367,5 +367,18 @@
 	"qolbundle.module.hotbar_layouts.screen.name": "Layout %s",
 	"qolbundle.module.hotbar_layouts.screen.save": "Save",
 	"qolbundle.module.hotbar_layouts.screen.apply": "Apply",
-	"qolbundle.module.hotbar_layouts.setting.inventory_button": "Button in the inventory screen"
+	"qolbundle.module.hotbar_layouts.setting.inventory_button": "Button in the inventory screen",
+
+	"qolbundle.module.nether_roof.name": "Nether Roof Helper",
+	"qolbundle.module.nether_roof.desc": "On the Nether roof: a heading tape, Nether and Overworld coordinates side by side, and what a portal built here would link to.",
+	"qolbundle.module.nether_roof.hud.coords": "Nether %s, %s  =  Overworld %s, %s",
+	"qolbundle.module.nether_roof.hud.portal_known": "A portal here would link to the known portal at %s, %s, %s",
+	"qolbundle.module.nether_roof.hud.portal_new": "A portal here: no known Overworld portal within 128 blocks, a new one would be made",
+	"qolbundle.module.nether_roof.hud.destination": "Destination Overworld %s, %s: %s blocks to walk here",
+	"qolbundle.module.nether_roof.setting.show_tape": "Heading tape",
+	"qolbundle.module.nether_roof.setting.show_coords": "Coordinates side by side",
+	"qolbundle.module.nether_roof.setting.show_portal": "Portal link forecast",
+	"qolbundle.module.nether_roof.setting.show_portal.desc": "Needs the Portal Calculator module to be on; it only knows portals you have seen.",
+	"qolbundle.module.nether_roof.setting.destination": "Destination (Overworld x, z)",
+	"qolbundle.module.nether_roof.setting.destination.desc": "For example 1200, -340. The tape then shows a marker for it."
 }
