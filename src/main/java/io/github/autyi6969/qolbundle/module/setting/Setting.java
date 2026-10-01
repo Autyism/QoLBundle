@@ -11,6 +11,7 @@ public abstract class Setting<T> {
 	private final T defaultValue;
 	private T value;
 	private Module owner;
+	private boolean hidden;
 
 	protected Setting(String id, T defaultValue) {
 		this.id = id;
@@ -20,6 +21,15 @@ public abstract class Setting<T> {
 
 	public final void attach(Module owner) {
 		this.owner = owner;
+	}
+
+	/** Hidden settings are saved like any other but get no row in the settings screen. */
+	public final boolean isHidden() {
+		return hidden;
+	}
+
+	public final void setHidden(boolean hidden) {
+		this.hidden = hidden;
 	}
 
 	public final String getId() {

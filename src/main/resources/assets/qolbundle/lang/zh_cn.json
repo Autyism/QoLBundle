@@ -7,12 +7,19 @@
 	"key.qolbundle.afk_toggle": "开始 / 停止 AFK 自动操作",
 	"key.qolbundle.freecam_toggle": "开关 Freecam",
 	"key.qolbundle.elytra_takeoff": "鞘翅一键起飞",
+	"key.qolbundle.hotbar_layouts": "打开快捷栏布局",
+	"key.qolbundle.hotbar_layout_1": "应用快捷栏布局 1",
+	"key.qolbundle.hotbar_layout_2": "应用快捷栏布局 2",
+	"key.qolbundle.hotbar_layout_3": "应用快捷栏布局 3",
+	"key.qolbundle.hotbar_layout_4": "应用快捷栏布局 4",
+	"key.qolbundle.hotbar_layout_5": "应用快捷栏布局 5",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
 	"qolbundle.gui.enabled": "启用",
 	"qolbundle.gui.reset": "恢复默认",
 	"qolbundle.gui.no_modules": "还没有任何模块。",
+	"qolbundle.gui.custom_screen": "打开",
 
 	"qolbundle.category.technical": "生电",
 	"qolbundle.category.info": "信息显示",
@@ -339,5 +346,19 @@
 	"qolbundle.module.item_search.desc": "背包和箱子界面里的搜索框。英文名、中文名、拼音首字母（zs = 钻石）都能搜到。",
 	"qolbundle.module.item_search.placeholder": "搜索物品...",
 	"qolbundle.module.item_search.setting.dim_others": "把不匹配的物品调暗",
-	"qolbundle.module.item_search.setting.pinyin": "匹配拼音首字母"
+	"qolbundle.module.item_search.setting.pinyin": "匹配拼音首字母",
+
+	"qolbundle.module.hotbar_layouts.name": "快捷栏配置切换",
+	"qolbundle.module.hotbar_layouts.desc": "保存最多五套快捷栏布局，一键把背包里的物品整理到快捷栏对应的位置。",
+	"qolbundle.module.hotbar_layouts.custom_screen": "布局列表",
+	"qolbundle.module.hotbar_layouts.button": "快捷栏布局",
+	"qolbundle.module.hotbar_layouts.applied": "已应用布局 %s（移动了 %s 个物品）",
+	"qolbundle.module.hotbar_layouts.applied_missing": "已应用布局 %s（移动了 %s 个，%s 个背包里没有）",
+	"qolbundle.module.hotbar_layouts.empty": "布局 %s 还没有保存任何东西",
+	"qolbundle.module.hotbar_layouts.screen.title": "快捷栏布局",
+	"qolbundle.module.hotbar_layouts.screen.hint": "保存 = 记住现在的快捷栏。应用 = 从背包里把这些物品取到快捷栏。",
+	"qolbundle.module.hotbar_layouts.screen.name": "布局 %s",
+	"qolbundle.module.hotbar_layouts.screen.save": "保存",
+	"qolbundle.module.hotbar_layouts.screen.apply": "应用",
+	"qolbundle.module.hotbar_layouts.setting.inventory_button": "背包界面显示按钮"
 }

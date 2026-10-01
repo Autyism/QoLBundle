@@ -43,7 +43,15 @@ public class ModuleSettingsScreen extends ScrollListScreen {
 		}).size(WIDGET_WIDTH, 20).build());
 		toggle.setTooltip(Tooltip.of(module.getDescription()));
 
+		if (module.hasCustomScreen()) {
+			Row row = addRow(24, Text.translatable(module.getTranslationKey() + ".custom_screen"), null);
+			row.add(ButtonWidget.builder(Text.translatable("qolbundle.gui.custom_screen"),
+					button -> this.client.setScreen(module.createCustomScreen(this))).size(WIDGET_WIDTH, 20).build());
+		}
 		for (Setting<?> setting : module.getSettings()) {
+			if (setting.isHidden()) {
+				continue;
+			}
 			Row row = addRow(24, setting.getName(), null);
 			ClickableWidget widget = row.add(createWidget(setting));
 			Text description = setting.getDescription();
@@ -91,7 +99,10 @@ public class ModuleSettingsScreen extends ScrollListScreen {
 		int y = this.height - 27;
 		addDrawableChild(ButtonWidget.builder(Text.translatable("qolbundle.gui.reset"), button -> {
 			for (Setting<?> setting : module.getSettings()) {
-				setting.reset();
+				// Hidden settings hold data (saved layouts and the like), not preferences: leave them.
+				if (!setting.isHidden()) {
+					setting.reset();
+				}
 			}
 			clearAndInit();
 		}).dimensions(this.width / 2 - 154, y, 150, 20).build());

@@ -44,7 +44,7 @@ public class ModuleListScreen extends ScrollListScreen {
 
 		ButtonWidget settings = row.add(ButtonWidget.builder(Text.translatable("qolbundle.gui.settings"),
 				button -> this.client.setScreen(new ModuleSettingsScreen(this, module))).size(60, 20).build());
-		settings.active = !module.getSettings().isEmpty();
+		settings.active = module.hasVisibleSettings();
 
 		ButtonWidget toggle = row.add(ButtonWidget.builder(toggleText(module), button -> {
 			module.setEnabled(!module.isEnabled());

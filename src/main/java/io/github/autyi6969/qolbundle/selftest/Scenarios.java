@@ -3,6 +3,7 @@ package io.github.autyi6969.qolbundle.selftest;
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
+import io.github.autyi6969.qolbundle.gui.HotbarLayoutScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
 import io.github.autyi6969.qolbundle.mixin.ChatHudAccessor;
@@ -22,6 +23,7 @@ import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
+import io.github.autyi6969.qolbundle.modules.HotbarLayoutsModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
@@ -44,6 +46,7 @@ import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.tutorial.TutorialStep;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Items;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.text.Text;
@@ -102,6 +105,7 @@ public final class Scenarios {
 		test.scenario("lava_safety", false, Scenarios::lavaSafety);
 		test.scenario("effect_range", false, Scenarios::effectRange);
 		test.scenario("item_search", false, Scenarios::itemSearch);
+		test.scenario("hotbar_layouts", false, Scenarios::hotbarLayouts);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -859,6 +863,53 @@ public final class Scenarios {
 		s.run("search for zs again for the screenshot", client -> module.setQuery("zs"));
 		s.screenshot("26_item_search");
 		s.run("close the inventory", client -> client.setScreen(null));
+		s.command("gamemode creative @a");
+	}
+
+	private static void hotbarLayouts(SelfTest.Script s) {
+		HotbarLayoutsModule module = module("hotbar_layouts");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		// Hotbar: stone, dirt. Backpack: sword, bow. The layout wants sword, bow, (nothing), netherite ingot.
+		s.command("item replace entity @a hotbar.0 with stone 8");
+		s.command("item replace entity @a hotbar.1 with dirt 8");
+		s.command("item replace entity @a inventory.0 with diamond_sword");
+		s.command("item replace entity @a inventory.5 with bow");
+		s.waitTicks(10);
+		String[] before = new String[2];
+		s.run("save the current hotbar as layout 2, define layout 1 by hand", client -> {
+			before[0] = module.getLayoutName(0);
+			before[1] = String.join(",", module.getLayout(0));
+			module.saveCurrent(client, 1);
+			module.setLayoutName(0, "Fight");
+			module.setLayout(0, new String[] {"minecraft:diamond_sword", "minecraft:bow", "", "minecraft:netherite_ingot", "", "", "", "", ""});
+		});
+		s.check("saving recorded stone and dirt", client -> module.getLayout(1)[0].equals("minecraft:stone")
+				&& module.getLayout(1)[1].equals("minecraft:dirt") && module.getLayout(1)[2].isEmpty());
+		s.run("open the layout screen", client -> client.setScreen(new HotbarLayoutScreen(null, module)));
+		s.screenshot("27_hotbar_layout_screen");
+		s.run("close it and apply layout 1", client -> {
+			client.setScreen(null);
+			module.apply(client, 0);
+		});
+		s.waitUntil("the layout is applied", client -> !module.isApplying(), 60);
+		s.waitTicks(10);
+		s.check("sword and bow are now in hotbar slots 1 and 2", client -> client.player.getInventory().getStack(0).isOf(Items.DIAMOND_SWORD)
+				&& client.player.getInventory().getStack(1).isOf(Items.BOW));
+		s.check("the stone and dirt went to the backpack, nothing was lost", client ->
+				client.player.getInventory().count(Items.STONE) == 8 && client.player.getInventory().count(Items.DIRT) == 8);
+		s.check("the missing netherite ingot was skipped without fuss", client -> module.getMissing() == 1);
+		s.screenshot("27_hotbar_layout_applied");
+		s.run("apply layout 2 to get the old hotbar back", client -> module.apply(client, 1));
+		s.waitUntil("layout 2 is applied", client -> !module.isApplying(), 60);
+		s.waitTicks(10);
+		s.check("stone and dirt are back in slots 1 and 2", client -> client.player.getInventory().getStack(0).isOf(Items.STONE)
+				&& client.player.getInventory().getStack(1).isOf(Items.DIRT));
+		s.run("restore the layouts", client -> {
+			module.setLayoutName(0, before[0]);
+			module.setLayout(0, before[1].split(",", -1));
+			module.setLayout(1, new String[] {"", "", "", "", "", "", "", "", ""});
+		});
 		s.command("gamemode creative @a");
 	}
 

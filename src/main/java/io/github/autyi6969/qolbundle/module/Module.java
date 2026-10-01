@@ -5,6 +5,7 @@ import io.github.autyi6969.qolbundle.module.setting.Setting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 
@@ -84,6 +85,32 @@ public abstract class Module {
 		setting.attach(this);
 		settings.add(setting);
 		return setting;
+	}
+
+	/** True when {@link #createCustomScreen} returns a screen. */
+	public boolean hasCustomScreen() {
+		return false;
+	}
+
+	/**
+	 * A screen of the module's own (for things that do not fit the plain list of settings).
+	 * It gets a button on the module's settings page; the label is the lang key ".custom_screen".
+	 */
+	public Screen createCustomScreen(Screen parent) {
+		return null;
+	}
+
+	/** True when the settings page has something to show. */
+	public final boolean hasVisibleSettings() {
+		if (hasCustomScreen()) {
+			return true;
+		}
+		for (Setting<?> setting : settings) {
+			if (!setting.isHidden()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Called when the switch is flipped (also when the config file changes the state at startup). */

@@ -7,12 +7,19 @@
 	"key.qolbundle.afk_toggle": "Start / stop the AFK clicker",
 	"key.qolbundle.freecam_toggle": "Toggle Freecam",
 	"key.qolbundle.elytra_takeoff": "Elytra one-key take-off",
+	"key.qolbundle.hotbar_layouts": "Open hotbar layouts",
+	"key.qolbundle.hotbar_layout_1": "Apply hotbar layout 1",
+	"key.qolbundle.hotbar_layout_2": "Apply hotbar layout 2",
+	"key.qolbundle.hotbar_layout_3": "Apply hotbar layout 3",
+	"key.qolbundle.hotbar_layout_4": "Apply hotbar layout 4",
+	"key.qolbundle.hotbar_layout_5": "Apply hotbar layout 5",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
 	"qolbundle.gui.enabled": "Enabled",
 	"qolbundle.gui.reset": "Reset to defaults",
 	"qolbundle.gui.no_modules": "No modules yet.",
+	"qolbundle.gui.custom_screen": "Open",
 
 	"qolbundle.category.technical": "Technical",
 	"qolbundle.category.info": "Information",
@@ -339,5 +346,19 @@
 	"qolbundle.module.item_search.desc": "A search box in inventories and chests. Finds items by English name, Chinese name or pinyin initials (zs = 钻石).",
 	"qolbundle.module.item_search.placeholder": "Search items...",
 	"qolbundle.module.item_search.setting.dim_others": "Dim items that do not match",
-	"qolbundle.module.item_search.setting.pinyin": "Match pinyin initials"
+	"qolbundle.module.item_search.setting.pinyin": "Match pinyin initials",
+
+	"qolbundle.module.hotbar_layouts.name": "Hotbar Layouts",
+	"qolbundle.module.hotbar_layouts.desc": "Save up to five hotbar layouts and fetch the items from your backpack into place with one click.",
+	"qolbundle.module.hotbar_layouts.custom_screen": "Layouts",
+	"qolbundle.module.hotbar_layouts.button": "Hotbar layouts",
+	"qolbundle.module.hotbar_layouts.applied": "Layout %s applied (%s items moved)",
+	"qolbundle.module.hotbar_layouts.applied_missing": "Layout %s applied (%s moved, %s not in your backpack)",
+	"qolbundle.module.hotbar_layouts.empty": "Layout %s has nothing saved yet",
+	"qolbundle.module.hotbar_layouts.screen.title": "Hotbar layouts",
+	"qolbundle.module.hotbar_layouts.screen.hint": "Save = remember the hotbar as it is now. Apply = fetch those items from the backpack.",
+	"qolbundle.module.hotbar_layouts.screen.name": "Layout %s",
+	"qolbundle.module.hotbar_layouts.screen.save": "Save",
+	"qolbundle.module.hotbar_layouts.screen.apply": "Apply",
+	"qolbundle.module.hotbar_layouts.setting.inventory_button": "Button in the inventory screen"
 }
