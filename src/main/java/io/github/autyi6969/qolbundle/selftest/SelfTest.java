@@ -35,6 +35,8 @@ public final class SelfTest {
 	private final List<Step> steps = new ArrayList<>();
 	private final List<String> failedScenarios = new ArrayList<>();
 	private final AtomicInteger pendingScreenshots = new AtomicInteger();
+	/** Things to put back when the run ends (game options the test had to change). */
+	private final List<Consumer<MinecraftClient>> cleanups = new ArrayList<>();
 	private int index;
 	private int ticksInStep;
 	private long startNanos = -1;
@@ -68,6 +70,11 @@ public final class SelfTest {
 	 */
 	public void scenario(String name, boolean fatal, Consumer<Script> body) {
 		body.accept(new Script(name, fatal));
+	}
+
+	/** Registers code that runs once at the very end, whether the run passed, failed or timed out. */
+	public void onFinish(Consumer<MinecraftClient> cleanup) {
+		cleanups.add(cleanup);
 	}
 
 	private void tick(MinecraftClient client) {
@@ -149,6 +156,13 @@ public final class SelfTest {
 			return;
 		}
 		done = true;
+		for (Consumer<MinecraftClient> cleanup : cleanups) {
+			try {
+				cleanup.accept(client);
+			} catch (RuntimeException e) {
+				LOGGER.error(PREFIX + "cleanup failed", e);
+			}
+		}
 		LOGGER.info(PREFIX + "SUMMARY passed={} failed={} {}", passed, failedScenarios.size(), failedScenarios);
 		LOGGER.info(PREFIX + "DONE");
 		client.scheduleStop();
@@ -287,8 +301,13 @@ public final class SelfTest {
 
 		/** Saves run/screenshots/selftest/NAME.png. Waits a few ticks first so the frame is up to date. */
 		public Script screenshot(String name) {
+			return screenshot(name, false);
+		}
+
+		/** @param keepToasts true when the pop-ups in the corner are what the screenshot is about */
+		public Script screenshot(String name, boolean keepToasts) {
 			add("screenshot " + name, (client, ticks) -> {
-				if (ticks == 0) {
+				if (ticks == 0 && !keepToasts) {
 					// Pop-ups like "Advancement made!" only hide what the screenshot is about.
 					client.getToastManager().clear();
 				}

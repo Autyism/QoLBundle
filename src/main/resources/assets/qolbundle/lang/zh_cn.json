@@ -3,6 +3,7 @@
 
 	"key.category.qolbundle.main": "QoL 全家桶",
 	"key.qolbundle.open_settings": "打开 QoL 全家桶设置",
+	"key.qolbundle.chat_search": "搜索聊天记录",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -210,5 +211,24 @@
 	"qolbundle.module.sound_compass.setting.show_labels": "写出是什么声音",
 	"qolbundle.module.sound_compass.setting.highlight_danger": "危险的声音用红色",
 	"qolbundle.module.sound_compass.setting.highlight_danger.desc": "苦力怕嘶嘶声、点燃的 TNT、监守者、火球。",
-	"qolbundle.module.sound_compass.setting.ignore_own": "忽略自己发出的声音"
+	"qolbundle.module.sound_compass.setting.ignore_own": "忽略自己发出的声音",
+
+	"qolbundle.module.chat_enhancements.name": "聊天增强",
+	"qolbundle.module.chat_enhancements.desc": "时间戳、有人提到你时标记并提示、聊天搜索、断线重连后保留聊天记录。",
+	"qolbundle.module.chat_enhancements.mention.toast": "有人提到了你",
+	"qolbundle.module.chat_enhancements.restored": "--- 这条线以上是你离开前的聊天记录 ---",
+	"qolbundle.module.chat_enhancements.search.button": "搜索",
+	"qolbundle.module.chat_enhancements.search.title": "搜索聊天记录",
+	"qolbundle.module.chat_enhancements.search.hint": "输入要找的字...",
+	"qolbundle.module.chat_enhancements.search.count": "找到 %s 条（共 %s 条）",
+	"qolbundle.module.chat_enhancements.search.empty": "还没有任何聊天记录。",
+	"qolbundle.module.chat_enhancements.setting.timestamps": "时间戳",
+	"qolbundle.module.chat_enhancements.setting.timestamp_seconds": "时间戳带秒",
+	"qolbundle.module.chat_enhancements.setting.mention_mark": "标记提到你的消息",
+	"qolbundle.module.chat_enhancements.setting.mention_sound": "被提到时响提示音",
+	"qolbundle.module.chat_enhancements.setting.mention_toast": "被提到时弹出提示",
+	"qolbundle.module.chat_enhancements.setting.keywords": "额外关注的词",
+	"qolbundle.module.chat_enhancements.setting.keywords.desc": "用英文逗号隔开。消息里出现这些词也算提到你。",
+	"qolbundle.module.chat_enhancements.setting.keep_history": "断线重连后保留聊天记录",
+	"qolbundle.module.chat_enhancements.setting.search_button": "聊天界面显示搜索按钮"
 }

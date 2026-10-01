@@ -8,6 +8,7 @@ import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
+import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
@@ -42,7 +43,8 @@ public class QoLBundleClient implements ClientModInitializer {
 	public static final String MOD_ID = "qolbundle";
 	public static final Logger LOGGER = LoggerFactory.getLogger("QoLBundle");
 
-	private static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(id("main"));
+	/** The "QoL Bundle" section in Options > Controls > Key Binds. */
+	public static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(id("main"));
 	private static KeyBinding openSettingsKey;
 
 	public static Identifier id(String path) {
@@ -86,6 +88,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new DurabilityAlertModule());
 		ModuleRegistry.register(new ElytraDashboardModule());
 		ModuleRegistry.register(new SoundCompassModule());
+		ModuleRegistry.register(new ChatEnhancementsModule());
 	}
 
 	private void onClientTick(MinecraftClient client) {

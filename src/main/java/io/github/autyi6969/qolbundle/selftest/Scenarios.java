@@ -1,11 +1,14 @@
 package io.github.autyi6969.qolbundle.selftest;
 
+import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
+import io.github.autyi6969.qolbundle.mixin.ChatHudAccessor;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
+import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
@@ -18,11 +21,15 @@ import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.tutorial.TutorialStep;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -34,6 +41,10 @@ import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.WorldPresets;
 import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.rule.GameRules;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * What the self-test actually does. Order: reach the title screen, settings screens, enter the
@@ -49,7 +60,7 @@ final class Scenarios {
 	}
 
 	static void build(SelfTest test) {
-		test.scenario("boot", true, Scenarios::boot);
+		test.scenario("boot", true, s -> boot(test, s));
 		test.scenario("settings_screen", false, Scenarios::settingsScreen);
 		test.scenario("enter_world", true, Scenarios::enterWorld);
 		test.scenario("durability_alert", false, Scenarios::durabilityAlert);
@@ -65,36 +76,53 @@ final class Scenarios {
 		test.scenario("slime_chunks", false, Scenarios::slimeChunks);
 		test.scenario("elytra_dashboard", false, Scenarios::elytraDashboard);
 		test.scenario("sound_compass", false, Scenarios::soundCompass);
+		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
+		test.scenario("chinese_ui", false, Scenarios::chineseUi);
 	}
 
-	private static void boot(SelfTest.Script s) {
+	private static void boot(SelfTest test, SelfTest.Script s) {
 		s.waitUntil("title screen", client -> {
 			if (client.getOverlay() != null) {
 				return false;
 			}
 			if (client.currentScreen instanceof AccessibilityOnboardingScreen) {
-				// First start of a fresh run/ folder shows this instead of the title screen.
-				client.options.onboardAccessibility = false;
+				// First start of a fresh run/ folder shows this instead of the title screen. Skip it for
+				// this run only; the option itself is not touched, so the player still gets to see it.
 				client.setScreen(new TitleScreen());
 				return false;
 			}
 			return client.currentScreen instanceof TitleScreen;
 		}, 20 * 120);
 		s.run("test-friendly options", client -> {
+			boolean pauseOnLostFocus = client.options.pauseOnLostFocus;
+			TutorialStep tutorialStep = client.options.tutorialStep;
 			// The window is usually in the background while the test runs; do not pause because of that.
 			client.options.pauseOnLostFocus = false;
-			client.options.onboardAccessibility = false;
 			// No tutorial pop-ups in the screenshots.
 			client.options.tutorialStep = TutorialStep.NONE;
 			client.getTutorialManager().setStep(TutorialStep.NONE);
+			// The game saves its options on exit: hand back what the player had, so a test run
+			// leaves options.txt as it found it.
+			test.onFinish(c -> {
+				c.options.pauseOnLostFocus = pauseOnLostFocus;
+				c.options.tutorialStep = tutorialStep;
+				c.options.write();
+			});
 		});
 	}
 
 	private static void settingsScreen(SelfTest.Script s) {
+		s.check("Mod Menu's configure button leads to our settings screen", Scenarios::modMenuOpensSettings);
 		s.run("open module list", client -> client.setScreen(new ModuleListScreen(client.currentScreen)));
 		s.waitTicks(10);
 		s.check("module list screen is open", client -> client.currentScreen instanceof ModuleListScreen);
 		s.screenshot("00_settings_list");
+		s.run("scroll the module list to the bottom", client -> {
+			if (client.currentScreen != null) {
+				client.currentScreen.mouseScrolled(client.currentScreen.width / 2.0, client.currentScreen.height / 2.0, 0, -100);
+			}
+		});
+		s.screenshot("00_settings_list_bottom");
 		if (!ModuleRegistry.all().isEmpty()) {
 			// The module with the most settings makes the most telling screenshot.
 			Module richest = ModuleRegistry.all().get(0);
@@ -112,6 +140,23 @@ final class Scenarios {
 		}
 		s.run("back to title", client -> client.setScreen(new TitleScreen()));
 		s.waitTicks(5);
+	}
+
+	/**
+	 * Asks Mod Menu which screen its "configure" button would open for this mod. Done by name
+	 * (reflection) so the self-test also works in a client without Mod Menu.
+	 */
+	private static boolean modMenuOpensSettings(MinecraftClient client) {
+		try {
+			Class<?> modMenu = Class.forName("com.terraformersmc.modmenu.ModMenu");
+			Object screen = modMenu.getMethod("getConfigScreen", String.class, Screen.class)
+					.invoke(null, "qolbundle", client.currentScreen);
+			return screen instanceof ModuleListScreen;
+		} catch (ClassNotFoundException e) {
+			return true; // Mod Menu is not installed in this client: nothing to check
+		} catch (ReflectiveOperationException e) {
+			return false;
+		}
 	}
 
 	private static void enterWorld(SelfTest.Script s) {
@@ -451,6 +496,100 @@ final class Scenarios {
 	private static float soundAngle(MinecraftClient client, SoundCompassModule.Entry entry) {
 		return SoundCompassModule.relativeAngle(client.gameRenderer.getCamera().getCameraPos(),
 				client.gameRenderer.getCamera().getYaw(), entry.pos());
+	}
+
+	private static void chatEnhancements(SelfTest.Script s) {
+		ChatEnhancementsModule module = module("chat_enhancements");
+		isolate(s, module);
+		s.run("forget earlier chat", client -> module.forgetAll());
+		s.waitTicks(5);
+		s.clearChat();
+		// Three lines as a chat plugin would send them: someone talking, someone mentioning the
+		// player, and the player's own line (which contains the own name but is not a mention).
+		s.command(client -> "tellraw @a {\"text\":\"<Bob> hello everyone\"}");
+		s.command(client -> "tellraw @a {\"text\":\"<Bob> hey " + client.getSession().getUsername() + " are you there?\"}");
+		s.command(client -> "tellraw @a {\"text\":\"<" + client.getSession().getUsername() + "> yes, "
+				+ client.getSession().getUsername() + " is here\"}");
+		s.waitTicks(10);
+		s.check("three lines were recorded", client -> module.getHistory().size() == 3);
+		s.check("exactly one of them counts as a mention", client -> module.getMentionCount() == 1);
+		s.check("the newest chat line starts with a timestamp", client -> newestChatLine(client).matches("^\\[\\d\\d:\\d\\d\\] .*"));
+		s.screenshot("15_chat_timestamps_mention", true);
+
+		s.run("open the search screen and search for 'hey'", client -> {
+			ChatSearchScreen screen = new ChatSearchScreen(null, module);
+			client.setScreen(screen);
+			screen.setQuery("hey");
+		});
+		s.waitTicks(5);
+		s.check("search finds exactly the one line containing 'hey'", client -> client.currentScreen instanceof ChatSearchScreen screen
+				&& screen.getResultCount() == 1);
+		s.screenshot("15_chat_search");
+		s.run("close the search screen", client -> client.setScreen(null));
+
+		// Leave the world and come back: the chat must still be there.
+		s.run("leave the world", client -> client.send(() -> client.disconnect(Text.literal("self-test reconnect"))));
+		s.waitUntil("back at the title screen", client -> client.world == null && client.currentScreen instanceof TitleScreen, 20 * 60);
+		s.run("load the world again", client -> client.send(() ->
+				client.createIntegratedServerLoader().start(WORLD_NAME, () -> client.setScreen(new TitleScreen()))));
+		s.waitUntil("player is in the world again", Scenarios::inWorld, 20 * 120);
+		s.waitTicks(40);
+		s.info("chat lines restored", client -> module.getRestoredLines());
+		s.check("the three chat lines came back after rejoining", client -> module.getRestoredLines() == 3);
+		s.check("the chat window contains the old line again", client -> chatLines(client).stream().anyMatch(line -> line.contains("hello everyone")));
+		s.run("open the chat so the restored lines are visible", client -> client.setScreen(new ChatScreen("", false)));
+		s.waitTicks(5);
+		s.screenshot("15_chat_restored");
+		s.run("close the chat", client -> client.setScreen(null));
+	}
+
+	/** Last scenario: the same screens and HUD lines in Simplified Chinese, to check font and translations. */
+	private static void chineseUi(SelfTest.Script s) {
+		CompletableFuture<?>[] reload = new CompletableFuture<?>[1];
+		s.run("switch the game language to Simplified Chinese", client -> {
+			client.getLanguageManager().setLanguage("zh_cn");
+			// options.language is left alone on purpose, so the dev client starts in English next time.
+			reload[0] = client.reloadResources();
+		});
+		s.waitUntil("resources are reloaded", client -> reload[0] != null && reload[0].isDone() && client.getOverlay() == null, 20 * 90);
+		resetPlayer(s);
+		s.run("switch on a few HUD modules", client -> {
+			for (Module module : ModuleRegistry.all()) {
+				String id = module.getId();
+				module.setEnabled(id.equals("info_hud") || id.equals("respawn_point") || id.equals("slime_chunks")
+						|| id.equals("entity_counter") || id.equals("armor_hud"));
+			}
+		});
+		s.command("give @a diamond_pickaxe[damage=700]");
+		s.waitTicks(30);
+		s.screenshot("16_zh_hud");
+		s.run("open module list", client -> client.setScreen(new ModuleListScreen(null)));
+		s.waitTicks(5);
+		s.screenshot("16_zh_settings_list");
+		s.run("scroll the module list to the bottom", client -> {
+			if (client.currentScreen != null) {
+				client.currentScreen.mouseScrolled(client.currentScreen.width / 2.0, client.currentScreen.height / 2.0, 0, -100);
+			}
+		});
+		s.screenshot("16_zh_settings_list_bottom");
+		s.run("open the settings of the chat module",
+				client -> client.setScreen(new ModuleSettingsScreen(client.currentScreen, module("chat_enhancements"))));
+		s.waitTicks(5);
+		s.screenshot("16_zh_settings_module");
+		s.run("close the screens", client -> client.setScreen(null));
+	}
+
+	private static List<String> chatLines(MinecraftClient client) {
+		List<String> lines = new ArrayList<>();
+		for (ChatHudLine line : ((ChatHudAccessor) client.inGameHud.getChatHud()).qolbundle$getMessages()) {
+			lines.add(line.content().getString());
+		}
+		return lines;
+	}
+
+	private static String newestChatLine(MinecraftClient client) {
+		List<String> lines = chatLines(client);
+		return lines.isEmpty() ? "" : lines.get(0);
 	}
 
 	private static void useLookedAtBlock(MinecraftClient client) {

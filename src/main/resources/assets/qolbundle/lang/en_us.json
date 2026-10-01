@@ -3,6 +3,7 @@
 
 	"key.category.qolbundle.main": "QoL Bundle",
 	"key.qolbundle.open_settings": "Open QoL Bundle settings",
+	"key.qolbundle.chat_search": "Search chat history",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
@@ -210,5 +211,24 @@
 	"qolbundle.module.sound_compass.setting.show_labels": "Name the sounds",
 	"qolbundle.module.sound_compass.setting.highlight_danger": "Dangerous sounds in red",
 	"qolbundle.module.sound_compass.setting.highlight_danger.desc": "Creeper fuse, lit TNT, Warden, fireballs.",
-	"qolbundle.module.sound_compass.setting.ignore_own": "Ignore your own sounds"
+	"qolbundle.module.sound_compass.setting.ignore_own": "Ignore your own sounds",
+
+	"qolbundle.module.chat_enhancements.name": "Chat Enhancements",
+	"qolbundle.module.chat_enhancements.desc": "Timestamps, a mark and sound when you are mentioned, chat search, and chat that survives a reconnect.",
+	"qolbundle.module.chat_enhancements.mention.toast": "Someone mentioned you",
+	"qolbundle.module.chat_enhancements.restored": "--- chat from before you left is above this line ---",
+	"qolbundle.module.chat_enhancements.search.button": "Search",
+	"qolbundle.module.chat_enhancements.search.title": "Search chat",
+	"qolbundle.module.chat_enhancements.search.hint": "Type to search...",
+	"qolbundle.module.chat_enhancements.search.count": "%s of %s lines",
+	"qolbundle.module.chat_enhancements.search.empty": "Nothing has been said yet.",
+	"qolbundle.module.chat_enhancements.setting.timestamps": "Timestamps",
+	"qolbundle.module.chat_enhancements.setting.timestamp_seconds": "Timestamps with seconds",
+	"qolbundle.module.chat_enhancements.setting.mention_mark": "Mark lines that mention you",
+	"qolbundle.module.chat_enhancements.setting.mention_sound": "Sound when mentioned",
+	"qolbundle.module.chat_enhancements.setting.mention_toast": "Pop-up when mentioned",
+	"qolbundle.module.chat_enhancements.setting.keywords": "Extra words to watch for",
+	"qolbundle.module.chat_enhancements.setting.keywords.desc": "Separated by commas. Lines containing one of them count as a mention.",
+	"qolbundle.module.chat_enhancements.setting.keep_history": "Keep chat after a reconnect",
+	"qolbundle.module.chat_enhancements.setting.search_button": "Search button in the chat screen"
 }
