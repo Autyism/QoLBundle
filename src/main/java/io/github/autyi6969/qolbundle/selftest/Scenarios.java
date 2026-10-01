@@ -6,6 +6,7 @@ import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
+import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
@@ -13,6 +14,7 @@ import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
+import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -56,6 +58,8 @@ final class Scenarios {
 		test.scenario("portal_calculator", false, Scenarios::portalCalculator);
 		test.scenario("respawn_point", false, Scenarios::respawnPoint);
 		test.scenario("entity_counter", false, Scenarios::entityCounter);
+		test.scenario("chunk_borders", false, Scenarios::chunkBorders);
+		test.scenario("slime_chunks", false, Scenarios::slimeChunks);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -328,6 +332,53 @@ final class Scenarios {
 		s.command("kill @e[type=item]");
 		s.command("kill @e[type=chicken]");
 		s.run("restore the warning threshold", client -> module.itemWarningSetting().reset());
+	}
+
+	private static void chunkBorders(SelfTest.Script s) {
+		ChunkBordersModule module = module("chunk_borders");
+		isolate(s, module);
+		// Middle of chunk 0,0, a little above the ground, looking at its south-east corner.
+		s.command("tp @a 8.5 " + (GROUND_Y + 3) + " 8.5 -45 15");
+		s.waitTicks(20);
+		s.check("four walls are drawn", client -> module.getWallsDrawn() == 4);
+		s.screenshot("11_chunk_borders");
+	}
+
+	private static void slimeChunks(SelfTest.Script s) {
+		SlimeChunksModule module = module("slime_chunks");
+		isolate(s, module);
+		s.run("empty seed box: single-player uses the seed of the world", client -> module.seedSetting().set(""));
+		s.waitTicks(25);
+		s.check("the world seed (0) is picked up automatically",
+				client -> module.getActiveSeed().isPresent() && module.getActiveSeed().getAsLong() == 0L);
+		s.run("type the seed 12345", client -> module.seedSetting().set("12345"));
+		s.waitTicks(5);
+		s.check("typed seed is used", client -> module.getActiveSeed().isPresent() && module.getActiveSeed().getAsLong() == 12345L);
+		// Stand in the slime chunk nearest to the origin, a few blocks up, looking down across it.
+		s.command(client -> {
+			int[] chunk = nearestSlimeChunk(12345L);
+			return "tp @a " + (chunk[0] * 16 + 2.5) + " " + (GROUND_Y + 6) + " " + (chunk[1] * 16 + 2.5) + " -45 35";
+		});
+		s.waitTicks(45);
+		s.info("slime chunks highlighted", client -> module.getHighlightedChunkCount());
+		s.check("player stands in a slime chunk", client -> module.isStandingInSlimeChunk());
+		s.check("some slime chunks are highlighted", client -> module.getHighlightedChunkCount() >= 1);
+		s.screenshot("12_slime_chunks");
+		s.run("clear the seed box again", client -> module.seedSetting().set(""));
+	}
+
+	/** Chunk coordinates of the slime chunk closest to chunk 0,0 for the given seed. */
+	private static int[] nearestSlimeChunk(long seed) {
+		for (int ring = 0; ring <= 12; ring++) {
+			for (int x = -ring; x <= ring; x++) {
+				for (int z = -ring; z <= ring; z++) {
+					if (Math.max(Math.abs(x), Math.abs(z)) == ring && SlimeChunksModule.isSlimeChunk(seed, x, z)) {
+						return new int[] {x, z};
+					}
+				}
+			}
+		}
+		throw new IllegalStateException("no slime chunk near the origin");
 	}
 
 	private static void useLookedAtBlock(MinecraftClient client) {

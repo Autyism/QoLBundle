@@ -239,6 +239,21 @@ public final class SelfTest {
 			return this;
 		}
 
+		/** Like {@link #command(String)}, for commands that are only known while the test runs. */
+		public Script command(Function<MinecraftClient, String> commandSupplier) {
+			add("command (computed)", (client, ticks) -> {
+				IntegratedServer server = client.getServer();
+				if (server == null) {
+					throw new IllegalStateException("no integrated server");
+				}
+				String command = commandSupplier.apply(client);
+				LOGGER.info(PREFIX + "computed command: /{}", command);
+				server.execute(() -> server.getCommandManager().parseAndExecute(server.getCommandSource().withSilent(), command));
+				return true;
+			});
+			return this;
+		}
+
 		/** Empties the chat so that server messages ("game mode updated") are not in the screenshot. */
 		public Script clearChat() {
 			add("clear chat", (client, ticks) -> {

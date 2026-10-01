@@ -2,6 +2,7 @@ package io.github.autyi6969.qolbundle.module;
 
 import io.github.autyi6969.qolbundle.hud.HudLayout;
 import io.github.autyi6969.qolbundle.module.setting.Setting;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -91,6 +92,13 @@ public abstract class Module {
 
 	/** Called once per client tick. {@code client.player} and {@code client.world} may be null. */
 	public void onTick(MinecraftClient client) {
+	}
+
+	/**
+	 * Called every frame while the world is drawn. Draw with {@code GizmoDrawing} (lines, faces,
+	 * boxes); whatever is added here is shown for this one frame.
+	 */
+	public void onRenderWorld(WorldRenderContext context) {
 	}
 
 	/** Called every frame while the HUD is visible and the player is in a world. */

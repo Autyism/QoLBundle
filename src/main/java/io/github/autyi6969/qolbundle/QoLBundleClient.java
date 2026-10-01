@@ -8,6 +8,7 @@ import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
+import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
@@ -15,6 +16,7 @@ import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
+import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.selftest.SelfTest;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -22,6 +24,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
@@ -54,6 +58,8 @@ public class QoLBundleClient implements ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
+		// The moment the game collects its own debug shapes; ours are drawn the same way.
+		WorldRenderEvents.BEFORE_DEBUG_RENDER.register(this::onRenderWorld);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ConfigManager.save());
 
 		if (SelfTest.isRequested()) {
@@ -71,6 +77,8 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new BreakProgressModule());
 		ModuleRegistry.register(new PortalCalculatorModule());
 		ModuleRegistry.register(new EntityCounterModule());
+		ModuleRegistry.register(new ChunkBordersModule());
+		ModuleRegistry.register(new SlimeChunksModule());
 		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new RespawnPointModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
@@ -88,6 +96,14 @@ public class QoLBundleClient implements ClientModInitializer {
 			}
 		}
 		WorldData.tick();
+	}
+
+	private void onRenderWorld(WorldRenderContext context) {
+		for (Module module : ModuleRegistry.all()) {
+			if (module.isEnabled()) {
+				module.onRenderWorld(context);
+			}
+		}
 	}
 
 	private void onRenderHud(DrawContext context, RenderTickCounter tickCounter) {

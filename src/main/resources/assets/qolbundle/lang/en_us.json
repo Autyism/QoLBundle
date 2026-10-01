@@ -144,5 +144,34 @@
 	"qolbundle.module.entity_counter.setting.show_categories": "Count by kind",
 	"qolbundle.module.entity_counter.setting.top_types": "Most common types to list",
 	"qolbundle.module.entity_counter.setting.item_warning": "Warn at this many dropped items",
-	"qolbundle.module.entity_counter.setting.show_item_pile": "Show where the biggest item pile is"
+	"qolbundle.module.entity_counter.setting.show_item_pile": "Show where the biggest item pile is",
+
+	"qolbundle.option.highlightcolor.red": "Red",
+	"qolbundle.option.highlightcolor.orange": "Orange",
+	"qolbundle.option.highlightcolor.yellow": "Yellow",
+	"qolbundle.option.highlightcolor.green": "Green",
+	"qolbundle.option.highlightcolor.cyan": "Cyan",
+	"qolbundle.option.highlightcolor.blue": "Blue",
+	"qolbundle.option.highlightcolor.purple": "Purple",
+	"qolbundle.option.highlightcolor.white": "White",
+
+	"qolbundle.module.chunk_borders.name": "Chunk Borders",
+	"qolbundle.module.chunk_borders.desc": "Shows the border of your chunk as see-through coloured walls.",
+	"qolbundle.module.chunk_borders.setting.color": "Color",
+	"qolbundle.module.chunk_borders.setting.opacity": "Wall opacity",
+	"qolbundle.module.chunk_borders.setting.neighbors": "Mark corners of neighbouring chunks",
+	"qolbundle.module.chunk_borders.setting.rings": "Height lines every 8 blocks",
+
+	"qolbundle.module.slime_chunks.name": "Slime Chunks",
+	"qolbundle.module.slime_chunks.desc": "Highlights slime chunks on the ground. Needs the world seed.",
+	"qolbundle.module.slime_chunks.hud.yes": "Slime chunk: YES",
+	"qolbundle.module.slime_chunks.hud.no": "Slime chunk: no",
+	"qolbundle.module.slime_chunks.hud.no_seed": "Slime chunks: enter the world seed in the settings",
+	"qolbundle.module.slime_chunks.setting.seed": "World seed",
+	"qolbundle.module.slime_chunks.setting.seed.desc": "Remembered separately for every world and server. Leave empty in single-player to use the seed of the open world.",
+	"qolbundle.module.slime_chunks.setting.radius": "Range (chunks)",
+	"qolbundle.module.slime_chunks.setting.color": "Color",
+	"qolbundle.module.slime_chunks.setting.opacity": "Highlight opacity",
+	"qolbundle.module.slime_chunks.setting.show_hud": "Say whether you stand in a slime chunk",
+	"qolbundle.module.slime_chunks.setting.position": "Position of that line"
 }

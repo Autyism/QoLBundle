@@ -144,5 +144,34 @@
 	"qolbundle.module.entity_counter.setting.show_categories": "按种类统计",
 	"qolbundle.module.entity_counter.setting.top_types": "列出数量最多的几种",
 	"qolbundle.module.entity_counter.setting.item_warning": "掉落物达到多少个时预警",
-	"qolbundle.module.entity_counter.setting.show_item_pile": "显示最大一堆掉落物的位置"
+	"qolbundle.module.entity_counter.setting.show_item_pile": "显示最大一堆掉落物的位置",
+
+	"qolbundle.option.highlightcolor.red": "红",
+	"qolbundle.option.highlightcolor.orange": "橙",
+	"qolbundle.option.highlightcolor.yellow": "黄",
+	"qolbundle.option.highlightcolor.green": "绿",
+	"qolbundle.option.highlightcolor.cyan": "青",
+	"qolbundle.option.highlightcolor.blue": "蓝",
+	"qolbundle.option.highlightcolor.purple": "紫",
+	"qolbundle.option.highlightcolor.white": "白",
+
+	"qolbundle.module.chunk_borders.name": "区块边界",
+	"qolbundle.module.chunk_borders.desc": "把你所在区块的边界画成半透明的彩色墙。",
+	"qolbundle.module.chunk_borders.setting.color": "颜色",
+	"qolbundle.module.chunk_borders.setting.opacity": "墙的不透明度",
+	"qolbundle.module.chunk_borders.setting.neighbors": "标出相邻区块的角",
+	"qolbundle.module.chunk_borders.setting.rings": "每 8 格画一圈高度线",
+
+	"qolbundle.module.slime_chunks.name": "史莱姆区块",
+	"qolbundle.module.slime_chunks.desc": "在地面上高亮史莱姆区块。需要世界种子。",
+	"qolbundle.module.slime_chunks.hud.yes": "史莱姆区块：是",
+	"qolbundle.module.slime_chunks.hud.no": "史莱姆区块：不是",
+	"qolbundle.module.slime_chunks.hud.no_seed": "史莱姆区块：请先在设置里填世界种子",
+	"qolbundle.module.slime_chunks.setting.seed": "世界种子",
+	"qolbundle.module.slime_chunks.setting.seed.desc": "每个存档 / 服务器分开记。单人游戏留空会自动用当前存档的种子。",
+	"qolbundle.module.slime_chunks.setting.radius": "范围（区块）",
+	"qolbundle.module.slime_chunks.setting.color": "颜色",
+	"qolbundle.module.slime_chunks.setting.opacity": "高亮不透明度",
+	"qolbundle.module.slime_chunks.setting.show_hud": "显示脚下是不是史莱姆区块",
+	"qolbundle.module.slime_chunks.setting.position": "那行字的位置"
 }
