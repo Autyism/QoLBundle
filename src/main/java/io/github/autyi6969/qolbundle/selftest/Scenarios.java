@@ -16,6 +16,7 @@ import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
+import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -63,6 +64,7 @@ final class Scenarios {
 		test.scenario("chunk_borders", false, Scenarios::chunkBorders);
 		test.scenario("slime_chunks", false, Scenarios::slimeChunks);
 		test.scenario("elytra_dashboard", false, Scenarios::elytraDashboard);
+		test.scenario("sound_compass", false, Scenarios::soundCompass);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -419,6 +421,38 @@ final class Scenarios {
 				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 10.0);
 	}
 
+	private static void soundCompass(SelfTest.Script s) {
+		SoundCompassModule module = module("sound_compass");
+		isolate(s, module);
+		s.waitTicks(20);
+		// The player stands at 0.5, 0.5 looking north (-Z). East (+X) is to the right, south is behind.
+		s.command("playsound minecraft:entity.creeper.primed hostile @a 10.5 " + GROUND_Y + " 0.5 1");
+		s.command("playsound minecraft:entity.cow.ambient neutral @a 0.5 " + GROUND_Y + " 9.5 1");
+		s.command("playsound minecraft:entity.zombie.ambient hostile @a -7.5 " + GROUND_Y + " -7.5 1");
+		s.waitTicks(12);
+		s.info("sounds on the ring", client -> {
+			StringBuilder out = new StringBuilder();
+			for (SoundCompassModule.Entry entry : module.getEntries()) {
+				out.append(entry.text().getString()).append(" @").append(Math.round(soundAngle(client, entry))).append("deg  ");
+			}
+			return out;
+		});
+		// Animals wandering near the origin add their own sounds, so "at least".
+		s.check("at least the three played sounds are on the ring", client -> module.getEntries().size() >= 3);
+		s.check("the creeper hiss points right (about 90 degrees) and is marked dangerous", client -> module.getEntries().stream()
+				.anyMatch(entry -> entry.danger() && Math.abs(soundAngle(client, entry) - 90F) < 10F));
+		s.check("the cow points behind (about 180 degrees)", client -> module.getEntries().stream()
+				.anyMatch(entry -> !entry.danger() && Math.abs(Math.abs(soundAngle(client, entry)) - 180F) < 10F));
+		s.check("the zombie points front-left (about -45 degrees)", client -> module.getEntries().stream()
+				.anyMatch(entry -> Math.abs(soundAngle(client, entry) + 45F) < 10F));
+		s.screenshot("14_sound_compass");
+	}
+
+	private static float soundAngle(MinecraftClient client, SoundCompassModule.Entry entry) {
+		return SoundCompassModule.relativeAngle(client.gameRenderer.getCamera().getCameraPos(),
+				client.gameRenderer.getCamera().getYaw(), entry.pos());
+	}
+
 	private static void useLookedAtBlock(MinecraftClient client) {
 		if (client.crosshairTarget instanceof BlockHitResult hit && client.interactionManager != null) {
 			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
@@ -445,6 +479,7 @@ final class Scenarios {
 		s.command("gamemode creative @a");
 		s.command("clear @a");
 		s.command("effect clear @a");
+		s.command("kill @e[type=item]");
 		// Remove anything an earlier scenario built around the origin.
 		s.command("fill -8 -60 -8 8 -50 8 air");
 		// "execute in overworld" also brings the player back if a scenario left them in the nether.

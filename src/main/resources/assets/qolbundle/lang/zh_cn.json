@@ -199,5 +199,16 @@
 	"qolbundle.module.elytra_dashboard.setting.show_elytra": "鞘翅剩余飞行时间",
 	"qolbundle.module.elytra_dashboard.setting.show_landing": "预计落点",
 	"qolbundle.module.elytra_dashboard.setting.show_landing.desc": "按你保持当前视角、不再放烟花来估算。",
-	"qolbundle.module.elytra_dashboard.setting.landing_marker": "在世界里标出落点"
+	"qolbundle.module.elytra_dashboard.setting.landing_marker": "在世界里标出落点",
+
+	"qolbundle.module.sound_compass.name": "声音方向罗盘",
+	"qolbundle.module.sound_compass.desc": "准星周围的小箭头指出刚才的声音是从哪个方向来的。",
+	"qolbundle.module.sound_compass.hud.above": "%s（上方）",
+	"qolbundle.module.sound_compass.hud.below": "%s（下方）",
+	"qolbundle.module.sound_compass.setting.radius": "圆环大小",
+	"qolbundle.module.sound_compass.setting.duration": "每个声音显示几秒",
+	"qolbundle.module.sound_compass.setting.show_labels": "写出是什么声音",
+	"qolbundle.module.sound_compass.setting.highlight_danger": "危险的声音用红色",
+	"qolbundle.module.sound_compass.setting.highlight_danger.desc": "苦力怕嘶嘶声、点燃的 TNT、监守者、火球。",
+	"qolbundle.module.sound_compass.setting.ignore_own": "忽略自己发出的声音"
 }

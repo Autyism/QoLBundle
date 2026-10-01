@@ -199,5 +199,16 @@
 	"qolbundle.module.elytra_dashboard.setting.show_elytra": "Elytra flying time left",
 	"qolbundle.module.elytra_dashboard.setting.show_landing": "Predicted landing spot",
 	"qolbundle.module.elytra_dashboard.setting.show_landing.desc": "Assumes you keep looking in the same direction and use no rockets.",
-	"qolbundle.module.elytra_dashboard.setting.landing_marker": "Mark the landing spot in the world"
+	"qolbundle.module.elytra_dashboard.setting.landing_marker": "Mark the landing spot in the world",
+
+	"qolbundle.module.sound_compass.name": "Sound Compass",
+	"qolbundle.module.sound_compass.desc": "Pointers around the crosshair show where recent sounds came from.",
+	"qolbundle.module.sound_compass.hud.above": "%s (above)",
+	"qolbundle.module.sound_compass.hud.below": "%s (below)",
+	"qolbundle.module.sound_compass.setting.radius": "Ring size",
+	"qolbundle.module.sound_compass.setting.duration": "Seconds a sound stays",
+	"qolbundle.module.sound_compass.setting.show_labels": "Name the sounds",
+	"qolbundle.module.sound_compass.setting.highlight_danger": "Dangerous sounds in red",
+	"qolbundle.module.sound_compass.setting.highlight_danger.desc": "Creeper fuse, lit TNT, Warden, fireballs.",
+	"qolbundle.module.sound_compass.setting.ignore_own": "Ignore your own sounds"
 }
