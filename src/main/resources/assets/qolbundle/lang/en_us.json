@@ -316,5 +316,16 @@
 	"qolbundle.module.lava_safety.setting.warning_text": "Warning text",
 	"qolbundle.module.lava_safety.setting.warning_sound": "Warning sound",
 	"qolbundle.module.lava_safety.setting.escape_arrow": "Arrow to a safe spot when in lava",
-	"qolbundle.module.lava_safety.setting.search_radius": "How far to look for a safe spot"
+	"qolbundle.module.lava_safety.setting.search_radius": "How far to look for a safe spot",
+
+	"qolbundle.module.effect_range.name": "Beacon & Conduit Range",
+	"qolbundle.module.effect_range.desc": "Look at a beacon or conduit, or hold one, to see how far its effect reaches.",
+	"qolbundle.module.effect_range.hud.beacon": "Beacon level %s: %s blocks to each side and down, all the way up",
+	"qolbundle.module.effect_range.hud.beacon_none": "Beacon: no pyramid, no effect",
+	"qolbundle.module.effect_range.hud.conduit": "Conduit: %s block radius (%s frame blocks)",
+	"qolbundle.module.effect_range.hud.conduit_none": "Conduit: inactive, %s of at least 16 frame blocks",
+	"qolbundle.module.effect_range.hud.preview": "If placed here: %s",
+	"qolbundle.module.effect_range.setting.color": "Color",
+	"qolbundle.module.effect_range.setting.when_looking": "Show when looking at one",
+	"qolbundle.module.effect_range.setting.when_holding": "Preview when holding one"
 }

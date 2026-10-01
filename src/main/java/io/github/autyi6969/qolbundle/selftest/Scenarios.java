@@ -14,6 +14,7 @@ import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
@@ -95,6 +96,7 @@ public final class Scenarios {
 		test.scenario("villager_trades", false, Scenarios::villagerTrades);
 		test.scenario("projectile_landing", false, Scenarios::projectileLanding);
 		test.scenario("lava_safety", false, Scenarios::lavaSafety);
+		test.scenario("effect_range", false, Scenarios::effectRange);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("freecam", false, Scenarios::freecam);
 		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
@@ -747,6 +749,39 @@ public final class Scenarios {
 		s.command("gamemode creative @a");
 		s.command("effect clear @a");
 		s.command("fill -3 " + (floor - 4) + " -3 3 " + floor + " 3 air");
+	}
+
+	private static void effectRange(SelfTest.Script s) {
+		EffectRangeModule module = module("effect_range");
+		isolate(s, module);
+		// A beacon on a two-layer iron pyramid (level 2 = 30 blocks), four blocks in front of the player.
+		s.command("fill -2 " + GROUND_Y + " -8 2 " + GROUND_Y + " -4 iron_block");
+		s.command("fill -1 " + (GROUND_Y + 1) + " -7 1 " + (GROUND_Y + 1) + " -5 iron_block");
+		s.command("setblock 0 " + (GROUND_Y + 2) + " -6 beacon");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -8");
+		s.waitTicks(20);
+		s.info("beacon", client -> module.getShown());
+		s.check("the looked-at beacon is level 2 with a 30 block range", client -> module.getShown() != null
+				&& module.getShown().source() == EffectRangeModule.Source.BEACON && module.getShown().level() == 2
+				&& module.getShown().range() == 30 && !module.getShown().preview());
+		s.screenshot("24_beacon_range");
+
+		// Holding a conduit in front of a prismarine cage with its front open, aiming at the spot in
+		// its middle: 33 frame blocks count there, which makes a 64 block radius.
+		resetPlayer(s);
+		s.command("fill -2 " + (GROUND_Y - 1) + " -8 2 " + (GROUND_Y + 3) + " -4 prismarine hollow");
+		s.command("fill -2 " + (GROUND_Y - 1) + " -4 2 " + (GROUND_Y + 3) + " -4 air");
+		s.command("setblock 0 " + GROUND_Y + " -6 stone");
+		s.command("give @a conduit");
+		s.command("tp @a 0.5 " + GROUND_Y + " -2.5 180 12");
+		s.waitTicks(20);
+		s.info("conduit", client -> module.getShown());
+		s.check("holding a conduit previews 33 frame blocks = 64 block radius", client -> module.getShown() != null
+				&& module.getShown().source() == EffectRangeModule.Source.CONDUIT && module.getShown().preview()
+				&& module.getShown().level() == 33 && module.getShown().range() == 64);
+		s.screenshot("24_conduit_preview");
+		s.command("fill -2 " + (GROUND_Y - 1) + " -8 2 " + (GROUND_Y + 3) + " -4 air");
+		s.command("fill -2 " + (GROUND_Y - 1) + " -8 2 " + (GROUND_Y - 1) + " -4 grass_block");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

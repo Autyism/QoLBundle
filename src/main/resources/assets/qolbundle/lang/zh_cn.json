@@ -316,5 +316,16 @@
 	"qolbundle.module.lava_safety.setting.warning_text": "警告文字",
 	"qolbundle.module.lava_safety.setting.warning_sound": "警告音",
 	"qolbundle.module.lava_safety.setting.escape_arrow": "掉进岩浆时指向安全点",
-	"qolbundle.module.lava_safety.setting.search_radius": "找安全点的范围（格）"
+	"qolbundle.module.lava_safety.setting.search_radius": "找安全点的范围（格）",
+
+	"qolbundle.module.effect_range.name": "信标 / 潮涌范围",
+	"qolbundle.module.effect_range.desc": "看着信标或潮涌核心、或者手里拿着它时，显示效果能覆盖多远。",
+	"qolbundle.module.effect_range.hud.beacon": "信标 %s 级：四周和向下各 %s 格，向上到顶",
+	"qolbundle.module.effect_range.hud.beacon_none": "信标：下面没有金字塔，没有效果",
+	"qolbundle.module.effect_range.hud.conduit": "潮涌核心：半径 %s 格（框架 %s 块）",
+	"qolbundle.module.effect_range.hud.conduit_none": "潮涌核心：未激活，框架只有 %s 块（至少要 16 块）",
+	"qolbundle.module.effect_range.hud.preview": "放在这里的话：%s",
+	"qolbundle.module.effect_range.setting.color": "颜色",
+	"qolbundle.module.effect_range.setting.when_looking": "看着它时显示",
+	"qolbundle.module.effect_range.setting.when_holding": "手持时预览"
 }

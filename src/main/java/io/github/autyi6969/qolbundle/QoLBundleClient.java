@@ -13,6 +13,7 @@ import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
@@ -97,6 +98,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ArmorHudModule());
 		ModuleRegistry.register(new BreakProgressModule());
 		ModuleRegistry.register(new PortalCalculatorModule());
+		ModuleRegistry.register(new EffectRangeModule());
 		ModuleRegistry.register(new EntityCounterModule());
 		ModuleRegistry.register(new ChunkBordersModule());
 		ModuleRegistry.register(new SlimeChunksModule());
