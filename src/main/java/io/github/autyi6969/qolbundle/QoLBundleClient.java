@@ -10,6 +10,7 @@ import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
@@ -82,6 +83,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new RespawnPointModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
+		ModuleRegistry.register(new ElytraDashboardModule());
 	}
 
 	private void onClientTick(MinecraftClient client) {

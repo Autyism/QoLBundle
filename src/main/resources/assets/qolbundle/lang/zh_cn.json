@@ -173,5 +173,31 @@
 	"qolbundle.module.slime_chunks.setting.color": "颜色",
 	"qolbundle.module.slime_chunks.setting.opacity": "高亮不透明度",
 	"qolbundle.module.slime_chunks.setting.show_hud": "显示脚下是不是史莱姆区块",
-	"qolbundle.module.slime_chunks.setting.position": "那行字的位置"
+	"qolbundle.module.slime_chunks.setting.position": "那行字的位置",
+
+	"qolbundle.option.dashboardposition.below_crosshair": "准星下方",
+	"qolbundle.option.dashboardposition.top_left": "左上",
+	"qolbundle.option.dashboardposition.top_right": "右上",
+	"qolbundle.option.dashboardposition.bottom_left": "左下",
+	"qolbundle.option.dashboardposition.bottom_right": "右下",
+
+	"qolbundle.module.elytra_dashboard.name": "鞘翅飞行仪表盘",
+	"qolbundle.module.elytra_dashboard.desc": "滑翔时显示速度、俯仰角、离地高度、烟花余量和预计落点。",
+	"qolbundle.module.elytra_dashboard.hud.speed": "%s 格/秒（升降 %s）",
+	"qolbundle.module.elytra_dashboard.hud.pitch": "俯仰 %s°",
+	"qolbundle.module.elytra_dashboard.hud.height": "离地 %s 格",
+	"qolbundle.module.elytra_dashboard.hud.rockets": "烟花 ×%s",
+	"qolbundle.module.elytra_dashboard.hud.elytra": "鞘翅还能飞 %s",
+	"qolbundle.module.elytra_dashboard.hud.landing": "预计落点 %s, %s, %s（%s 格，%s 秒）",
+	"qolbundle.module.elytra_dashboard.hud.landing_far": "预计落点：超出已加载范围（%s 格以外）",
+	"qolbundle.module.elytra_dashboard.setting.position": "位置",
+	"qolbundle.module.elytra_dashboard.setting.show_speed": "速度",
+	"qolbundle.module.elytra_dashboard.setting.show_pitch": "俯仰角",
+	"qolbundle.module.elytra_dashboard.setting.show_height": "离地高度",
+	"qolbundle.module.elytra_dashboard.setting.show_rockets": "烟花余量",
+	"qolbundle.module.elytra_dashboard.setting.rocket_warning": "烟花少于多少变黄",
+	"qolbundle.module.elytra_dashboard.setting.show_elytra": "鞘翅剩余飞行时间",
+	"qolbundle.module.elytra_dashboard.setting.show_landing": "预计落点",
+	"qolbundle.module.elytra_dashboard.setting.show_landing.desc": "按你保持当前视角、不再放烟花来估算。",
+	"qolbundle.module.elytra_dashboard.setting.landing_marker": "在世界里标出落点"
 }

@@ -8,6 +8,7 @@ import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
@@ -24,6 +25,7 @@ import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -60,6 +62,7 @@ final class Scenarios {
 		test.scenario("entity_counter", false, Scenarios::entityCounter);
 		test.scenario("chunk_borders", false, Scenarios::chunkBorders);
 		test.scenario("slime_chunks", false, Scenarios::slimeChunks);
+		test.scenario("elytra_dashboard", false, Scenarios::elytraDashboard);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -379,6 +382,41 @@ final class Scenarios {
 			}
 		}
 		throw new IllegalStateException("no slime chunk near the origin");
+	}
+
+	private static void elytraDashboard(SelfTest.Script s) {
+		ElytraDashboardModule module = module("elytra_dashboard");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("item replace entity @a armor.chest with elytra[damage=300]");
+		s.command("give @a firework_rocket 23");
+		// 90 blocks up, looking north and 40 degrees down (steep enough to come down inside the
+		// loaded chunks); then press jump once to open the elytra.
+		s.command("tp @a 0.5 " + (GROUND_Y + 90) + " 0.5 180 40");
+		s.waitTicks(8);
+		s.run("press jump", client -> client.options.jumpKey.setPressed(true));
+		s.waitTicks(3);
+		s.run("release jump", client -> client.options.jumpKey.setPressed(false));
+		s.waitTicks(22);
+		s.clearChat();
+		s.info("elytra readings", client -> "active=" + module.isActive() + " speed=" + module.getSpeed()
+				+ " rockets=" + module.getRockets() + " landing=" + module.getLanding());
+		s.check("dashboard is active while gliding", client -> module.isActive());
+		s.check("speed is plausible (5..80 blocks/s)", client -> module.getSpeed() > 5 && module.getSpeed() < 80);
+		s.check("23 rockets are counted", client -> module.getRockets() == 23);
+		s.check("a landing spot ahead (north, on the ground) is predicted", client -> module.getLanding() != null
+				&& !module.isLandingOutOfRange() && module.getLanding().z < -5
+				&& Math.abs(module.getLanding().y - GROUND_Y) < 1.5);
+		s.screenshot("13_elytra_dashboard");
+
+		// Now fly it out and compare the real touchdown with what was predicted in mid-air.
+		Vec3d[] predicted = new Vec3d[1];
+		s.run("remember the prediction", client -> predicted[0] = module.getLanding());
+		s.command("gamemode creative @a");
+		s.waitUntil("touchdown", client -> client.player != null && (client.player.isOnGround() || !client.player.isGliding()), 20 * 30);
+		s.info("touchdown", client -> "actual=" + client.player.getEntityPos() + " predicted=" + predicted[0]);
+		s.check("real touchdown is within 10 blocks of the prediction", client -> predicted[0] != null
+				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 10.0);
 	}
 
 	private static void useLookedAtBlock(MinecraftClient client) {

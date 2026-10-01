@@ -173,5 +173,31 @@
 	"qolbundle.module.slime_chunks.setting.color": "Color",
 	"qolbundle.module.slime_chunks.setting.opacity": "Highlight opacity",
 	"qolbundle.module.slime_chunks.setting.show_hud": "Say whether you stand in a slime chunk",
-	"qolbundle.module.slime_chunks.setting.position": "Position of that line"
+	"qolbundle.module.slime_chunks.setting.position": "Position of that line",
+
+	"qolbundle.option.dashboardposition.below_crosshair": "Below the crosshair",
+	"qolbundle.option.dashboardposition.top_left": "Top left",
+	"qolbundle.option.dashboardposition.top_right": "Top right",
+	"qolbundle.option.dashboardposition.bottom_left": "Bottom left",
+	"qolbundle.option.dashboardposition.bottom_right": "Bottom right",
+
+	"qolbundle.module.elytra_dashboard.name": "Elytra Dashboard",
+	"qolbundle.module.elytra_dashboard.desc": "While gliding: speed, pitch, height, rockets left and the predicted landing spot.",
+	"qolbundle.module.elytra_dashboard.hud.speed": "%s m/s (vertical %s)",
+	"qolbundle.module.elytra_dashboard.hud.pitch": "Pitch %s°",
+	"qolbundle.module.elytra_dashboard.hud.height": "%s above ground",
+	"qolbundle.module.elytra_dashboard.hud.rockets": "Rockets ×%s",
+	"qolbundle.module.elytra_dashboard.hud.elytra": "Elytra %s left",
+	"qolbundle.module.elytra_dashboard.hud.landing": "Landing at %s, %s, %s (%s blocks, %s s)",
+	"qolbundle.module.elytra_dashboard.hud.landing_far": "Landing: beyond loaded chunks (over %s blocks)",
+	"qolbundle.module.elytra_dashboard.setting.position": "Position",
+	"qolbundle.module.elytra_dashboard.setting.show_speed": "Speed",
+	"qolbundle.module.elytra_dashboard.setting.show_pitch": "Pitch angle",
+	"qolbundle.module.elytra_dashboard.setting.show_height": "Height above ground",
+	"qolbundle.module.elytra_dashboard.setting.show_rockets": "Rockets left",
+	"qolbundle.module.elytra_dashboard.setting.rocket_warning": "Rockets turn yellow at",
+	"qolbundle.module.elytra_dashboard.setting.show_elytra": "Elytra flying time left",
+	"qolbundle.module.elytra_dashboard.setting.show_landing": "Predicted landing spot",
+	"qolbundle.module.elytra_dashboard.setting.show_landing.desc": "Assumes you keep looking in the same direction and use no rockets.",
+	"qolbundle.module.elytra_dashboard.setting.landing_marker": "Mark the landing spot in the world"
 }
