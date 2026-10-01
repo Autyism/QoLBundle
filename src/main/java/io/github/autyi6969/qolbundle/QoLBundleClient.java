@@ -13,6 +13,7 @@ import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChestMemoryModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
+import io.github.autyi6969.qolbundle.modules.DiagnosticsModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
@@ -127,6 +128,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ShulkerManagerModule());
 		ModuleRegistry.register(new RecipeHelperModule());
 		ModuleRegistry.register(new PlacementMasterModule());
+		ModuleRegistry.register(new DiagnosticsModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());

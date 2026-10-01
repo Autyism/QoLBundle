@@ -1,5 +1,7 @@
 package io.github.autyi6969.qolbundle.selftest;
 
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import io.github.autyi6969.qolbundle.modules.PlacementMasterModule;
 import net.minecraft.util.math.Direction;
 import net.minecraft.state.property.Properties;
@@ -24,6 +26,7 @@ import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChestMemoryModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
+import io.github.autyi6969.qolbundle.modules.DiagnosticsModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
@@ -131,6 +134,7 @@ public final class Scenarios {
 		test.scenario("shulker_manager", false, Scenarios::shulkerManager);
 		test.scenario("recipe_helper", false, Scenarios::recipeHelper);
 		test.scenario("placement_master", false, Scenarios::placementMaster);
+		test.scenario("diagnostics", false, Scenarios::diagnostics);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -658,6 +662,27 @@ public final class Scenarios {
 		s.waitTicks(5);
 		s.screenshot("15_chat_restored");
 		s.run("close the chat", client -> client.setScreen(null));
+
+		// The search button must not take the arrow keys away from the chat box: in the chat,
+		// "up" recalls the last thing you typed. (Found while playing, 2026-10-01.)
+		s.run("remember a typed message, open the chat", client -> {
+			client.inGameHud.getChatHud().addToMessageHistory("remembered line");
+			client.setScreen(new ChatScreen("", false));
+		});
+		s.waitTicks(5);
+		s.run("press the up arrow", client -> client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_UP, 0, 0)));
+		s.waitTicks(2);
+		s.check("up arrow recalls the last typed message, the chat box keeps the keyboard", client ->
+				client.currentScreen instanceof ChatScreen screen && screen.getFocused() instanceof TextFieldWidget field
+						&& field.getText().equals("remembered line"));
+		s.run("press down and tab", client -> {
+			client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_DOWN, 0, 0));
+			client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_TAB, 0, 0));
+		});
+		s.waitTicks(2);
+		s.check("down arrow and tab leave the keyboard in the chat box too", client ->
+				client.currentScreen instanceof ChatScreen screen && screen.getFocused() instanceof TextFieldWidget);
+		s.run("close the chat", client -> client.setScreen(null));
 	}
 
 	/** Last scenario: the same screens and HUD lines in Simplified Chinese, to check font and translations. */
@@ -763,8 +788,10 @@ public final class Scenarios {
 		s.waitUntil("the pearl has teleported the player", client -> client.player.getZ() < -5, 200);
 		s.waitTicks(5);
 		s.info("pearl", client -> "landed=" + client.player.getEntityPos() + " predicted=" + predicted[0]);
-		s.check("the player arrived within 1.5 blocks of the predicted spot", client -> predicted[0] != null
-				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 1.5);
+		// The game throws every pearl with a little random spread, which the prediction cannot know:
+		// over a 35 block throw that is up to about two blocks.
+		s.check("the player arrived within 2.5 blocks of the predicted spot", client -> predicted[0] != null
+				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 2.5);
 
 		// A low ceiling ahead: the pearl would hit it, so the light must turn red.
 		resetPlayer(s);
@@ -1200,6 +1227,135 @@ public final class Scenarios {
 		s.check("plain stone is worked out but not previewed", client -> module.getCurrent() != null && !module.isPreviewShown());
 	}
 
+	/**
+	 * Puts the (creative) player in the air and keeps them there. Flying can only be switched on
+	 * while off the ground (the game switches it off again the moment the player stands), hence
+	 * the two teleports.
+	 */
+	private static void hover(SelfTest.Script s, String where) {
+		s.command("tp @a " + where);
+		s.waitTicks(2);
+		s.run("fly", client -> {
+			client.player.getAbilities().flying = true;
+			client.player.sendAbilitiesUpdate();
+		});
+		s.command("tp @a " + where);
+	}
+
+	private static void diagnostics(SelfTest.Script s) {
+		DiagnosticsModule module = module("diagnostics");
+		ChestMemoryModule chests = module("chest_memory");
+		int y = GROUND_Y;
+		isolate(s, module);
+		s.run("chest memory on as well, nothing remembered", client -> {
+			chests.setEnabled(true);
+			chests.forgetAll();
+		});
+		// A small "machine". Line 1: redstone block and 16 dust; the signal dies at the 16th.
+		s.command("setblock -8 " + y + " -4 redstone_block");
+		s.command("fill -7 " + y + " -4 8 " + y + " -4 redstone_wire");
+		// Line 2 (joined through a stone block): lever, dust, repeater on its 3rd setting, lamp.
+		s.command("setblock -7 " + y + " -5 stone");
+		s.command("setblock -8 " + y + " -6 lever[face=floor,powered=true]");
+		s.command("setblock -7 " + y + " -6 redstone_wire");
+		s.command("setblock -6 " + y + " -6 repeater[facing=west,delay=3]");
+		s.command("setblock -5 " + y + " -6 redstone_lamp");
+		// A hopper locked by a redstone block, a torch one layer up, and an output chest.
+		s.command("setblock 0 " + y + " -5 stone");
+		s.command("setblock 0 " + y + " -6 hopper");
+		s.command("setblock 1 " + y + " -6 redstone_block");
+		s.command("setblock 0 " + (y + 1) + " -5 redstone_torch");
+		s.command("setblock 4 " + y + " -5 chest[facing=east]{Items:[{Slot:0b,id:\"minecraft:iron_ingot\",count:5}]}");
+		hover(s, "0.5 " + (y + 8) + " 3.5 180 50");
+		s.waitTicks(20);
+		s.check("there is nothing to show before a scan", client -> module.getParts().isEmpty());
+		s.check("scanning from a block with no redstone near it finds nothing", client -> !module.scan(client.world, new BlockPos(0, y, 6)));
+		s.check("scanning from the first dust takes the whole machine", client -> module.scan(client.world, new BlockPos(-7, y, -4)));
+		s.waitTicks(5);
+		s.info("machine", client -> module.buildLines().stream().map(Text::getString).toList());
+		s.check("all 25 components are found, through the stone blocks too", client -> module.getParts().size() == 25
+				&& module.count(DiagnosticsModule.Kind.WIRE) == 17 && module.count(DiagnosticsModule.Kind.SOURCE) == 2
+				&& module.count(DiagnosticsModule.Kind.INPUT) == 1 && module.count(DiagnosticsModule.Kind.REPEATER) == 1
+				&& module.count(DiagnosticsModule.Kind.LAMP) == 1 && module.count(DiagnosticsModule.Kind.HOPPER) == 1
+				&& module.count(DiagnosticsModule.Kind.TORCH) == 1 && module.count(DiagnosticsModule.Kind.CONTAINER) == 1);
+		s.check("overview: 16 of the 17 dust are powered, the lamp is lit", client -> module.activeCount(DiagnosticsModule.Kind.WIRE) == 16
+				&& module.activeCount(DiagnosticsModule.Kind.LAMP) == 1);
+		s.check("signal flow: the one break point is the 16th dust of the long line", client -> module.getBreakPoints().size() == 1
+				&& module.getBreakPoints().get(0).pos.equals(new BlockPos(8, y, -4)));
+		s.check("bottleneck: the locked hopper is reported", client -> module.getLockedHoppers().size() == 1
+				&& module.getLockedHoppers().get(0).pos.equals(new BlockPos(0, y, -6)));
+		s.screenshot("34_diagnostics");
+
+		// Switch the lever off and on every 10 ticks: everything behind it repeats every 20 ticks.
+		for (int i = 0; i < 4; i++) {
+			s.command("setblock -8 " + y + " -6 lever[face=floor,powered=false]");
+			s.waitTicks(10);
+			s.command("setblock -8 " + y + " -6 lever[face=floor,powered=true]");
+			s.waitTicks(10);
+		}
+		s.info("slowest", client -> module.getSlowest() == null ? "none" : module.getSlowest().kind + " every " + module.getSlowest().getPeriod() + " gt");
+		s.check("bottleneck: the repeating part is measured at about 20 game ticks", client -> module.getSlowest() != null
+				&& module.getSlowest().getPeriod() >= 16 && module.getSlowest().getPeriod() <= 28);
+
+		// Output: drops appearing at the machine, and what gets added to its chest.
+		s.command("summon item -2 " + (y + 1) + " -4 {Item:{id:\"minecraft:wheat\",count:8}}");
+		s.command("summon item 3 " + (y + 1) + " -4 {Item:{id:\"minecraft:wheat\",count:8}}");
+		s.command("summon item 6 " + (y + 1) + " -4 {Item:{id:\"minecraft:iron_ingot\",count:3}}");
+		s.command("summon item 0 " + (y + 1) + " 6 {Item:{id:\"minecraft:diamond\",count:9}}");
+		s.waitTicks(20);
+		s.check("rate: 16 wheat and 3 iron dropped at the machine are counted, the diamonds far away are not", client ->
+				module.getItemTotal("minecraft:wheat") == 16 && module.getItemTotal("minecraft:iron_ingot") == 3
+						&& module.getItemTotal("minecraft:diamond") == 0);
+		s.command("kill @e[type=item]");
+		s.run("land", client -> {
+			client.player.getAbilities().flying = false;
+			client.player.sendAbilitiesUpdate();
+		});
+		s.command("tp @a 6.5 " + y + " -4.5 90 30");
+		s.waitTicks(15);
+		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.waitTicks(15);
+		s.run("close the chest", client -> client.player.closeHandledScreen());
+		// 21 seconds later the chest holds 32 more iron.
+		s.waitTicks(20 * 21);
+		s.command("item replace block 4 " + y + " -5 container.0 with iron_ingot 37");
+		s.run("right-click the chest again", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.waitTicks(15);
+		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.waitTicks(15);
+		s.check("rate: the chest gained 32 iron between the two looks", client -> module.getChestGain("minecraft:iron_ingot") == 32);
+		hover(s, "0.5 " + (y + 8) + " 3.5 180 50");
+		s.waitTicks(20);
+		s.info("panel", client -> module.buildLines().stream().map(Text::getString).toList());
+		s.screenshot("34_diagnostics_rates");
+
+		// Slice: layer 1 is everything on the ground, layer 2 only the torch.
+		s.run("next layer", client -> module.stepSlice(1));
+		s.waitTicks(5);
+		s.check("slice 1 holds everything but the torch", client -> module.getSlice() == 0 && module.getShownParts() == 24
+				&& module.count(DiagnosticsModule.Kind.TORCH) == 0);
+		s.screenshot("34_diagnostics_slice");
+		s.run("next layer", client -> module.stepSlice(1));
+		s.waitTicks(5);
+		s.check("slice 2 holds only the torch", client -> module.getSlice() == 1 && module.getShownParts() == 1
+				&& module.count(DiagnosticsModule.Kind.TORCH) == 1);
+		s.run("next layer", client -> module.stepSlice(1));
+		s.check("after the last layer the whole machine is shown again", client -> module.getSlice() == -1 && module.getShownParts() == 25);
+
+		s.command("setblock -5 " + y + " -6 air");
+		s.waitTicks(10);
+		s.check("removing a component is noticed (scan again)", client -> module.isChanged());
+		s.run("clear", client -> module.clear());
+		s.check("cleared", client -> module.getParts().isEmpty());
+		s.run("land, forget the chest", client -> {
+			client.player.getAbilities().flying = false;
+			client.player.sendAbilitiesUpdate();
+			chests.forgetAll();
+		});
+	}
+
 	private static void shulkerManager(SelfTest.Script s) {
 		ShulkerManagerModule module = module("shulker_manager");
 		isolate(s, module);
@@ -1272,7 +1428,8 @@ public final class Scenarios {
 		s.screenshot("17_afk_clicker");
 		// "damage" takes exactly one entity, so @p rather than @a.
 		s.command("damage @p 1");
-		s.waitTicks(15);
+		// Not a fixed wait: on a busy computer the server may take a moment to get to the command.
+		s.waitUntil("the clicker stops after the damage", client -> !module.isRunning(), 100);
 		s.check("getting hurt stopped the clicker", client -> !module.isRunning() && module.wasStoppedByDamage());
 		s.screenshot("17_afk_clicker_stopped");
 		s.run("restore AFK settings", client -> {
@@ -1494,6 +1651,7 @@ public final class Scenarios {
 		s.command("clear @a");
 		s.command("effect clear @a");
 		s.command("kill @e[type=item]");
+		s.command("fill -8 " + (GROUND_Y - 1) + " -8 8 " + (GROUND_Y - 1) + " 8 grass_block");
 		// Remove anything an earlier scenario built around the origin.
 		s.command("fill -8 -60 -8 8 -50 8 air");
 		// "execute in overworld" also brings the player back if a scenario left them in the nether.
