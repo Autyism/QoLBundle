@@ -21,6 +21,7 @@ import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
+import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
@@ -93,6 +94,7 @@ public final class Scenarios {
 		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
 		test.scenario("villager_trades", false, Scenarios::villagerTrades);
 		test.scenario("projectile_landing", false, Scenarios::projectileLanding);
+		test.scenario("lava_safety", false, Scenarios::lavaSafety);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("freecam", false, Scenarios::freecam);
 		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
@@ -710,6 +712,41 @@ public final class Scenarios {
 		s.check("a splash potion gets a landing spot too", client -> module.isHoldingThrowable() && module.getLanding() != null);
 		s.screenshot("22_projectile_potion");
 		s.command("effect clear @a");
+	}
+
+	private static void lavaSafety(SelfTest.Script s) {
+		LavaSafetyModule module = module("lava_safety");
+		isolate(s, module);
+		int floor = GROUND_Y + 8;
+		// A stone platform in the air with a one-block hole; four blocks under the hole a lava
+		// source sits in a stone basin.
+		s.command("fill -3 " + floor + " -3 3 " + floor + " 3 stone");
+		s.command("fill 0 " + (floor - 4) + " -1 2 " + (floor - 3) + " 1 stone");
+		s.command("setblock 1 " + (floor - 3) + " 0 lava");
+		s.command("gamemode survival @a");
+		// Hurt-proof but not fire-proof: the module must still treat lava as a danger.
+		s.command("effect give @a resistance 60 255 true");
+		s.command("tp @a -1.5 " + (floor + 1) + " 0.5 -90 30");
+		s.waitTicks(20);
+		s.check("no warning while standing over solid floor", client -> module.getLavaBelow() == 0);
+		s.command("setblock 1 " + floor + " 0 air");
+		s.command("tp @a 0.5 " + (floor + 1) + " 0.5 -90 30");
+		s.waitTicks(20);
+		s.clearChat();
+		s.info("lava below", client -> module.getLavaBelow());
+		s.check("lava 4 blocks below the hole next to the player is reported", client -> module.getLavaBelow() == 4);
+		s.screenshot("23_lava_below");
+
+		s.command("tp @a 1.5 " + (floor - 3) + " 0.5 -90 0");
+		s.waitUntil("the player is in the lava", client -> module.isInLava(), 60);
+		s.waitTicks(8);
+		s.info("escape", client -> module.getEscape());
+		s.check("a safe spot within 3 blocks is found", client -> module.getEscape() != null
+				&& module.getEscape().getSquaredDistance(client.player.getBlockPos()) <= 9);
+		s.screenshot("23_lava_escape");
+		s.command("gamemode creative @a");
+		s.command("effect clear @a");
+		s.command("fill -3 " + (floor - 4) + " -3 3 " + floor + " 3 air");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

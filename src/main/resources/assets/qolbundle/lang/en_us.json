@@ -303,5 +303,18 @@
 	"qolbundle.module.projectile_landing.setting.show_arc": "Draw the arc",
 	"qolbundle.module.projectile_landing.setting.show_landing": "Mark the landing spot",
 	"qolbundle.module.projectile_landing.setting.show_radius": "Show potion reach",
-	"qolbundle.module.projectile_landing.setting.show_hud": "Show distance / traffic light text"
+	"qolbundle.module.projectile_landing.setting.show_hud": "Show distance / traffic light text",
+
+	"qolbundle.module.lava_safety.name": "Lava Safety Net",
+	"qolbundle.module.lava_safety.desc": "Warns when open lava is just below your feet, and points to the nearest safe spot once you are in lava.",
+	"qolbundle.module.lava_safety.hud.below": "Lava %s blocks below!",
+	"qolbundle.module.lava_safety.hud.escape": "Safe spot: %s blocks, follow the arrow",
+	"qolbundle.module.lava_safety.hud.escape_up": "Safe spot: %s blocks, %s up, follow the arrow",
+	"qolbundle.module.lava_safety.hud.no_escape": "No safe spot found nearby!",
+	"qolbundle.module.lava_safety.setting.depth": "How far below to look (blocks)",
+	"qolbundle.module.lava_safety.setting.edge_warning": "Orange screen edges",
+	"qolbundle.module.lava_safety.setting.warning_text": "Warning text",
+	"qolbundle.module.lava_safety.setting.warning_sound": "Warning sound",
+	"qolbundle.module.lava_safety.setting.escape_arrow": "Arrow to a safe spot when in lava",
+	"qolbundle.module.lava_safety.setting.search_radius": "How far to look for a safe spot"
 }
