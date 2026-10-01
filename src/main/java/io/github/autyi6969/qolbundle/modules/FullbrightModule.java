@@ -21,11 +21,14 @@ public class FullbrightModule extends Module {
 
 	/** Used by the mixin: true when the light map should be brightened. */
 	public static boolean isActive() {
-		return instance != null && instance.isEnabled();
+		return instance != null && instance.isEnabled() || FreecamModule.wantsFullbright();
 	}
 
 	/** Used by the mixin: 0..1, how strongly to brighten. */
 	public static float getStrength() {
-		return instance == null ? 0F : instance.strength.get() / 100F;
+		if (instance == null || !instance.isEnabled()) {
+			return 1F; // lit for the free camera, not by this module's own switch
+		}
+		return instance.strength.get() / 100F;
 	}
 }

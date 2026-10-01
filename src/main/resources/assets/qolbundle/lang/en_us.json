@@ -14,6 +14,7 @@
 	"key.qolbundle.hotbar_layout_4": "Apply hotbar layout 4",
 	"key.qolbundle.hotbar_layout_5": "Apply hotbar layout 5",
 	"key.qolbundle.chest_memory": "Search remembered chests",
+	"key.qolbundle.freecam_clear_markers": "Clear Freecam markers",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
@@ -84,6 +85,7 @@
 	"qolbundle.module.armor_hud.setting.display": "Show durability as",
 	"qolbundle.module.armor_hud.setting.show_hands": "Include held items",
 	"qolbundle.module.armor_hud.setting.show_bar": "Durability bar under the icon",
+	"qolbundle.module.armor_hud.setting.show_free_slots": "Show free inventory slots",
 
 	"qolbundle.module.break_progress.name": "Break Progress",
 	"qolbundle.module.break_progress.desc": "Shows how far the block you are mining is broken, and the time left.",
@@ -282,7 +284,7 @@
 	"qolbundle.module.afk_clicker.setting.position": "Position of the status line",
 
 	"qolbundle.module.freecam.name": "Freecam",
-	"qolbundle.module.freecam.desc": "Single-player / own server only, careful on public servers (anti-cheat kicks for this). The camera flies free while your body stays put. Toggle key: F6 by default.",
+	"qolbundle.module.freecam.desc": "Single-player / own server only, careful on public servers (anti-cheat kicks for this). The camera flies free while your body stays put; right click marks a spot to walk to afterwards. Toggle key: F6 by default.",
 	"qolbundle.module.freecam.on": "Freecam on",
 	"qolbundle.module.freecam.off": "Freecam off",
 	"qolbundle.module.freecam.off_damage": "Freecam off: you were hurt!",
@@ -291,6 +293,18 @@
 	"qolbundle.module.freecam.setting.speed.desc": "Hold the sprint key to fly three times as fast.",
 	"qolbundle.module.freecam.setting.exit_on_damage": "Leave when hurt",
 	"qolbundle.module.freecam.setting.show_hud": "Show the FREECAM banner",
+	"qolbundle.module.freecam.hud_markers": "Right click: mark this spot - Left click on a marker: remove it",
+	"qolbundle.module.freecam.marker_added": "Marker %s set at %s, %s, %s",
+	"qolbundle.module.freecam.marker_removed": "Marker %s removed",
+	"qolbundle.module.freecam.markers_cleared": "All Freecam markers cleared",
+	"qolbundle.module.freecam.marker_label": "#%s  %s m",
+	"qolbundle.module.freecam.marker_label_up": "#%s  %s m (above)",
+	"qolbundle.module.freecam.marker_label_down": "#%s  %s m (below)",
+	"qolbundle.module.freecam.setting.fullbright": "Light up the dark while flying",
+	"qolbundle.module.freecam.setting.markers": "Markers (right click while flying)",
+	"qolbundle.module.freecam.setting.markers.desc": "Right click marks the block you look at, left click on a marker removes it. Arrows around the crosshair lead you to the markers after you return to your body.",
+	"qolbundle.module.freecam.setting.max_markers": "Most markers at once",
+	"qolbundle.module.freecam.setting.remove_on_arrival": "Remove a marker when you reach it",
 
 	"qolbundle.module.elytra_takeoff.name": "Elytra One-Key Take-off",
 	"qolbundle.module.elytra_takeoff.desc": "Single-player / own server only, careful on public servers. One key jumps, opens the elytra and fires a rocket (without rockets: just jumps and opens). Look up first. Key: V by default.",

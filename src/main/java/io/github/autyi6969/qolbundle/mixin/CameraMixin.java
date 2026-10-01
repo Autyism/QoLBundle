@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Freecam: after the game has placed the camera at the player's eyes, move it to the free
- * camera's position instead. Marking it "third person" makes the game draw the player's own body
- * and hide the first-person hand.
+ * camera's position instead. Marking it "third person" makes the game draw the player's own body;
+ * that waits until the camera is a block away, so you never look at the inside of your own head.
  */
 @Mixin(Camera.class)
 public abstract class CameraMixin {
@@ -34,7 +34,7 @@ public abstract class CameraMixin {
 			Vec3d pos = freecam.getCameraPos(tickProgress);
 			this.setRotation(freecam.getYaw(), freecam.getPitch());
 			this.setPos(pos.x, pos.y, pos.z);
-			this.thirdPerson = true;
+			this.thirdPerson = pos.squaredDistanceTo(focusedEntity.getCameraPosVec(tickProgress)) > 1.0;
 		}
 	}
 }

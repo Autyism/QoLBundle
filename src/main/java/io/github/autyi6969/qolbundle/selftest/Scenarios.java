@@ -83,6 +83,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class Scenarios {
 	private static final String WORLD_NAME = "selftest";
+	/** A second world with ordinary terrain (hills, caves), for what the flat one cannot show. */
+	private static final String NORMAL_WORLD_NAME = "selftest_normal";
 	public static final int GROUND_Y = -60;
 
 	private Scenarios() {
@@ -123,6 +125,7 @@ public final class Scenarios {
 		for (QoLBundleAddon addon : QoLBundleClient.addons()) {
 			addon.registerSelfTests(test);
 		}
+		test.scenario("freecam_underground", false, Scenarios::freecamUnderground);
 		test.scenario("chinese_ui", false, Scenarios::chineseUi);
 	}
 
@@ -322,6 +325,7 @@ public final class Scenarios {
 		s.waitTicks(15);
 		s.clearChat();
 		s.check("4 armor pieces + 1 tool are shown", client -> module.getShownCount() == 5);
+		s.check("35 of 36 inventory slots are counted as free (only the pickaxe takes one)", client -> module.getFreeSlots() == 35);
 		s.screenshot("05_armor_hud");
 	}
 
@@ -1141,6 +1145,113 @@ public final class Scenarios {
 		s.waitTicks(5);
 		s.check("the camera is back at the eyes", client ->
 				client.gameRenderer.getCamera().getCameraPos().distanceTo(client.player.getEyePos()) < 0.5);
+	}
+
+	/** Leaves the current world and enters another one (created on first use). */
+	private static void switchWorld(SelfTest.Script s, String name, boolean flat) {
+		s.run("leave the world", client -> client.send(() -> client.disconnect(Text.literal("self-test world switch"))));
+		s.waitUntil("back at the title screen", client -> client.world == null && client.currentScreen instanceof TitleScreen, 20 * 60);
+		s.run("enter world '" + name + "'", client -> client.send(() -> {
+			if (client.getLevelStorage().levelExists(name)) {
+				client.createIntegratedServerLoader().start(name, () -> client.setScreen(new TitleScreen()));
+			} else {
+				LevelInfo info = new LevelInfo(name, GameMode.CREATIVE, false, Difficulty.PEACEFUL, true,
+						new GameRules(FeatureFlags.DEFAULT_ENABLED_FEATURES), DataConfiguration.SAFE_MODE);
+				client.createIntegratedServerLoader().createAndStart(name, info, new GeneratorOptions(20261001L, false, false),
+						flat ? WorldPresets::createTestOptions : WorldPresets::createDemoOptions, client.currentScreen);
+			}
+		}));
+		s.waitUntil("player is in '" + name + "'", Scenarios::inWorld, 20 * 240);
+		s.waitTicks(60);
+	}
+
+	/**
+	 * Freecam in a world with real terrain: fly the camera into the ground and through it.
+	 * What matters is that the world keeps being drawn (no flicker, nothing missing) while the
+	 * camera is inside rock, which the flat test world cannot show.
+	 */
+	private static void freecamUnderground(SelfTest.Script s) {
+		FreecamModule module = module("freecam");
+		switchWorld(s, NORMAL_WORLD_NAME, false);
+		s.run("only freecam on", client -> {
+			for (Module other : ModuleRegistry.all()) {
+				other.setEnabled(other == module);
+			}
+			module.clearMarkers();
+			client.inGameHud.getChatHud().clear(false);
+		});
+		s.command("gamemode creative @a");
+		s.command("time set noon");
+		s.waitTicks(100);
+		int[] sectionsAbove = new int[1];
+		int[][] counts = new int[1][];
+		s.run("switch freecam on, remember how much is drawn", client -> {
+			sectionsAbove[0] = client.worldRenderer.getCompletedChunkCount();
+			module.setActive(client, true);
+		});
+		s.waitTicks(10);
+		s.screenshot("31_freecam_surface");
+		// 30 blocks straight down from the player: inside the ground.
+		s.run("put the camera 30 blocks under the player, looking ahead", client ->
+				module.placeCamera(client.player.getEyePos().add(0, -30, 0), client.player.getYaw(), 10F));
+		s.waitTicks(40);
+		s.screenshot("31_freecam_underground_1");
+		s.run("fly forward through the rock", client -> {
+			counts[0] = new int[40];
+			client.options.forwardKey.setPressed(true);
+		});
+		for (int i = 0; i < 40; i++) {
+			int index = i;
+			s.run("sample " + i, client -> counts[0][index] = client.worldRenderer.getCompletedChunkCount());
+			s.waitTicks(1);
+		}
+		s.run("stop", client -> client.options.forwardKey.setPressed(false));
+		s.screenshot("31_freecam_underground_2");
+		s.info("chunk sections drawn", client -> {
+			int min = Integer.MAX_VALUE;
+			int max = 0;
+			for (int count : counts[0]) {
+				min = Math.min(min, count);
+				max = Math.max(max, count);
+			}
+			return "before freecam=" + sectionsAbove[0] + ", while flying through rock: min=" + min + " max=" + max;
+		});
+		s.check("the world keeps being drawn while the camera is inside rock (never fewer than 50 chunk sections)", client -> {
+			for (int count : counts[0]) {
+				if (count < 50) {
+					return false;
+				}
+			}
+			return true;
+		});
+		s.check("what is drawn does not jump around from tick to tick (no flicker)", client -> {
+			for (int i = 1; i < counts[0].length; i++) {
+				if (Math.abs(counts[0][i] - counts[0][i - 1]) > Math.max(40, counts[0][i - 1] / 4)) {
+					return false;
+				}
+			}
+			return true;
+		});
+
+		// Mark what the camera looks at, go back to the body, and the marker must lead there.
+		s.run("right click: mark", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitTicks(5);
+		s.check("one marker was set", client -> module.getMarkers().size() == 1);
+		s.run("leave freecam", client -> module.setActive(client, false));
+		s.waitTicks(20);
+		s.check("the marker is still there after returning to the body", client -> module.getMarkers().size() == 1);
+		s.screenshot("31_freecam_marker_from_body");
+		s.run("back into freecam at the same spot, left click on the marker", client -> {
+			module.setActive(client, true);
+			FreecamModule.Marker marker = module.getMarkers().get(0);
+			Vec3d from = Vec3d.ofCenter(marker.pos()).add(0, 0, 3);
+			module.placeCamera(from, 180F, 0F);
+			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.attackKey));
+		});
+		s.waitTicks(5);
+		s.check("left click removed the marker", client -> module.getMarkers().isEmpty());
+		s.run("leave freecam", client -> module.setActive(client, false));
+		switchWorld(s, WORLD_NAME, true);
 	}
 
 	private static void elytraTakeoff(SelfTest.Script s) {

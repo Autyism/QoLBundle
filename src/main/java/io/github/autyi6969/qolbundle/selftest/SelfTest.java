@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.server.integrated.IntegratedServer;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -70,6 +71,20 @@ public final class SelfTest {
 		}
 	}
 
+	/**
+	 * Cuts the real mouse buttons, wheel and keyboard off from the game window for this run.
+	 * Somebody may be using the computer while the test window is open; a stray click would
+	 * otherwise count as a key press in a scenario. Scenarios press keys through the game's own
+	 * key bindings, which does not need these callbacks.
+	 */
+	private static void ignoreRealInput(MinecraftClient client) {
+		long window = client.getWindow().getHandle();
+		GLFW.glfwSetMouseButtonCallback(window, null);
+		GLFW.glfwSetScrollCallback(window, null);
+		GLFW.glfwSetKeyCallback(window, null);
+		GLFW.glfwSetCharModsCallback(window, null);
+	}
+
 	public static boolean isRequested() {
 		return Boolean.getBoolean("qol.selftest");
 	}
@@ -111,6 +126,7 @@ public final class SelfTest {
 		if (startNanos < 0) {
 			startNanos = System.nanoTime();
 			clearOldScreenshots(client);
+			ignoreRealInput(client);
 		}
 		if (finishing) {
 			tickFinish(client);

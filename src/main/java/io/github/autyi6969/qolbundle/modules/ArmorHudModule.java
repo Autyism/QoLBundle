@@ -31,11 +31,19 @@ public class ArmorHudModule extends Module {
 	private final EnumSetting<DurabilityDisplay> display = add(new EnumSetting<>("display", DurabilityDisplay.REMAINING));
 	private final BoolSetting showHands = add(new BoolSetting("show_hands", true));
 	private final BoolSetting showBar = add(new BoolSetting("show_bar", true));
+	private final BoolSetting showFreeSlots = add(new BoolSetting("show_free_slots", true));
+	private static final ItemStack CHEST_ICON = new ItemStack(net.minecraft.item.Items.CHEST);
+	private int freeSlots;
 
 	private int shownLastFrame;
 
 	public ArmorHudModule() {
 		super("armor_hud", ModuleCategory.TECHNICAL, true);
+	}
+
+	/** Empty slots among the 36 of hotbar and backpack, as counted in the last frame (for the self-test). */
+	public int getFreeSlots() {
+		return freeSlots;
 	}
 
 	/** How many items were drawn in the last frame (for the self-test). */
@@ -53,11 +61,29 @@ public class ArmorHudModule extends Module {
 		}
 		shownLastFrame = stacks.size();
 		HudAnchor anchor = position.get();
-		if (stacks.isEmpty() || layout.isBlocked(anchor)) {
+		freeSlots = 0;
+		for (int slot = 0; slot < 36; slot++) {
+			if (client.player.getInventory().getStack(slot).isEmpty()) {
+				freeSlots++;
+			}
+		}
+		boolean slotsRow = showFreeSlots.get();
+		if (stacks.isEmpty() && !slotsRow || layout.isBlocked(anchor)) {
 			return;
 		}
 
-		int top = layout.reserve(anchor, stacks.size() * ROW_HEIGHT);
+		int rows = stacks.size() + (slotsRow ? 1 : 0);
+		int top = layout.reserve(anchor, rows * ROW_HEIGHT);
+		if (slotsRow) {
+			// Last row: a chest and how many of the 36 inventory slots are still empty.
+			String text = Integer.toString(freeSlots);
+			int rowWidth = 16 + 3 + client.textRenderer.getWidth(text);
+			int x = layout.xFor(anchor, rowWidth);
+			int y = top + stacks.size() * ROW_HEIGHT;
+			context.drawItem(CHEST_ICON, anchor.right ? x + rowWidth - 16 : x, y);
+			int color = freeSlots <= 3 ? 0xFFFF5555 : freeSlots <= 9 ? 0xFFFFFF55 : 0xFF55FF55;
+			context.drawTextWithShadow(client.textRenderer, text, anchor.right ? x : x + 19, y + 4, color);
+		}
 		for (int i = 0; i < stacks.size(); i++) {
 			ItemStack stack = stacks.get(i);
 			int max = stack.getMaxDamage();

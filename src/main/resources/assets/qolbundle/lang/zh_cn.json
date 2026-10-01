@@ -14,6 +14,7 @@
 	"key.qolbundle.hotbar_layout_4": "应用快捷栏布局 4",
 	"key.qolbundle.hotbar_layout_5": "应用快捷栏布局 5",
 	"key.qolbundle.chest_memory": "搜索箱子记忆",
+	"key.qolbundle.freecam_clear_markers": "清除 Freecam 标记",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -84,6 +85,7 @@
 	"qolbundle.module.armor_hud.setting.display": "耐久显示方式",
 	"qolbundle.module.armor_hud.setting.show_hands": "包括手持物品",
 	"qolbundle.module.armor_hud.setting.show_bar": "图标下方显示耐久条",
+	"qolbundle.module.armor_hud.setting.show_free_slots": "显示背包还剩几格",
 
 	"qolbundle.module.break_progress.name": "破坏进度",
 	"qolbundle.module.break_progress.desc": "挖方块时显示已挖百分比和还要多久。",
@@ -282,7 +284,7 @@
 	"qolbundle.module.afk_clicker.setting.position": "状态行的位置",
 
 	"qolbundle.module.freecam.name": "Freecam 自由视角",
-	"qolbundle.module.freecam.desc": "仅限单人 / 自建服，公服慎用（会被反作弊踢）。镜头离开身体自由飞，身体留在原地。开关键默认 F6。",
+	"qolbundle.module.freecam.desc": "仅限单人 / 自建服，公服慎用（会被反作弊踢）。镜头离开身体自由飞，身体留在原地；右键可以打标记，回到身体后跟着箭头走过去。开关键默认 F6。",
 	"qolbundle.module.freecam.on": "Freecam 已开启",
 	"qolbundle.module.freecam.off": "Freecam 已关闭",
 	"qolbundle.module.freecam.off_damage": "Freecam 已关闭：你被打了！",
@@ -291,6 +293,18 @@
 	"qolbundle.module.freecam.setting.speed.desc": "按住疾跑键速度变 3 倍。",
 	"qolbundle.module.freecam.setting.exit_on_damage": "受击自动退出",
 	"qolbundle.module.freecam.setting.show_hud": "显示 FREECAM 提示条",
+	"qolbundle.module.freecam.hud_markers": "右键：给这里打标记 · 左键点标记：取消",
+	"qolbundle.module.freecam.marker_added": "已打标记 %s：%s, %s, %s",
+	"qolbundle.module.freecam.marker_removed": "已取消标记 %s",
+	"qolbundle.module.freecam.markers_cleared": "已清除所有 Freecam 标记",
+	"qolbundle.module.freecam.marker_label": "标记%s  %s格",
+	"qolbundle.module.freecam.marker_label_up": "标记%s  %s格（上方）",
+	"qolbundle.module.freecam.marker_label_down": "标记%s  %s格（下方）",
+	"qolbundle.module.freecam.setting.fullbright": "飞的时候自动照亮黑暗处",
+	"qolbundle.module.freecam.setting.markers": "标记（飞的时候右键）",
+	"qolbundle.module.freecam.setting.markers.desc": "右键标记你看着的方块，左键点标记可以取消。回到身体后，准星周围的箭头会带你去标记的地方。",
+	"qolbundle.module.freecam.setting.max_markers": "最多同时几个标记",
+	"qolbundle.module.freecam.setting.remove_on_arrival": "走到标记处后自动消失",
 
 	"qolbundle.module.elytra_takeoff.name": "鞘翅一键起飞",
 	"qolbundle.module.elytra_takeoff.desc": "仅限单人 / 自建服，公服慎用。一个键完成跳、开鞘翅、放烟花（没有烟花时只跳和开鞘翅）。先抬头再按。默认按键 V。",

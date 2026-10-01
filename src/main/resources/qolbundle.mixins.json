@@ -13,7 +13,8 @@
 		"KeyboardInputMixin",
 		"LavaFogModifierMixin",
 		"LightmapTextureManagerMixin",
-		"WaterFogModifierMixin"
+		"WaterFogModifierMixin",
+		"WorldRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
