@@ -91,6 +91,11 @@ public final class SelfTest {
 	 * @param fatal if this scenario fails, nothing after it can work (e.g. the world did not load), so the run ends
 	 */
 	public void scenario(String name, boolean fatal, Consumer<Script> body) {
+		// -Dqol.selftest.only=a,b runs just those scenarios (plus the ones everything depends on).
+		String only = System.getProperty("qol.selftest.only", "");
+		if (!only.isBlank() && !fatal && !List.of(only.split(",")).contains(name)) {
+			return;
+		}
 		body.accept(new Script(name, fatal));
 	}
 

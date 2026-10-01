@@ -24,6 +24,7 @@ import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
+import io.github.autyi6969.qolbundle.modules.VillagerTradesModule;
 import io.github.autyi6969.qolbundle.selftest.SelfTest;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -99,6 +100,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new SlimeChunksModule());
 		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new RespawnPointModule());
+		ModuleRegistry.register(new VillagerTradesModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
 		ModuleRegistry.register(new ElytraDashboardModule());
 		ModuleRegistry.register(new SoundCompassModule());

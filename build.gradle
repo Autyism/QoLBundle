@@ -54,6 +54,10 @@ loom {
 			// `.\gradlew runClient -Pselftest` switches on the automated self-test.
 			if (project.hasProperty("selftest")) {
 				vmArg "-Dqol.selftest=true"
+				// `-Pselftest=name1,name2` runs only those scenarios.
+				if (project.property("selftest")) {
+					vmArg "-Dqol.selftest.only=${project.property('selftest')}"
+				}
 			}
 		}
 	}

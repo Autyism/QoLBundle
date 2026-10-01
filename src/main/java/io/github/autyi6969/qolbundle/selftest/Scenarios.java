@@ -25,18 +25,24 @@ import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
+import io.github.autyi6969.qolbundle.modules.VillagerTradesModule;
 import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.tutorial.TutorialStep;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -84,6 +90,7 @@ public final class Scenarios {
 		test.scenario("elytra_dashboard", false, Scenarios::elytraDashboard);
 		test.scenario("sound_compass", false, Scenarios::soundCompass);
 		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
+		test.scenario("villager_trades", false, Scenarios::villagerTrades);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("freecam", false, Scenarios::freecam);
 		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
@@ -626,6 +633,39 @@ public final class Scenarios {
 	private static String newestChatLine(MinecraftClient client) {
 		List<String> lines = chatLines(client);
 		return lines.isEmpty() ? "" : lines.get(0);
+	}
+
+	private static void villagerTrades(SelfTest.Script s) {
+		VillagerTradesModule module = module("villager_trades");
+		isolate(s, module);
+		s.command("kill @e[type=villager]");
+		// A level 2 farmer three blocks in front of the player, with two fixed trades.
+		s.command("summon villager 0.5 " + GROUND_Y + " -2.5 {NoAI:1b,Rotation:[0f,0f],"
+				+ "VillagerData:{profession:\"minecraft:farmer\",level:2,type:\"minecraft:plains\"},"
+				+ "Offers:{Recipes:["
+				+ "{buy:{id:\"minecraft:emerald\",count:3},sell:{id:\"minecraft:diamond\",count:1},maxUses:5},"
+				+ "{buy:{id:\"minecraft:wheat\",count:20},sell:{id:\"minecraft:emerald\",count:1},maxUses:16}]}}");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 5");
+		s.waitTicks(20);
+		s.check("the crosshair is on the villager", client -> lookedAtVillager(client) != null);
+		s.check("nothing is known about it before trading", client -> lookedAtVillager(client) != null
+				&& module.getKnownTrades(lookedAtVillager(client).getUuid()) == null);
+		s.screenshot("21_villager_unknown");
+		// A real press of the use key: that is the path on which the game announces "entity used".
+		s.run("right-click the villager", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitUntil("the trading screen opens", client -> client.currentScreen instanceof MerchantScreen, 60);
+		s.waitTicks(10);
+		s.run("close the trading screen", client -> client.player.closeHandledScreen());
+		s.waitTicks(10);
+		s.check("both trades are remembered", client -> lookedAtVillager(client) != null
+				&& module.getKnownTrades(lookedAtVillager(client).getUuid()) != null
+				&& module.getKnownTrades(lookedAtVillager(client).getUuid()).size() == 2);
+		s.screenshot("21_villager_trades");
+		s.command("kill @e[type=villager]");
+	}
+
+	private static VillagerEntity lookedAtVillager(MinecraftClient client) {
+		return client.crosshairTarget instanceof EntityHitResult hit && hit.getEntity() instanceof VillagerEntity villager ? villager : null;
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

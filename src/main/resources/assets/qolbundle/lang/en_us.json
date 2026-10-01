@@ -282,5 +282,14 @@
 	"qolbundle.module.elytra_takeoff.no_elytra": "No usable elytra on your chest",
 	"qolbundle.module.elytra_takeoff.no_rockets": "No rockets: elytra opened without a boost",
 	"qolbundle.module.elytra_takeoff.already_flying": "Already flying",
-	"qolbundle.module.elytra_takeoff.cannot_now": "Cannot take off right now"
+	"qolbundle.module.elytra_takeoff.cannot_now": "Cannot take off right now",
+
+	"qolbundle.module.villager_trades.name": "Villager Trade Peek",
+	"qolbundle.module.villager_trades.desc": "Look at a villager to see all its trades and prices without clicking. Works for villagers whose trading screen you have opened once.",
+	"qolbundle.module.villager_trades.hud.title": "%s (%s)",
+	"qolbundle.module.villager_trades.hud.unknown": "No data yet: open its trades once",
+	"qolbundle.module.villager_trades.hud.stock": " (%s left)",
+	"qolbundle.module.villager_trades.hud.sold_out": " (sold out)",
+	"qolbundle.module.villager_trades.setting.max_trades": "Most trades to list",
+	"qolbundle.module.villager_trades.setting.show_stock": "Show how many times a trade is left"
 }

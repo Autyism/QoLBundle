@@ -282,5 +282,14 @@
 	"qolbundle.module.elytra_takeoff.no_elytra": "胸甲栏没有能用的鞘翅",
 	"qolbundle.module.elytra_takeoff.no_rockets": "没有烟花：只张开了鞘翅",
 	"qolbundle.module.elytra_takeoff.already_flying": "已经在飞了",
-	"qolbundle.module.elytra_takeoff.cannot_now": "现在没法起飞"
+	"qolbundle.module.elytra_takeoff.cannot_now": "现在没法起飞",
+
+	"qolbundle.module.villager_trades.name": "村民交易透视",
+	"qolbundle.module.villager_trades.desc": "看着村民就显示它的全部交易和价格，不用右键。只对你打开过一次交易界面的村民有数据。",
+	"qolbundle.module.villager_trades.hud.title": "%s（%s）",
+	"qolbundle.module.villager_trades.hud.unknown": "还没有数据：先打开一次它的交易界面",
+	"qolbundle.module.villager_trades.hud.stock": "（还能换 %s 次）",
+	"qolbundle.module.villager_trades.hud.sold_out": "（已售罄）",
+	"qolbundle.module.villager_trades.setting.max_trades": "最多列出几条交易",
+	"qolbundle.module.villager_trades.setting.show_stock": "显示还能换几次"
 }
