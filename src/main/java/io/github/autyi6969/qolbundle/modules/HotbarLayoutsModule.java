@@ -2,6 +2,7 @@ package io.github.autyi6969.qolbundle.modules;
 
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.gui.HotbarLayoutScreen;
+import io.github.autyi6969.qolbundle.gui.MouseOnlyButton;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
 import io.github.autyi6969.qolbundle.module.setting.BoolSetting;
@@ -67,9 +68,8 @@ public class HotbarLayoutsModule extends Module {
 		}
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof InventoryScreen && isEnabled() && inventoryButton.get()) {
-				Screens.getButtons(screen).add(ButtonWidget.builder(Text.translatable(getTranslationKey() + ".button"),
-						button -> client.setScreen(new HotbarLayoutScreen(null, this)))
-						.dimensions(width - 104, height - 24, 100, 20).build());
+				Screens.getButtons(screen).add(new MouseOnlyButton(width - 104, height - 24, 100, 20,
+						Text.translatable(getTranslationKey() + ".button"), button -> client.setScreen(new HotbarLayoutScreen(null, this))));
 			}
 		});
 	}

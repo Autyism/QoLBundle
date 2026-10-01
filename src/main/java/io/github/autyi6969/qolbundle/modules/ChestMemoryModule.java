@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.data.WorldData;
 import io.github.autyi6969.qolbundle.gui.ChestMemoryScreen;
+import io.github.autyi6969.qolbundle.gui.MouseOnlyButton;
 import io.github.autyi6969.qolbundle.hud.HudLayout;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
@@ -25,7 +26,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.DrawStyle;
@@ -149,9 +149,8 @@ public class ChestMemoryModule extends Module {
 		});
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof InventoryScreen && isEnabled() && inventoryButton.get()) {
-				Screens.getButtons(screen).add(ButtonWidget.builder(Text.translatable(getTranslationKey() + ".button"),
-						button -> client.setScreen(new ChestMemoryScreen(null, this)))
-						.dimensions(width - 104, height - 48, 100, 20).build());
+				Screens.getButtons(screen).add(new MouseOnlyButton(width - 104, height - 48, 100, 20,
+						Text.translatable(getTranslationKey() + ".button"), button -> client.setScreen(new ChestMemoryScreen(null, this))));
 			}
 		});
 	}

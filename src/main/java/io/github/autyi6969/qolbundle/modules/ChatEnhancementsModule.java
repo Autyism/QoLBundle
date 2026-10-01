@@ -3,6 +3,7 @@ package io.github.autyi6969.qolbundle.modules;
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.data.WorldData;
 import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
+import io.github.autyi6969.qolbundle.gui.MouseOnlyButton;
 import io.github.autyi6969.qolbundle.mixin.ChatHudAccessor;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
@@ -16,7 +17,6 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
 import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.toast.SystemToast;
@@ -89,9 +89,10 @@ public class ChatEnhancementsModule extends Module {
 				InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), QoLBundleClient.KEY_CATEGORY));
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof ChatScreen && isEnabled() && searchButton.get()) {
-				Screens.getButtons(screen).add(ButtonWidget.builder(Text.translatable(getTranslationKey() + ".search.button"),
-						button -> client.setScreen(new ChatSearchScreen(null, this)))
-						.dimensions(width - 64, height - 34, 60, 16).build());
+				// Mouse only: the arrow keys and Tab belong to the chat box (message history, completion).
+				Screens.getButtons(screen).add(new MouseOnlyButton(width - 64, height - 34, 60, 16,
+						Text.translatable(getTranslationKey() + ".search.button"),
+						button -> client.setScreen(new ChatSearchScreen(null, this))));
 			}
 		});
 	}
