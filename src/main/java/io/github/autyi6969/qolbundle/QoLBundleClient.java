@@ -18,6 +18,7 @@ import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
+import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
@@ -115,6 +116,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());
 		ModuleRegistry.register(new ElytraTakeoffModule());
+		ModuleRegistry.register(new FluidVisionModule());
 		// Modules from add-on mods (the X-ray add-on lives in its own jar).
 		for (QoLBundleAddon addon : addons()) {
 			addon.registerModules();

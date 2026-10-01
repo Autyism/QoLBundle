@@ -327,5 +327,11 @@
 	"qolbundle.module.effect_range.hud.preview": "If placed here: %s",
 	"qolbundle.module.effect_range.setting.color": "Color",
 	"qolbundle.module.effect_range.setting.when_looking": "Show when looking at one",
-	"qolbundle.module.effect_range.setting.when_holding": "Preview when holding one"
+	"qolbundle.module.effect_range.setting.when_holding": "Preview when holding one",
+
+	"qolbundle.module.fluid_vision.name": "Water & Lava Vision",
+	"qolbundle.module.fluid_vision.desc": "Single-player / own server only, careful on public servers. No fog under water; inside lava you can make out the blocks around you.",
+	"qolbundle.module.fluid_vision.setting.water": "Clear view under water",
+	"qolbundle.module.fluid_vision.setting.lava": "See blocks while in lava",
+	"qolbundle.module.fluid_vision.setting.lava_distance": "How far you see in lava (blocks)"
 }

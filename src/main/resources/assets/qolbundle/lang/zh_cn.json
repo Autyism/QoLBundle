@@ -327,5 +327,11 @@
 	"qolbundle.module.effect_range.hud.preview": "放在这里的话：%s",
 	"qolbundle.module.effect_range.setting.color": "颜色",
 	"qolbundle.module.effect_range.setting.when_looking": "看着它时显示",
-	"qolbundle.module.effect_range.setting.when_holding": "手持时预览"
+	"qolbundle.module.effect_range.setting.when_holding": "手持时预览",
+
+	"qolbundle.module.fluid_vision.name": "水下 / 岩浆可视增强",
+	"qolbundle.module.fluid_vision.desc": "仅限单人 / 自建服，公服慎用。水下没有雾；在岩浆里能看出周围方块的轮廓。",
+	"qolbundle.module.fluid_vision.setting.water": "水下去雾",
+	"qolbundle.module.fluid_vision.setting.lava": "岩浆里能看见方块",
+	"qolbundle.module.fluid_vision.setting.lava_distance": "岩浆里能看多远（格）"
 }

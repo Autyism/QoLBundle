@@ -19,6 +19,7 @@ import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
+import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
@@ -98,6 +99,7 @@ public final class Scenarios {
 		test.scenario("lava_safety", false, Scenarios::lavaSafety);
 		test.scenario("effect_range", false, Scenarios::effectRange);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
+		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
 		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
 		for (QoLBundleAddon addon : QoLBundleClient.addons()) {
@@ -782,6 +784,45 @@ public final class Scenarios {
 		s.screenshot("24_conduit_preview");
 		s.command("fill -2 " + (GROUND_Y - 1) + " -8 2 " + (GROUND_Y + 3) + " -4 air");
 		s.command("fill -2 " + (GROUND_Y - 1) + " -8 2 " + (GROUND_Y - 1) + " -4 grass_block");
+	}
+
+	private static void fluidVision(SelfTest.Script s) {
+		FluidVisionModule module = module("fluid_vision");
+		isolate(s, module);
+		// A long glass tank full of water with a gold block at the far end, 30 blocks away.
+		s.command("fill -2 " + GROUND_Y + " -36 2 " + (GROUND_Y + 4) + " -3 glass hollow");
+		s.command("fill -1 " + (GROUND_Y + 1) + " -35 1 " + (GROUND_Y + 3) + " -4 water");
+		s.command("fill -1 " + (GROUND_Y + 1) + " -35 1 " + (GROUND_Y + 3) + " -35 gold_block");
+		s.command("tp @a 0.5 " + (GROUND_Y + 1) + " -4.5 180 0");
+		s.run("vision off", client -> module.setEnabled(false));
+		s.waitTicks(30);
+		s.screenshot("25_water_off");
+		int[] frames = new int[2];
+		s.run("vision on", client -> {
+			module.setEnabled(true);
+			frames[0] = module.getWaterFrames();
+		});
+		s.waitTicks(20);
+		s.check("the water fog is being adjusted", client -> module.getWaterFrames() > frames[0]);
+		s.screenshot("25_water_on");
+		s.command("fill -2 " + GROUND_Y + " -36 2 " + (GROUND_Y + 4) + " -3 air");
+
+		// A short lava tank with a gold block 6 blocks ahead.
+		s.command("fill -2 " + GROUND_Y + " -12 2 " + (GROUND_Y + 4) + " -3 glass hollow");
+		s.command("fill -1 " + (GROUND_Y + 1) + " -11 1 " + (GROUND_Y + 3) + " -4 lava");
+		s.command("fill -1 " + (GROUND_Y + 1) + " -11 1 " + (GROUND_Y + 3) + " -11 gold_block");
+		s.command("tp @a 0.5 " + (GROUND_Y + 1) + " -4.5 180 0");
+		s.run("vision off", client -> module.setEnabled(false));
+		s.waitTicks(30);
+		s.screenshot("25_lava_off");
+		s.run("vision on", client -> {
+			module.setEnabled(true);
+			frames[1] = module.getLavaFrames();
+		});
+		s.waitTicks(20);
+		s.check("the lava fog is being adjusted", client -> module.getLavaFrames() > frames[1]);
+		s.screenshot("25_lava_on");
+		s.command("fill -2 " + GROUND_Y + " -12 2 " + (GROUND_Y + 4) + " -3 air");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

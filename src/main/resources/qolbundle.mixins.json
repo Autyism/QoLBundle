@@ -10,7 +10,9 @@
 		"EntityMixin",
 		"GameRendererMixin",
 		"KeyboardInputMixin",
-		"LightmapTextureManagerMixin"
+		"LavaFogModifierMixin",
+		"LightmapTextureManagerMixin",
+		"WaterFogModifierMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
