@@ -1,3 +1,21 @@
 {
-	"qolbundle.name": "QoL Bundle"
+	"qolbundle.name": "QoL Bundle",
+
+	"key.category.qolbundle.main": "QoL Bundle",
+	"key.qolbundle.open_settings": "Open QoL Bundle settings",
+
+	"qolbundle.gui.title": "QoL Bundle",
+	"qolbundle.gui.settings": "Settings...",
+	"qolbundle.gui.enabled": "Enabled",
+	"qolbundle.gui.reset": "Reset to defaults",
+	"qolbundle.gui.no_modules": "No modules yet.",
+
+	"qolbundle.category.technical": "Technical",
+	"qolbundle.category.info": "Information",
+	"qolbundle.category.tools": "Tools",
+
+	"qolbundle.option.hudanchor.top_left": "Top left",
+	"qolbundle.option.hudanchor.top_right": "Top right",
+	"qolbundle.option.hudanchor.bottom_left": "Bottom left",
+	"qolbundle.option.hudanchor.bottom_right": "Bottom right"
 }

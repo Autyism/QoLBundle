@@ -1,0 +1,16 @@
+package io.github.autyi6969.qolbundle.module;
+
+import net.minecraft.text.Text;
+
+import java.util.Locale;
+
+/** Groups modules in the settings screen. Mirrors the categories in docs/HANDOVER.md section 6.2. */
+public enum ModuleCategory {
+	TECHNICAL,
+	INFO,
+	TOOLS;
+
+	public Text getDisplayName() {
+		return Text.translatable("qolbundle.category." + name().toLowerCase(Locale.ROOT));
+	}
+}

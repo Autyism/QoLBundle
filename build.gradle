@@ -11,7 +11,6 @@ base {
 }
 
 repositories {
-	maven { url "https://maven.shedaniel.me/" }
 	maven { url "https://maven.terraformersmc.com/releases/" }
 }
 
@@ -22,7 +21,22 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	
+
+	// Mod Menu: optional at runtime for players. Compiled against for the "configure" button,
+	// and loaded in the dev client so that button can be tested.
+	modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
+}
+
+loom {
+	runs {
+		client {
+			// `.\gradlew runClient -Pselftest` switches on the automated self-test.
+			if (project.hasProperty("selftest")) {
+				vmArg "-Dqol.selftest=true"
+			}
+		}
+	}
 }
 
 processResources {

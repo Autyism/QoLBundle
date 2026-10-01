@@ -1,3 +1,21 @@
 {
-	"qolbundle.name": "QoL 全家桶"
+	"qolbundle.name": "QoL 全家桶",
+
+	"key.category.qolbundle.main": "QoL 全家桶",
+	"key.qolbundle.open_settings": "打开 QoL 全家桶设置",
+
+	"qolbundle.gui.title": "QoL 全家桶",
+	"qolbundle.gui.settings": "设置...",
+	"qolbundle.gui.enabled": "启用",
+	"qolbundle.gui.reset": "恢复默认",
+	"qolbundle.gui.no_modules": "还没有任何模块。",
+
+	"qolbundle.category.technical": "生电",
+	"qolbundle.category.info": "信息显示",
+	"qolbundle.category.tools": "工具",
+
+	"qolbundle.option.hudanchor.top_left": "左上",
+	"qolbundle.option.hudanchor.top_right": "右上",
+	"qolbundle.option.hudanchor.bottom_left": "左下",
+	"qolbundle.option.hudanchor.bottom_right": "右下"
 }
