@@ -47,6 +47,7 @@ import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.WorldPresets;
 import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.rule.GameRules;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -265,7 +266,12 @@ public final class Scenarios {
 		s.info("break progress", client -> module.getLastProgress());
 		s.check("break progress is above 5 %", client -> module.getLastProgress() > 0.05F);
 		s.screenshot("06_break_progress");
-		s.run("release the attack key", client -> client.options.attackKey.setPressed(false));
+		s.run("release the attack key and the mouse", client -> {
+			client.options.attackKey.setPressed(false);
+			// Give the mouse back, and tell the game the truth about window focus again.
+			client.mouse.unlockCursor();
+			client.onWindowFocusChanged(GLFW.glfwGetWindowAttrib(client.getWindow().getHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
+		});
 		s.command("gamemode creative @a");
 	}
 
@@ -627,7 +633,7 @@ public final class Scenarios {
 				+ " stone left=" + client.player.getMainHandStack().getCount());
 		s.check("the clicker is running and has clicked at least 5 times", client -> module.isRunning() && module.getClicks() >= 5);
 		s.check("the clicks really placed stone (fewer than 16 left)", client -> client.player.getMainHandStack().getCount() < 16);
-		s.run("try to turn the view with the mouse", client -> client.player.changeLookDirection(400, 200));
+		s.run("try to turn the view with the mouse", client -> SelfTest.moveMouse(client, 400, 200));
 		s.waitTicks(3);
 		s.check("the view stayed locked", client -> Math.abs(client.player.getPitch() - 50F) < 0.5F
 				&& Math.abs(MathHelper.wrapDegrees(client.player.getYaw() - 180F)) < 0.5F);
@@ -660,7 +666,7 @@ public final class Scenarios {
 			client.options.backKey.setPressed(false);
 			client.options.jumpKey.setPressed(false);
 		});
-		s.run("move the mouse down a little", client -> client.player.changeLookDirection(0, 150));
+		s.run("move the mouse down a little", client -> SelfTest.moveMouse(client, 0, 150));
 		s.waitTicks(5);
 		s.info("freecam", client -> "camera=" + module.getCameraPos(1F) + " cameraPitch=" + module.getPitch()
 				+ " player=" + client.player.getEntityPos() + " playerPitch=" + client.player.getPitch());

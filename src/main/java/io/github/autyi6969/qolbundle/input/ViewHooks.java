@@ -24,6 +24,11 @@ public final class ViewHooks {
 		INTERCEPTORS.add(interceptor);
 	}
 
+	/** Registers an interceptor that is asked before all others (used by the self-test). */
+	public static void registerFirst(LookInterceptor interceptor) {
+		INTERCEPTORS.add(0, interceptor);
+	}
+
 	public static boolean interceptLook(double deltaX, double deltaY) {
 		for (LookInterceptor interceptor : INTERCEPTORS) {
 			if (interceptor.interceptLook(deltaX, deltaY)) {

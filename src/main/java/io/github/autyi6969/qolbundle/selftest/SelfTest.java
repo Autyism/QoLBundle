@@ -2,6 +2,7 @@ package io.github.autyi6969.qolbundle.selftest;
 
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.config.ConfigManager;
+import io.github.autyi6969.qolbundle.input.ViewHooks;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.ScreenshotRecorder;
@@ -47,7 +48,26 @@ public final class SelfTest {
 	private int finishTicks;
 	private boolean done;
 
+	/** True only while the test itself moves the "mouse"; see {@link #moveMouse}. */
+	private static boolean testIsMovingMouse;
+
 	private SelfTest() {
+	}
+
+	/**
+	 * Turns the view the way a mouse movement would. During a self-test the real mouse is ignored
+	 * (somebody may be using the computer while the test window is open), so scenarios must use this.
+	 */
+	public static void moveMouse(MinecraftClient client, double deltaX, double deltaY) {
+		if (client.player == null) {
+			return;
+		}
+		testIsMovingMouse = true;
+		try {
+			client.player.changeLookDirection(deltaX, deltaY);
+		} finally {
+			testIsMovingMouse = false;
+		}
 	}
 
 	public static boolean isRequested() {
@@ -58,6 +78,8 @@ public final class SelfTest {
 		SelfTest test = new SelfTest();
 		// The test flips module switches and settings; never let that reach the real config file.
 		ConfigManager.setSavingSuppressed(true);
+		// Swallow real mouse movement for the whole run, so it cannot disturb what the scenarios measure.
+		ViewHooks.registerFirst((deltaX, deltaY) -> !testIsMovingMouse);
 		Scenarios.build(test);
 		ClientTickEvents.END_CLIENT_TICK.register(test::tick);
 		LOGGER.info(PREFIX + "enabled, {} step(s) queued", test.steps.size());
