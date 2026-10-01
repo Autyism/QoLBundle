@@ -1,0 +1,22 @@
+{
+	"qolbundle.module.xray.name": "X-ray (add-on)",
+	"qolbundle.module.xray.desc": "Single-player / own server only; public servers ban for this. Outlines ores near you through walls.",
+	"qolbundle.module.xray.hud": "X-ray: %s blocks outlined",
+	"qolbundle.module.xray.setting.radius": "Range (blocks)",
+	"qolbundle.module.xray.setting.max_boxes": "Most outlines at once",
+	"qolbundle.module.xray.setting.max_boxes.desc": "When there are more, the nearest ones are shown.",
+	"qolbundle.module.xray.setting.diamond": "Diamond ore",
+	"qolbundle.module.xray.setting.ancient_debris": "Ancient debris",
+	"qolbundle.module.xray.setting.emerald": "Emerald ore",
+	"qolbundle.module.xray.setting.gold": "Gold ore",
+	"qolbundle.module.xray.setting.iron": "Iron ore",
+	"qolbundle.module.xray.setting.redstone": "Redstone ore",
+	"qolbundle.module.xray.setting.lapis": "Lapis ore",
+	"qolbundle.module.xray.setting.coal": "Coal ore",
+	"qolbundle.module.xray.setting.copper": "Copper ore",
+	"qolbundle.module.xray.setting.quartz": "Nether quartz ore",
+	"qolbundle.module.xray.setting.extra_blocks": "Extra blocks",
+	"qolbundle.module.xray.setting.extra_blocks.desc": "Block ids separated by commas, e.g. minecraft:spawner,minecraft:chest",
+	"qolbundle.module.xray.setting.show_count": "Show how many are outlined",
+	"qolbundle.module.xray.setting.position": "Position of that line"
+}

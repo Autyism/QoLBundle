@@ -28,9 +28,29 @@ dependencies {
 	modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
+// The X-ray add-on is a second, separate mod built from src/xray: its own modid, its own jar
+// (build/libs/qolbundle-xray-addon-<version>.jar). It is never part of the main jar.
+sourceSets {
+	xray {
+		compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+		runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+	}
+}
+
 loom {
+	// Tells the dev client which folders belong to which mod.
+	mods {
+		"qolbundle" {
+			sourceSet sourceSets.main
+		}
+		"qolbundle_xray" {
+			sourceSet sourceSets.xray
+		}
+	}
 	runs {
 		client {
+			// The dev client includes the X-ray add-on; `-PnoAddon` runs the main mod alone.
+			source project.hasProperty("noAddon") ? sourceSets.main : sourceSets.xray
 			// `.\gradlew runClient -Pselftest` switches on the automated self-test.
 			if (project.hasProperty("selftest")) {
 				vmArg "-Dqol.selftest=true"
@@ -40,6 +60,14 @@ loom {
 }
 
 processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+processXrayResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
@@ -67,6 +95,29 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${inputs.properties.archivesName}"}
 	}
+}
+
+// The add-on's jar: first packed with the readable (dev) names, then translated to the names the
+// real game uses, the same two steps Loom does for the main jar.
+def xrayJar = tasks.register("xrayJar", Jar) {
+	from sourceSets.xray.output
+	from("LICENSE") {
+		rename { "${it}_qolbundle_xray" }
+	}
+	archiveBaseName = "${project.archives_base_name}-xray-addon"
+	archiveClassifier = "dev"
+	destinationDirectory = layout.buildDirectory.dir("devlibs")
+}
+
+def remapXrayJar = tasks.register("remapXrayJar", net.fabricmc.loom.task.RemapJarTask) {
+	inputFile = xrayJar.flatMap { it.archiveFile }
+	archiveBaseName = "${project.archives_base_name}-xray-addon"
+	addNestedDependencies = false
+	classpath.from(sourceSets.xray.compileClasspath)
+}
+
+tasks.named("assemble") {
+	dependsOn remapXrayJar
 }
 
 // configure the maven publication

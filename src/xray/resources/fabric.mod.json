@@ -1,0 +1,22 @@
+{
+	"schemaVersion": 1,
+	"id": "qolbundle_xray",
+	"version": "${version}",
+	"name": "QoL Bundle: X-ray add-on",
+	"description": "Add-on for QoL Bundle: outlines ores through walls. Single-player and your own server only; do not use it on public servers.",
+	"authors": [
+		"Autyi6969"
+	],
+	"license": "GPL-3.0",
+	"environment": "client",
+	"entrypoints": {
+		"qolbundle": ["io.github.autyi6969.qolbundle.xray.XrayAddon"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "1.21.11",
+		"java": ">=21",
+		"fabric-api": "*",
+		"qolbundle": "*"
+	}
+}

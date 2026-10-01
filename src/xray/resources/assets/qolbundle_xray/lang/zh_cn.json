@@ -1,0 +1,22 @@
+{
+	"qolbundle.module.xray.name": "X-ray 矿物透视（附属包）",
+	"qolbundle.module.xray.desc": "仅限单人 / 自建服，公服会被封。隔着墙给附近的矿石描边。",
+	"qolbundle.module.xray.hud": "X-ray：正在描边 %s 个方块",
+	"qolbundle.module.xray.setting.radius": "范围（格）",
+	"qolbundle.module.xray.setting.max_boxes": "最多同时描边多少个",
+	"qolbundle.module.xray.setting.max_boxes.desc": "超过时只显示离你最近的。",
+	"qolbundle.module.xray.setting.diamond": "钻石矿",
+	"qolbundle.module.xray.setting.ancient_debris": "远古残骸",
+	"qolbundle.module.xray.setting.emerald": "绿宝石矿",
+	"qolbundle.module.xray.setting.gold": "金矿",
+	"qolbundle.module.xray.setting.iron": "铁矿",
+	"qolbundle.module.xray.setting.redstone": "红石矿",
+	"qolbundle.module.xray.setting.lapis": "青金石矿",
+	"qolbundle.module.xray.setting.coal": "煤矿",
+	"qolbundle.module.xray.setting.copper": "铜矿",
+	"qolbundle.module.xray.setting.quartz": "下界石英矿",
+	"qolbundle.module.xray.setting.extra_blocks": "额外要找的方块",
+	"qolbundle.module.xray.setting.extra_blocks.desc": "方块 id，用英文逗号隔开，例如 minecraft:spawner,minecraft:chest",
+	"qolbundle.module.xray.setting.show_count": "显示描边数量",
+	"qolbundle.module.xray.setting.position": "那行字的位置"
+}
