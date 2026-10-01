@@ -406,5 +406,18 @@
 	"qolbundle.module.chest_memory.screen.age.days": "%s days ago",
 	"qolbundle.module.chest_memory.setting.stale_days": "Mark as possibly outdated after (days)",
 	"qolbundle.module.chest_memory.setting.pointer_seconds": "Keep pointing for (seconds)",
-	"qolbundle.module.chest_memory.setting.inventory_button": "Button in the inventory screen"
+	"qolbundle.module.chest_memory.setting.inventory_button": "Button in the inventory screen",
+	"qolbundle.module.chest_memory.screen.found_carried": "In %s shulker box(es) you carry and %s container(s).",
+	"qolbundle.module.chest_memory.screen.carried": "in your %s, %s",
+	"qolbundle.module.chest_memory.screen.slot.hotbar": "hotbar slot %s",
+	"qolbundle.module.chest_memory.screen.slot.backpack": "backpack row %s, column %s",
+	"qolbundle.module.chest_memory.screen.slot.offhand": "off hand",
+
+	"qolbundle.module.shulker_manager.name": "Shulker Box Manager",
+	"qolbundle.module.shulker_manager.desc": "Tags every shulker box with a colour for what it holds and a picture of its main item, and shows which box contains what you search for.",
+	"qolbundle.module.shulker_manager.setting.show_tag": "Colour tag by contents",
+	"qolbundle.module.shulker_manager.setting.show_tag.desc": "Grey = building blocks, cyan = ores and ingots, red = redstone, orange = food, purple = tools and armor, pink = potions and enchanting, white = mixed.",
+	"qolbundle.module.shulker_manager.setting.show_icon": "Small picture of the main item",
+	"qolbundle.module.shulker_manager.setting.search_inside": "Search inside boxes",
+	"qolbundle.module.shulker_manager.setting.search_inside.desc": "With the item search box: boxes that contain a match get an orange frame."
 }

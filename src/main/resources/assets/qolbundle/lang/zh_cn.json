@@ -406,5 +406,18 @@
 	"qolbundle.module.chest_memory.screen.age.days": "%s 天前",
 	"qolbundle.module.chest_memory.setting.stale_days": "多少天没开过就标可能过期",
 	"qolbundle.module.chest_memory.setting.pointer_seconds": "带路持续多少秒",
-	"qolbundle.module.chest_memory.setting.inventory_button": "背包界面显示按钮"
+	"qolbundle.module.chest_memory.setting.inventory_button": "背包界面显示按钮",
+	"qolbundle.module.chest_memory.screen.found_carried": "在你身上的 %s 个潜影盒和 %s 个容器里找到。",
+	"qolbundle.module.chest_memory.screen.carried": "在你带着的%s里（%s）",
+	"qolbundle.module.chest_memory.screen.slot.hotbar": "快捷栏第 %s 格",
+	"qolbundle.module.chest_memory.screen.slot.backpack": "背包第 %s 行第 %s 格",
+	"qolbundle.module.chest_memory.screen.slot.offhand": "副手",
+
+	"qolbundle.module.shulker_manager.name": "潜影盒管家",
+	"qolbundle.module.shulker_manager.desc": "给每个潜影盒打上内容类别的颜色标记和主要物品的小图，搜索时指出东西在哪个盒里。",
+	"qolbundle.module.shulker_manager.setting.show_tag": "按内容类别显示颜色标记",
+	"qolbundle.module.shulker_manager.setting.show_tag.desc": "灰 = 建筑方块，青 = 矿物和锭，红 = 红石，橙 = 食物，紫 = 工具和盔甲，粉 = 药水和附魔，白 = 混装。",
+	"qolbundle.module.shulker_manager.setting.show_icon": "显示主要物品的小图",
+	"qolbundle.module.shulker_manager.setting.search_inside": "搜索时也搜盒子里面",
+	"qolbundle.module.shulker_manager.setting.search_inside.desc": "配合物品搜索框使用：里面有匹配物品的盒子会有橙色框。"
 }

@@ -34,6 +34,7 @@ import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
+import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
 import io.github.autyi6969.qolbundle.modules.VillagerTradesModule;
@@ -114,6 +115,7 @@ public final class Scenarios {
 		test.scenario("hotbar_layouts", false, Scenarios::hotbarLayouts);
 		test.scenario("nether_roof", false, Scenarios::netherRoof);
 		test.scenario("chest_memory", false, Scenarios::chestMemory);
+		test.scenario("shulker_manager", false, Scenarios::shulkerManager);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1021,6 +1023,51 @@ public final class Scenarios {
 		s.waitTicks(60);
 		s.check("a chest that no longer exists is forgotten", client -> module.getChests().isEmpty());
 		s.command("kill @e[type=item]");
+	}
+
+	private static void shulkerManager(SelfTest.Script s) {
+		ShulkerManagerModule module = module("shulker_manager");
+		isolate(s, module);
+		s.run("item search and chest memory on as well", client -> {
+			module("item_search").setEnabled(true);
+			module("chest_memory").setEnabled(true);
+		});
+		s.command("gamemode survival @a");
+		// Three boxes: building blocks, gear, and a bit of everything.
+		s.command("give @a shulker_box[container=[{slot:0,item:{id:\"minecraft:stone\",count:64}},"
+				+ "{slot:1,item:{id:\"minecraft:oak_planks\",count:64}},{slot:2,item:{id:\"minecraft:glass\",count:32}}]]");
+		s.command("give @a cyan_shulker_box[container=[{slot:0,item:{id:\"minecraft:diamond_pickaxe\",count:1}},"
+				+ "{slot:1,item:{id:\"minecraft:diamond_sword\",count:1}},{slot:2,item:{id:\"minecraft:iron_chestplate\",count:1}}]]");
+		s.command("give @a red_shulker_box[container=[{slot:0,item:{id:\"minecraft:stone\",count:1}},"
+				+ "{slot:1,item:{id:\"minecraft:bread\",count:5}},{slot:2,item:{id:\"minecraft:redstone\",count:9}},"
+				+ "{slot:3,item:{id:\"minecraft:diamond\",count:2}}]]");
+		s.waitTicks(10);
+		s.check("the first box is sorted as building blocks", client ->
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(0)) == ShulkerManagerModule.BoxCategory.BUILDING);
+		s.check("the second as gear", client ->
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(1)) == ShulkerManagerModule.BoxCategory.GEAR);
+		s.check("the third as mixed", client ->
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(2)) == ShulkerManagerModule.BoxCategory.MIXED);
+		s.check("searching the carried boxes for '钻石镐' finds the box in hotbar slot 2", client -> {
+			List<ShulkerManagerModule.InventoryHit> hits = module.searchInventory(client.player, "钻石镐");
+			return hits.size() == 1 && hits.get(0).slot() == 1 && hits.get(0).count() == 1;
+		});
+		s.run("open the inventory", client -> client.setScreen(new InventoryScreen(client.player)));
+		s.waitTicks(5);
+		s.screenshot("30_shulker_tags");
+		s.run("type zsg into the item search box", client -> ((ItemSearchModule) module("item_search")).setQuery("zsg"));
+		s.screenshot("30_shulker_search");
+		s.run("open the chest memory search with the same word", client -> {
+			ChestMemoryScreen screen = new ChestMemoryScreen(null, module("chest_memory"));
+			client.setScreen(screen);
+			screen.setQuery("zsg");
+		});
+		s.waitTicks(5);
+		s.check("the chest memory screen lists the carried box", client -> client.currentScreen instanceof ChestMemoryScreen screen
+				&& screen.getCarried().size() == 1);
+		s.screenshot("30_shulker_carried");
+		s.run("close", client -> client.setScreen(null));
+		s.command("gamemode creative @a");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

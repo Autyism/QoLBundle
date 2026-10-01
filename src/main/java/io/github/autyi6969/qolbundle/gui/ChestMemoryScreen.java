@@ -1,6 +1,8 @@
 package io.github.autyi6969.qolbundle.gui;
 
+import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ChestMemoryModule;
+import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -33,6 +35,8 @@ public class ChestMemoryScreen extends Screen {
 	private final Screen parent;
 	private final ChestMemoryModule module;
 	private List<ChestMemoryModule.Hit> hits = new ArrayList<>();
+	/** Shulker boxes the player carries that hold the item; listed before the chests. */
+	private List<ShulkerManagerModule.InventoryHit> carried = new ArrayList<>();
 	private TextFieldWidget queryField;
 	private String query = "";
 	private int scroll;
@@ -45,6 +49,10 @@ public class ChestMemoryScreen extends Screen {
 
 	public List<ChestMemoryModule.Hit> getHits() {
 		return hits;
+	}
+
+	public List<ShulkerManagerModule.InventoryHit> getCarried() {
+		return carried;
 	}
 
 	public void setQuery(String text) {
@@ -77,6 +85,14 @@ public class ChestMemoryScreen extends Screen {
 		String dimension = this.client != null && this.client.world != null
 				? this.client.world.getRegistryKey().getValue().toString() : "";
 		hits = text.isBlank() ? new ArrayList<>() : module.search(text, this.client == null ? null : this.client.player, dimension);
+		carried = new ArrayList<>();
+		if (this.client != null && ModuleRegistry.get("shulker_manager") instanceof ShulkerManagerModule shulkers) {
+			carried = shulkers.searchInventory(this.client.player, text);
+		}
+	}
+
+	private int rowCount() {
+		return carried.size() + hits.size();
 	}
 
 	private int visibleRows() {
@@ -89,7 +105,7 @@ public class ChestMemoryScreen extends Screen {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-		int max = Math.max(0, hits.size() - visibleRows());
+		int max = Math.max(0, rowCount() - visibleRows());
 		scroll = Math.max(0, Math.min(max, scroll - (int) Math.signum(verticalAmount)));
 		return true;
 	}
@@ -112,12 +128,15 @@ public class ChestMemoryScreen extends Screen {
 			return -1;
 		}
 		int index = scroll + (int) ((mouseY - LIST_TOP) / ROW_HEIGHT);
-		return index < hits.size() && index < scroll + visibleRows() ? index : -1;
+		return index < rowCount() && index < scroll + visibleRows() ? index : -1;
 	}
 
 	/** Makes the HUD point at the container of a result and closes the screen. */
 	public void choose(int index) {
-		module.setTarget(hits.get(index).chest());
+		if (index >= carried.size()) {
+			module.setTarget(hits.get(index - carried.size()).chest());
+		}
+		// A box you are carrying needs no pointer: its place in the backpack is written in the row.
 		this.client.setScreen(null);
 	}
 
@@ -126,29 +145,52 @@ public class ChestMemoryScreen extends Screen {
 		super.render(context, mouseX, mouseY, deltaTicks);
 		context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 11, WHITE);
 		Text status;
-		if (module.getChests().isEmpty()) {
+		if (module.getChests().isEmpty() && carried.isEmpty()) {
 			status = Text.translatable(KEY + "nothing_remembered");
 		} else if (query.isBlank()) {
 			status = Text.translatable(KEY + "remembered", module.getChests().size());
 		} else {
-			status = Text.translatable(KEY + "found", hits.size());
+			status = carried.isEmpty()
+					? Text.translatable(KEY + "found", hits.size())
+					: Text.translatable(KEY + "found_carried", carried.size(), hits.size());
 		}
 		context.drawCenteredTextWithShadow(this.textRenderer, status, this.width / 2, LIST_TOP - 12, GRAY);
 
 		int left = rowLeft();
 		int hovered = rowAt(mouseX, mouseY);
-		for (int i = scroll; i < hits.size() && i < scroll + visibleRows(); i++) {
-			ChestMemoryModule.Hit hit = hits.get(i);
+		for (int i = scroll; i < rowCount() && i < scroll + visibleRows(); i++) {
 			int y = LIST_TOP + (i - scroll) * ROW_HEIGHT;
 			if (i == hovered) {
 				context.fill(left - 2, y, this.width - left + 2, y + ROW_HEIGHT - 1, 0x40FFFFFF);
 			}
+			if (i < carried.size()) {
+				ShulkerManagerModule.InventoryHit box = carried.get(i);
+				context.drawItem(box.box(), left, y + 1);
+				context.drawTextWithShadow(this.textRenderer, Text.translatable(KEY + "what", box.name(), box.count()), left + 20, y + 1, WHITE);
+				context.drawTextWithShadow(this.textRenderer, carriedWhere(box), left + 20, y + 10, 0xFF55FF55);
+				continue;
+			}
+			ChestMemoryModule.Hit hit = hits.get(i - carried.size());
 			ChestMemoryModule.Chest chest = hit.chest();
 			context.drawItem(new ItemStack(ChestMemoryModule.itemOf(chest.blockId)), left, y + 1);
 			MutableText what = Text.translatable(KEY + (hit.inShulkerBox() ? "what_in_box" : "what"), hit.name(), hit.count());
 			context.drawTextWithShadow(this.textRenderer, what, left + 20, y + 1, WHITE);
 			context.drawTextWithShadow(this.textRenderer, where(chest), left + 20, y + 10, module.isStale(chest) ? 0xFFFFAA00 : GRAY);
 		}
+	}
+
+	/** "in the shulker box in your hotbar, slot 5". */
+	private static Text carriedWhere(ShulkerManagerModule.InventoryHit box) {
+		int slot = box.slot();
+		Text place;
+		if (slot < 9) {
+			place = Text.translatable(KEY + "slot.hotbar", slot + 1);
+		} else if (slot < 36) {
+			place = Text.translatable(KEY + "slot.backpack", (slot - 9) / 9 + 1, (slot - 9) % 9 + 1);
+		} else {
+			place = Text.translatable(KEY + "slot.offhand");
+		}
+		return Text.translatable(KEY + "carried", box.box().getName(), place);
 	}
 
 	/** "at 12, 64, -30 (35 blocks, 2 hours ago)" plus a note when the record is old. */

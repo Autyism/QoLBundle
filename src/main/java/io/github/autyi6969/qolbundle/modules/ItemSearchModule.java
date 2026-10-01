@@ -3,6 +3,7 @@ package io.github.autyi6969.qolbundle.modules;
 import io.github.autyi6969.qolbundle.mixin.HandledScreenAccessor;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
+import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.module.setting.BoolSetting;
 import io.github.autyi6969.qolbundle.util.ItemNames;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -39,6 +40,11 @@ public class ItemSearchModule extends Module {
 				attach(client, handled, height);
 			}
 		});
+	}
+
+	/** What is typed in the search box right now ("" when there is none). */
+	public String getQuery() {
+		return field == null ? "" : query;
 	}
 
 	public void setQuery(String text) {
@@ -105,6 +111,10 @@ public class ItemSearchModule extends Module {
 			int y = top + slot.y;
 			if (!slot.getStack().isEmpty() && matches(slot.getStack(), query)) {
 				context.drawStrokedRectangle(x - 1, y - 1, 18, 18, 0xFF55FF55);
+			} else if (ModuleRegistry.get("shulker_manager") instanceof ShulkerManagerModule shulkers && shulkers.isEnabled()
+					&& !ShulkerManagerModule.firstMatchInside(slot.getStack(), query).isEmpty()) {
+				// A shulker box with a match inside: the Shulker Box Manager frames it, so leave it bright.
+				continue;
 			} else if (dimOthers.get()) {
 				context.fill(x, y, x + 16, y + 16, 0xB0101010);
 			}

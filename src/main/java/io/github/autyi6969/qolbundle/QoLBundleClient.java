@@ -30,6 +30,7 @@ import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
+import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
 import io.github.autyi6969.qolbundle.modules.SoundCompassModule;
 import io.github.autyi6969.qolbundle.modules.VillagerTradesModule;
@@ -120,6 +121,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ItemSearchModule());
 		ModuleRegistry.register(new HotbarLayoutsModule());
 		ModuleRegistry.register(new ChestMemoryModule());
+		ModuleRegistry.register(new ShulkerManagerModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());
