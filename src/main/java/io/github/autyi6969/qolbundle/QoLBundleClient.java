@@ -27,6 +27,7 @@ import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
 import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
+import io.github.autyi6969.qolbundle.modules.PlacementMasterModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RecipeHelperModule;
@@ -89,6 +90,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
 		WorldRenderEvents.BEFORE_DEBUG_RENDER.register(this::onRenderWorld);
+		WorldRenderEvents.BEFORE_ENTITIES.register(this::onSubmitWorld);
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ConfigManager.save());
 
 		if (SelfTest.isRequested()) {
@@ -124,6 +126,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ChestMemoryModule());
 		ModuleRegistry.register(new ShulkerManagerModule());
 		ModuleRegistry.register(new RecipeHelperModule());
+		ModuleRegistry.register(new PlacementMasterModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());
@@ -152,6 +155,14 @@ public class QoLBundleClient implements ClientModInitializer {
 			}
 		}
 		WorldData.tick();
+	}
+
+	private void onSubmitWorld(WorldRenderContext context) {
+		for (Module module : ModuleRegistry.all()) {
+			if (module.isEnabled()) {
+				module.onSubmitWorld(context);
+			}
+		}
 	}
 
 	private void onRenderWorld(WorldRenderContext context) {

@@ -1,5 +1,12 @@
 package io.github.autyi6969.qolbundle.selftest;
 
+import io.github.autyi6969.qolbundle.modules.PlacementMasterModule;
+import net.minecraft.util.math.Direction;
+import net.minecraft.state.property.Properties;
+import net.minecraft.block.enums.SlabType;
+import net.minecraft.block.enums.BlockHalf;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.config.ConfigManager;
@@ -123,6 +130,7 @@ public final class Scenarios {
 		test.scenario("chest_memory", false, Scenarios::chestMemory);
 		test.scenario("shulker_manager", false, Scenarios::shulkerManager);
 		test.scenario("recipe_helper", false, Scenarios::recipeHelper);
+		test.scenario("placement_master", false, Scenarios::placementMaster);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1114,6 +1122,82 @@ public final class Scenarios {
 		s.command("kill @e[type=item]");
 		s.command("gamemode creative @a");
 		s.run("forget the chest", client -> chests.forgetAll());
+	}
+
+	private static void pressUse(SelfTest.Script s) {
+		s.run("right click", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.waitTicks(6);
+	}
+
+	private static void placementMaster(SelfTest.Script s) {
+		PlacementMasterModule module = module("placement_master");
+		isolate(s, module);
+		BlockPos first = new BlockPos(0, GROUND_Y, -1);
+		// Stairs in hand, looking north and down at the ground one block ahead.
+		s.command("item replace entity @a weapon.mainhand with oak_stairs 16");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 60");
+		s.waitTicks(15);
+		s.info("preview", client -> module.getCurrent() == null ? "none" : module.getCurrent().pos().toShortString() + " " + module.getCurrent().state());
+		s.check("the preview shows oak stairs on the ground ahead, facing north, lower half", client -> module.getCurrent() != null
+				&& module.isPreviewShown() && first.equals(module.getCurrent().pos())
+				&& module.getCurrent().state().isOf(Blocks.OAK_STAIRS)
+				&& module.getCurrent().state().get(Properties.HORIZONTAL_FACING) == Direction.NORTH
+				&& module.getCurrent().state().get(Properties.BLOCK_HALF) == BlockHalf.BOTTOM);
+		s.screenshot("33_placement_preview");
+		BlockState[] predicted = new BlockState[1];
+		s.run("remember the preview", client -> predicted[0] = module.getCurrent().state());
+		pressUse(s);
+		s.check("the block that got placed is exactly the previewed one", client -> client.world.getBlockState(first).equals(predicted[0]));
+		s.check("its orientation is remembered for the lock", client -> module.getLastOrientation() != null
+				&& "north".equals(module.getLastOrientation().get("facing")) && "bottom".equals(module.getLastOrientation().get("half")));
+
+		// Lock held, now facing east: the stairs would face east, so the click must not happen.
+		BlockPos east = new BlockPos(1, GROUND_Y, 0);
+		s.run("hold the lock key", client -> module.getLockKey().setPressed(true));
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 -90 60");
+		s.waitTicks(15);
+		s.check("facing east the preview is marked as different from the locked orientation", client -> module.getCurrent() != null
+				&& east.equals(module.getCurrent().pos()) && module.isLocking() && module.conflicts(module.getCurrent().state()));
+		s.screenshot("33_placement_lock_wrong");
+		pressUse(s);
+		s.check("the click was stopped: nothing was placed", client -> client.world.getBlockState(east).isAir() && module.getStoppedCount() == 1);
+		// Facing north again, somewhere else: same orientation, so it goes through.
+		BlockPos again = new BlockPos(2, GROUND_Y, -1);
+		s.command("tp @a 2.5 " + GROUND_Y + " 0.5 180 60");
+		s.waitTicks(15);
+		s.check("facing north again the preview matches the lock", client -> module.getCurrent() != null
+				&& again.equals(module.getCurrent().pos()) && module.isLocking() && !module.conflicts(module.getCurrent().state()));
+		s.screenshot("33_placement_lock_ok");
+		pressUse(s);
+		s.check("a matching placement goes through while locked", client -> client.world.getBlockState(again).isOf(Blocks.OAK_STAIRS)
+				&& module.getStoppedCount() == 1);
+		s.run("release the lock key", client -> module.getLockKey().setPressed(false));
+
+		// Upper / lower half: a slab aimed at the side of a block at eye height.
+		s.command("setblock 5 " + GROUND_Y + " -3 stone");
+		s.command("setblock 5 " + (GROUND_Y + 1) + " -3 stone");
+		s.command("item replace entity @a weapon.mainhand with oak_slab 16");
+		s.command("tp @a 5.5 " + GROUND_Y + " -0.5 180 0");
+		s.waitTicks(15);
+		s.check("aiming at the upper half of the side face previews an upper slab", client -> module.getCurrent() != null
+				&& module.halfZone() == 1 && module.getCurrent().state().get(Properties.SLAB_TYPE) == SlabType.TOP);
+		s.screenshot("33_placement_half_upper");
+		s.command("tp @a 5.5 " + GROUND_Y + " -0.5 180 15");
+		s.waitTicks(15);
+		s.check("aiming at the lower half previews a lower slab", client -> module.getCurrent() != null
+				&& module.halfZone() == -1 && module.getCurrent().state().get(Properties.SLAB_TYPE) == SlabType.BOTTOM);
+		s.screenshot("33_placement_half_lower");
+
+		// A torch against a wall becomes a wall torch: the item decides, and the preview must follow it.
+		s.command("item replace entity @a weapon.mainhand with torch 16");
+		s.waitTicks(10);
+		s.check("a torch aimed at a wall previews as a wall torch facing away from it", client -> module.getCurrent() != null
+				&& module.getCurrent().state().isOf(Blocks.WALL_TORCH)
+				&& module.getCurrent().state().get(Properties.HORIZONTAL_FACING) == Direction.SOUTH);
+		// Plain stone has no direction: by default it gets no preview.
+		s.command("item replace entity @a weapon.mainhand with stone 16");
+		s.waitTicks(10);
+		s.check("plain stone is worked out but not previewed", client -> module.getCurrent() != null && !module.isPreviewShown());
 	}
 
 	private static void shulkerManager(SelfTest.Script s) {

@@ -3,6 +3,7 @@
 	"package": "io.github.autyi6969.qolbundle.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"BlockItemInvoker",
 		"CameraMixin",
 		"ChatHudAccessor",
 		"ChatHudMixin",

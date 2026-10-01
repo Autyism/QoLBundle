@@ -132,6 +132,14 @@ public abstract class Module {
 	public void onRenderWorld(WorldRenderContext context) {
 	}
 
+	/**
+	 * Called every frame just before the game hands this frame's entities to the renderer. For
+	 * things that need real textured geometry (a see-through block): submit them through
+	 * {@code context.commandQueue()}. Lines and boxes belong in {@link #onRenderWorld}.
+	 */
+	public void onSubmitWorld(WorldRenderContext context) {
+	}
+
 	/** Called every frame while the HUD is visible and the player is in a world. */
 	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
 	}
