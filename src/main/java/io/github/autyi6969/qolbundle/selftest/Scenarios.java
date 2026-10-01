@@ -23,6 +23,7 @@ import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
+import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
@@ -36,6 +37,8 @@ import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.option.KeyBinding;
@@ -98,6 +101,7 @@ public final class Scenarios {
 		test.scenario("projectile_landing", false, Scenarios::projectileLanding);
 		test.scenario("lava_safety", false, Scenarios::lavaSafety);
 		test.scenario("effect_range", false, Scenarios::effectRange);
+		test.scenario("item_search", false, Scenarios::itemSearch);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -823,6 +827,39 @@ public final class Scenarios {
 		s.check("the lava fog is being adjusted", client -> module.getLavaFrames() > frames[1]);
 		s.screenshot("25_lava_on");
 		s.command("fill -2 " + GROUND_Y + " -12 2 " + (GROUND_Y + 4) + " -3 air");
+	}
+
+	private static void itemSearch(SelfTest.Script s) {
+		ItemSearchModule module = module("item_search");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("give @a diamond 3");
+		s.command("give @a iron_ingot 5");
+		s.command("give @a gold_ingot 2");
+		s.command("give @a diamond_pickaxe");
+		s.waitTicks(10);
+		s.run("open the inventory", client -> client.setScreen(new InventoryScreen(client.player)));
+		s.waitTicks(5);
+		// The game runs in English here; Chinese names and pinyin initials must work all the same.
+		String[][] cases = {
+			{"zs", "2"},         // 钻石 and 钻石镐 (zsg)
+			{"zsg", "1"},        // 钻石镐
+			{"diamond", "2"},
+			{"钻石", "2"},
+			{"铁锭", "1"},
+			{"td", "1"},         // 铁锭
+			{"gold ingot", "1"},
+			{"xyz", "0"},
+		};
+		for (String[] testCase : cases) {
+			s.run("search for " + testCase[0], client -> module.setQuery(testCase[0]));
+			s.check("'" + testCase[0] + "' finds " + testCase[1] + " slot(s)", client -> client.currentScreen instanceof HandledScreen<?> screen
+					&& module.countMatches(screen) == Integer.parseInt(testCase[1]));
+		}
+		s.run("search for zs again for the screenshot", client -> module.setQuery("zs"));
+		s.screenshot("26_item_search");
+		s.run("close the inventory", client -> client.setScreen(null));
+		s.command("gamemode creative @a");
 	}
 
 	private static void afkClicker(SelfTest.Script s) {

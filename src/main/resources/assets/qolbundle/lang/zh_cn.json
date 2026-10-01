@@ -333,5 +333,11 @@
 	"qolbundle.module.fluid_vision.desc": "仅限单人 / 自建服，公服慎用。水下没有雾；在岩浆里能看出周围方块的轮廓。",
 	"qolbundle.module.fluid_vision.setting.water": "水下去雾",
 	"qolbundle.module.fluid_vision.setting.lava": "岩浆里能看见方块",
-	"qolbundle.module.fluid_vision.setting.lava_distance": "岩浆里能看多远（格）"
+	"qolbundle.module.fluid_vision.setting.lava_distance": "岩浆里能看多远（格）",
+
+	"qolbundle.module.item_search.name": "多语言物品搜索",
+	"qolbundle.module.item_search.desc": "背包和箱子界面里的搜索框。英文名、中文名、拼音首字母（zs = 钻石）都能搜到。",
+	"qolbundle.module.item_search.placeholder": "搜索物品...",
+	"qolbundle.module.item_search.setting.dim_others": "把不匹配的物品调暗",
+	"qolbundle.module.item_search.setting.pinyin": "匹配拼音首字母"
 }

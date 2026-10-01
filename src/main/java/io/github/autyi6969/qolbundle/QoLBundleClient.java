@@ -22,6 +22,7 @@ import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
+import io.github.autyi6969.qolbundle.modules.ItemSearchModule;
 import io.github.autyi6969.qolbundle.modules.LavaSafetyModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
@@ -112,6 +113,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ElytraDashboardModule());
 		ModuleRegistry.register(new SoundCompassModule());
 		ModuleRegistry.register(new ChatEnhancementsModule());
+		ModuleRegistry.register(new ItemSearchModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());

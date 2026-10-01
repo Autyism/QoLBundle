@@ -9,6 +9,7 @@
 		"ClientPlayerInteractionManagerAccessor",
 		"EntityMixin",
 		"GameRendererMixin",
+		"HandledScreenAccessor",
 		"KeyboardInputMixin",
 		"LavaFogModifierMixin",
 		"LightmapTextureManagerMixin",

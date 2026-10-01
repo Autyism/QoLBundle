@@ -333,5 +333,11 @@
 	"qolbundle.module.fluid_vision.desc": "Single-player / own server only, careful on public servers. No fog under water; inside lava you can make out the blocks around you.",
 	"qolbundle.module.fluid_vision.setting.water": "Clear view under water",
 	"qolbundle.module.fluid_vision.setting.lava": "See blocks while in lava",
-	"qolbundle.module.fluid_vision.setting.lava_distance": "How far you see in lava (blocks)"
+	"qolbundle.module.fluid_vision.setting.lava_distance": "How far you see in lava (blocks)",
+
+	"qolbundle.module.item_search.name": "Multilingual Item Search",
+	"qolbundle.module.item_search.desc": "A search box in inventories and chests. Finds items by English name, Chinese name or pinyin initials (zs = 钻石).",
+	"qolbundle.module.item_search.placeholder": "Search items...",
+	"qolbundle.module.item_search.setting.dim_others": "Dim items that do not match",
+	"qolbundle.module.item_search.setting.pinyin": "Match pinyin initials"
 }
