@@ -43,7 +43,9 @@ import java.util.Map;
 public class ChatEnhancementsModule extends Module {
 	private static final int MAX_HISTORY = 2000;
 	/** A line is treated as "somebody said something" when one of these follows the speaker's name. */
-	private static final String[] SPEAKER_SEPARATORS = {"> ", ": ", "» ", "] "};
+	private static final String[] SPEAKER_SEPARATORS = {"> ", ": ", "» "};
+	/** Only used when none of the above is found: "[Server] hello". Otherwise "]" just closes a rank tag. */
+	private static final String BRACKET_SEPARATOR = "] ";
 	private static final int SPEAKER_SEARCH_LIMIT = 48;
 
 	@Nullable
@@ -205,12 +207,20 @@ public class ChatEnhancementsModule extends Module {
 				&& content.getKey().equals("commands.message.display.incoming")) {
 			return true; // a private message to you
 		}
+		// Where the speaker's part ends: the first "> ", ": " or "» ". In "[Admin] Alex: hi" that is
+		// after "Alex", so the rank tag in front does not hide who is talking.
 		int bodyStart = -1;
 		int searchEnd = Math.min(plain.length(), SPEAKER_SEARCH_LIMIT);
 		for (String separator : SPEAKER_SEPARATORS) {
 			int index = plain.indexOf(separator);
 			if (index >= 0 && index < searchEnd && (bodyStart < 0 || index + separator.length() < bodyStart)) {
 				bodyStart = index + separator.length();
+			}
+		}
+		if (bodyStart < 0) {
+			int index = plain.indexOf(BRACKET_SEPARATOR);
+			if (index >= 0 && index < searchEnd) {
+				bodyStart = index + BRACKET_SEPARATOR.length();
 			}
 		}
 		if (bodyStart < 0) {

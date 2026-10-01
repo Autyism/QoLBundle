@@ -504,15 +504,18 @@ final class Scenarios {
 		s.run("forget earlier chat", client -> module.forgetAll());
 		s.waitTicks(5);
 		s.clearChat();
-		// Three lines as a chat plugin would send them: someone talking, someone mentioning the
-		// player, and the player's own line (which contains the own name but is not a mention).
+		// Lines as a chat plugin would send them: someone talking, someone mentioning the player,
+		// the player's own line (contains the own name but is not a mention), and the same two
+		// cases again in a "[rank] name: text" format.
 		s.command(client -> "tellraw @a {\"text\":\"<Bob> hello everyone\"}");
 		s.command(client -> "tellraw @a {\"text\":\"<Bob> hey " + client.getSession().getUsername() + " are you there?\"}");
 		s.command(client -> "tellraw @a {\"text\":\"<" + client.getSession().getUsername() + "> yes, "
 				+ client.getSession().getUsername() + " is here\"}");
+		s.command(client -> "tellraw @a {\"text\":\"[Admin] " + client.getSession().getUsername() + ": my own line with a rank tag\"}");
+		s.command(client -> "tellraw @a {\"text\":\"[Admin] Carol: " + client.getSession().getUsername() + ", come to spawn\"}");
 		s.waitTicks(10);
-		s.check("three lines were recorded", client -> module.getHistory().size() == 3);
-		s.check("exactly one of them counts as a mention", client -> module.getMentionCount() == 1);
+		s.check("five lines were recorded", client -> module.getHistory().size() == 5);
+		s.check("exactly two of them count as a mention", client -> module.getMentionCount() == 2);
 		s.check("the newest chat line starts with a timestamp", client -> newestChatLine(client).matches("^\\[\\d\\d:\\d\\d\\] .*"));
 		s.screenshot("15_chat_timestamps_mention", true);
 
@@ -535,7 +538,7 @@ final class Scenarios {
 		s.waitUntil("player is in the world again", Scenarios::inWorld, 20 * 120);
 		s.waitTicks(40);
 		s.info("chat lines restored", client -> module.getRestoredLines());
-		s.check("the three chat lines came back after rejoining", client -> module.getRestoredLines() == 3);
+		s.check("the five chat lines came back after rejoining", client -> module.getRestoredLines() == 5);
 		s.check("the chat window contains the old line again", client -> chatLines(client).stream().anyMatch(line -> line.contains("hello everyone")));
 		s.run("open the chat so the restored lines are visible", client -> client.setScreen(new ChatScreen("", false)));
 		s.waitTicks(5);
