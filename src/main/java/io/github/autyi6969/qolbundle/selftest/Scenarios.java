@@ -4,6 +4,7 @@ import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -34,6 +35,7 @@ final class Scenarios {
 		test.scenario("boot", true, Scenarios::boot);
 		test.scenario("settings_screen", false, Scenarios::settingsScreen);
 		test.scenario("enter_world", true, Scenarios::enterWorld);
+		test.scenario("durability_alert", false, Scenarios::durabilityAlert);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -105,6 +107,29 @@ final class Scenarios {
 		s.screenshot("01_world");
 	}
 
+	private static void durabilityAlert(SelfTest.Script s) {
+		DurabilityAlertModule module = module("durability_alert");
+		isolate(s, module);
+		s.command("give @a diamond_pickaxe");
+		s.waitTicks(20);
+		s.check("no alert with a brand-new pickaxe", client -> !module.isAlertActive());
+		s.command("clear @a");
+		// Diamond pickaxe: 1561 uses. damage=1530 leaves 31 = 2 %.
+		s.command("give @a diamond_pickaxe[damage=1530]");
+		s.waitTicks(15);
+		s.check("alert active with a pickaxe at 2 %", client -> module.isAlertActive());
+		s.screenshot("02_durability_alert");
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <M extends Module> M module(String id) {
+		Module module = ModuleRegistry.get(id);
+		if (module == null) {
+			throw new IllegalStateException("module not registered: " + id);
+		}
+		return (M) module;
+	}
+
 	private static boolean inWorld(MinecraftClient client) {
 		return client.player != null && client.world != null && client.currentScreen == null && client.getOverlay() == null;
 	}
@@ -115,6 +140,12 @@ final class Scenarios {
 		s.command("clear @a");
 		s.command("effect clear @a");
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		s.run("select hotbar slot 1 and clear chat", client -> {
+			if (client.player != null) {
+				client.player.getInventory().setSelectedSlot(0);
+			}
+			client.inGameHud.getChatHud().clear(false);
+		});
 		s.waitTicks(10);
 	}
 

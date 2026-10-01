@@ -17,5 +17,15 @@
 	"qolbundle.option.hudanchor.top_left": "左上",
 	"qolbundle.option.hudanchor.top_right": "右上",
 	"qolbundle.option.hudanchor.bottom_left": "左下",
-	"qolbundle.option.hudanchor.bottom_right": "右下"
+	"qolbundle.option.hudanchor.bottom_right": "右下",
+
+	"qolbundle.module.durability_alert.name": "耐久报警",
+	"qolbundle.module.durability_alert.desc": "工具或盔甲快坏时屏幕边缘闪红并响提示音。",
+	"qolbundle.module.durability_alert.warning": "%s 快坏了：还剩 %s 点耐久（%s%%）",
+	"qolbundle.module.durability_alert.setting.threshold": "耐久低于多少时报警",
+	"qolbundle.module.durability_alert.setting.threshold.desc": "剩余耐久占该物品满耐久的百分比。",
+	"qolbundle.module.durability_alert.setting.check_armor": "也检查身上的盔甲",
+	"qolbundle.module.durability_alert.setting.flash": "屏幕边缘闪红",
+	"qolbundle.module.durability_alert.setting.sound": "播放提示音",
+	"qolbundle.module.durability_alert.setting.show_text": "显示物品名和剩余耐久"
 }

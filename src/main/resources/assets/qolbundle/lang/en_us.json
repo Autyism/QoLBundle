@@ -17,5 +17,15 @@
 	"qolbundle.option.hudanchor.top_left": "Top left",
 	"qolbundle.option.hudanchor.top_right": "Top right",
 	"qolbundle.option.hudanchor.bottom_left": "Bottom left",
-	"qolbundle.option.hudanchor.bottom_right": "Bottom right"
+	"qolbundle.option.hudanchor.bottom_right": "Bottom right",
+
+	"qolbundle.module.durability_alert.name": "Durability Alert",
+	"qolbundle.module.durability_alert.desc": "Red screen edges and a sound when a tool or armor piece is about to break.",
+	"qolbundle.module.durability_alert.warning": "%s is about to break: %s uses left (%s%%)",
+	"qolbundle.module.durability_alert.setting.threshold": "Warn at or below",
+	"qolbundle.module.durability_alert.setting.threshold.desc": "Remaining durability, in percent of the item's maximum.",
+	"qolbundle.module.durability_alert.setting.check_armor": "Also watch worn armor",
+	"qolbundle.module.durability_alert.setting.flash": "Flash screen edges red",
+	"qolbundle.module.durability_alert.setting.sound": "Play a sound",
+	"qolbundle.module.durability_alert.setting.show_text": "Show item name and uses left"
 }
