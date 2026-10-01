@@ -641,5 +641,12 @@
 	"qolbundle.module.stare_alert.setting.angle": "对得多准才算",
 	"qolbundle.module.stare_alert.setting.range": "范围（格）",
 	"qolbundle.module.stare_alert.setting.sound": "提示音",
-	"qolbundle.module.stare_alert.hud": "%s 在盯着你"
+	"qolbundle.module.stare_alert.hud": "%s 在盯着你",
+
+	"qolbundle.module.rear_mirror.name": "后视镜",
+	"qolbundle.module.rear_mirror.desc": "仅限单人 / 自建服，公服慎用。屏幕上一个小画面，显示你正后方。为了它每一帧要把世界画两遍，帧数大约减半。",
+	"qolbundle.module.rear_mirror.setting.position": "位置",
+	"qolbundle.module.rear_mirror.setting.size": "大小（占屏幕宽度）",
+	"qolbundle.module.rear_mirror.setting.flip": "像真镜子一样左右对调",
+	"qolbundle.module.rear_mirror.setting.flip.desc": "开：你左后方的东西出现在画面左边。关：画面就是你转过身去看到的样子。"
 }

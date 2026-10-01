@@ -641,5 +641,12 @@
 	"qolbundle.module.stare_alert.setting.angle": "How exactly they must aim at you",
 	"qolbundle.module.stare_alert.setting.range": "Range (blocks)",
 	"qolbundle.module.stare_alert.setting.sound": "Sound",
-	"qolbundle.module.stare_alert.hud": "%s is watching you"
+	"qolbundle.module.stare_alert.hud": "%s is watching you",
+
+	"qolbundle.module.rear_mirror.name": "Rear-view Mirror",
+	"qolbundle.module.rear_mirror.desc": "Single-player / own server only, careful on public servers. A small picture of what is directly behind you. The world is drawn twice per frame for it, so expect roughly half the frame rate.",
+	"qolbundle.module.rear_mirror.setting.position": "Position",
+	"qolbundle.module.rear_mirror.setting.size": "Size (share of the screen width)",
+	"qolbundle.module.rear_mirror.setting.flip": "Left-right like a real mirror",
+	"qolbundle.module.rear_mirror.setting.flip.desc": "On: what is behind your left shoulder appears on the left. Off: the picture is what you would see after turning round."
 }

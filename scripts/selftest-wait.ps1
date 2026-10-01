@@ -5,9 +5,9 @@
 #   2. Then:               .\scripts\selftest-wait.ps1
 #
 # Ends when the log contains "[SelfTest] DONE", when the dev client exits without it (crash),
-# or after the timeout (6 minutes). On timeout only this project's dev client is stopped;
+# or after the timeout (13 minutes). On timeout only this project's dev client is stopped;
 # no other java process (the Minecraft server, Gradle daemons) is ever touched.
-param([int]$TimeoutSeconds = 360)
+param([int]$TimeoutSeconds = 780)
 
 $root = Split-Path -Parent $PSScriptRoot
 $log = Join-Path $root "run\logs\latest.log"

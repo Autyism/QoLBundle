@@ -54,6 +54,7 @@ import io.github.autyi6969.qolbundle.modules.NetherRoofModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RecipeHelperModule;
+import io.github.autyi6969.qolbundle.modules.RearMirrorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
@@ -153,6 +154,7 @@ public final class Scenarios {
 		test.scenario("enemy_gear", false, Scenarios::enemyGear);
 		test.scenario("approach_alert", false, Scenarios::approachAlert);
 		test.scenario("stare_alert", false, Scenarios::stareAlert);
+		test.scenario("rear_mirror", false, Scenarios::rearMirror);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1604,6 +1606,35 @@ public final class Scenarios {
 		s.run("restore the setting", client -> module.secondsSetting().reset());
 		s.command("kill @e[type=minecraft:mannequin]");
 		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
+	}
+
+	private static void rearMirror(SelfTest.Script s) {
+		RearMirrorModule module = module("rear_mirror");
+		s.run("everything off", client -> {
+			for (Module other : ModuleRegistry.all()) {
+				other.setEnabled(false);
+			}
+		});
+		resetPlayer(s);
+		// Behind the player (who faces north): a gold pillar behind the right shoulder, a redstone
+		// pillar behind the left one. In front: nothing.
+		s.command("fill 3 " + GROUND_Y + " 6 3 " + (GROUND_Y + 3) + " 6 gold_block");
+		s.command("fill -3 " + GROUND_Y + " 6 -3 " + (GROUND_Y + 1) + " 6 redstone_block");
+		s.waitTicks(20);
+		int[] fps = new int[2];
+		s.run("note the frame rate without the mirror", client -> fps[0] = client.getCurrentFps());
+		s.screenshot("43_rear_mirror_off");
+		s.run("mirror on", client -> module.setEnabled(true));
+		s.waitTicks(40);
+		s.run("note the frame rate with the mirror", client -> fps[1] = client.getCurrentFps());
+		s.info("frame rate", client -> "without mirror " + fps[0] + " fps, with mirror " + fps[1] + " fps");
+		s.check("a picture of the view backwards is kept every frame", client -> module.getCaptures() > 10);
+		s.check("the normal view still looks north", client -> Math.abs(MathHelper.wrapDegrees(client.gameRenderer.getCamera().getYaw() - 180F)) < 0.5F);
+		s.screenshot("43_rear_mirror");
+		s.dump("43_rear_mirror_picture", client -> module.getPicture());
+		s.run("mirror off", client -> module.setEnabled(false));
+		s.waitTicks(10);
+		s.screenshot("43_rear_mirror_after");
 	}
 
 	private static void shulkerManager(SelfTest.Script s) {

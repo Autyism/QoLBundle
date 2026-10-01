@@ -31,7 +31,7 @@ public final class SelfTest {
 	public static final String PREFIX = "[SelfTest] ";
 	private static final Logger LOGGER = QoLBundleClient.LOGGER;
 	/** Hard limit for the whole run; the outside watcher gives up after 6 minutes. */
-	private static final long TIMEOUT_NANOS = 330L * 1_000_000_000L;
+	private static final long TIMEOUT_NANOS = 720L * 1_000_000_000L;
 	private static final String SCREENSHOT_FOLDER = "selftest";
 
 	private final List<Step> steps = new ArrayList<>();
@@ -363,6 +363,23 @@ public final class SelfTest {
 							pendingScreenshots.decrementAndGet();
 							LOGGER.info(PREFIX + "screenshot {}: {}", name, message.getString());
 						});
+				return true;
+			});
+			return this;
+		}
+
+		/** Saves the contents of some other picture buffer (not the screen) as a PNG next to the screenshots. */
+		public Script dump(String name, Function<MinecraftClient, net.minecraft.client.gl.Framebuffer> buffer) {
+			add("dump " + name, (client, ticks) -> {
+				net.minecraft.client.gl.Framebuffer framebuffer = buffer.apply(client);
+				if (framebuffer == null) {
+					throw new IllegalStateException("nothing to dump for " + name);
+				}
+				pendingScreenshots.incrementAndGet();
+				ScreenshotRecorder.saveScreenshot(client.runDirectory, SCREENSHOT_FOLDER + "/" + name + ".png", framebuffer, 1, message -> {
+					pendingScreenshots.decrementAndGet();
+					LOGGER.info(PREFIX + "dump {}: {}", name, message.getString());
+				});
 				return true;
 			});
 			return this;

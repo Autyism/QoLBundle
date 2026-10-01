@@ -40,6 +40,7 @@ import io.github.autyi6969.qolbundle.modules.PlacementMasterModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import io.github.autyi6969.qolbundle.modules.ProjectileLandingModule;
 import io.github.autyi6969.qolbundle.modules.RecipeHelperModule;
+import io.github.autyi6969.qolbundle.modules.RearMirrorModule;
 import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyi6969.qolbundle.modules.SlimeChunksModule;
@@ -150,6 +151,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new FreecamModule());
 		ModuleRegistry.register(new ElytraTakeoffModule());
 		ModuleRegistry.register(new FluidVisionModule());
+		ModuleRegistry.register(new RearMirrorModule());
 		// Modules from add-on mods (the X-ray add-on lives in its own jar).
 		for (QoLBundleAddon addon : addons()) {
 			addon.registerModules();
