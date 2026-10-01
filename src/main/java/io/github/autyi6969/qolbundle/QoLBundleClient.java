@@ -9,6 +9,7 @@ import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
@@ -69,6 +70,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ArmorHudModule());
 		ModuleRegistry.register(new BreakProgressModule());
 		ModuleRegistry.register(new PortalCalculatorModule());
+		ModuleRegistry.register(new EntityCounterModule());
 		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new RespawnPointModule());
 		ModuleRegistry.register(new DurabilityAlertModule());

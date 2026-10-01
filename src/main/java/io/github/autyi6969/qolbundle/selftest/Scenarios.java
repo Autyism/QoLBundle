@@ -7,6 +7,7 @@ import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
@@ -54,6 +55,7 @@ final class Scenarios {
 		test.scenario("fall_damage", false, Scenarios::fallDamage);
 		test.scenario("portal_calculator", false, Scenarios::portalCalculator);
 		test.scenario("respawn_point", false, Scenarios::respawnPoint);
+		test.scenario("entity_counter", false, Scenarios::entityCounter);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -301,6 +303,31 @@ final class Scenarios {
 		s.check("bed removal is noticed", client -> module.getStatus() == RespawnPointModule.Status.BROKEN);
 		s.screenshot("09_respawn_lost");
 		s.command("kill @e[type=item]");
+	}
+
+	private static void entityCounter(SelfTest.Script s) {
+		EntityCounterModule module = module("entity_counter");
+		isolate(s, module);
+		s.command("kill @e[type=item]");
+		s.run("warn at 20 dropped items", client -> module.itemWarningSetting().set(20));
+		// Swords do not stack, so 30 of them stay 30 separate item entities.
+		for (int i = 0; i < 30; i++) {
+			s.command("summon item 5 " + GROUND_Y + " -6 {Item:{id:\"minecraft:diamond_sword\",count:1}}");
+		}
+		for (int i = 0; i < 4; i++) {
+			s.command("summon chicken " + (-4 + i) + " " + GROUND_Y + " -6 {NoAI:1b}");
+		}
+		s.waitTicks(30);
+		s.info("entity counts", client -> "total=" + module.getTotal() + " items=" + module.getCount(EntityCounterModule.Category.ITEM)
+				+ " animals=" + module.getCount(EntityCounterModule.Category.ANIMAL) + " pile=" + module.getPilePos());
+		s.check("30 dropped items are counted", client -> module.getCount(EntityCounterModule.Category.ITEM) == 30);
+		s.check("at least 4 animals are counted", client -> module.getCount(EntityCounterModule.Category.ANIMAL) >= 4);
+		s.check("the item pile is located at x=5 z=-6", client -> module.getPilePos() != null
+				&& module.getPilePos().getX() == 5 && module.getPilePos().getZ() == -6);
+		s.screenshot("10_entity_counter");
+		s.command("kill @e[type=item]");
+		s.command("kill @e[type=chicken]");
+		s.run("restore the warning threshold", client -> module.itemWarningSetting().reset());
 	}
 
 	private static void useLookedAtBlock(MinecraftClient client) {
