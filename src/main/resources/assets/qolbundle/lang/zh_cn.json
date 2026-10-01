@@ -90,5 +90,29 @@
 	"qolbundle.module.portal_calculator.hud.return_other": "回程：会从 %s, %s, %s 的门出来，不是这个门！",
 	"qolbundle.module.portal_calculator.setting.range": "多远能识别（格）",
 	"qolbundle.module.portal_calculator.setting.show_link": "显示会连到哪个门",
-	"qolbundle.module.portal_calculator.setting.show_return": "检查回程"
+	"qolbundle.module.portal_calculator.setting.show_return": "检查回程",
+
+	"qolbundle.dimension.overworld": "主世界",
+	"qolbundle.dimension.the_nether": "下界",
+	"qolbundle.dimension.the_end": "末地",
+
+	"qolbundle.module.respawn_point.name": "床与重生点管家",
+	"qolbundle.module.respawn_point.desc": "显示你的重生点在哪，床没了会大字警告。",
+	"qolbundle.module.respawn_point.hud.unknown": "重生点：未知（点一下床就会记录）",
+	"qolbundle.module.respawn_point.hud.none": "重生点：没有，死后回世界出生点",
+	"qolbundle.module.respawn_point.hud.set": "重生点：%s",
+	"qolbundle.module.respawn_point.hud.set_distance": "重生点：%s（距离 %s 格）",
+	"qolbundle.module.respawn_point.hud.set_other_dimension": "重生点：%s %s",
+	"qolbundle.module.respawn_point.hud.broken": "重生点失效！（原来在 %s）",
+	"qolbundle.module.respawn_point.hud.warning_title": "重生点失效",
+	"qolbundle.module.respawn_point.hud.warning_bed": "你的床没了，赶快重新睡一张床！",
+	"qolbundle.module.respawn_point.hud.warning_anchor": "你的重生锚没了或者没充能了。",
+	"qolbundle.module.respawn_point.hud.bed_yours": "这是你的重生床",
+	"qolbundle.module.respawn_point.hud.bed_not_yours": "这不是你的重生床",
+	"qolbundle.module.respawn_point.hud.bed_unsure": "不确定这是不是你的床",
+	"qolbundle.module.respawn_point.setting.position": "位置",
+	"qolbundle.module.respawn_point.setting.show_distance": "显示距离",
+	"qolbundle.module.respawn_point.setting.show_when_unknown": "未知时也显示一行",
+	"qolbundle.module.respawn_point.setting.bed_hint": "看着床时提示是不是你的",
+	"qolbundle.module.respawn_point.setting.warn_sound": "失效时响提示音"
 }

@@ -90,5 +90,29 @@
 	"qolbundle.module.portal_calculator.hud.return_other": "Way back: comes out at %s, %s, %s instead!",
 	"qolbundle.module.portal_calculator.setting.range": "Look distance (blocks)",
 	"qolbundle.module.portal_calculator.setting.show_link": "Show which portal it links to",
-	"qolbundle.module.portal_calculator.setting.show_return": "Check the way back"
+	"qolbundle.module.portal_calculator.setting.show_return": "Check the way back",
+
+	"qolbundle.dimension.overworld": "Overworld",
+	"qolbundle.dimension.the_nether": "The Nether",
+	"qolbundle.dimension.the_end": "The End",
+
+	"qolbundle.module.respawn_point.name": "Bed & Respawn Point Keeper",
+	"qolbundle.module.respawn_point.desc": "Shows where you will respawn and warns loudly when your bed is gone.",
+	"qolbundle.module.respawn_point.hud.unknown": "Respawn: unknown (use a bed to record it)",
+	"qolbundle.module.respawn_point.hud.none": "Respawn: none, you will respawn at world spawn",
+	"qolbundle.module.respawn_point.hud.set": "Respawn: %s",
+	"qolbundle.module.respawn_point.hud.set_distance": "Respawn: %s (%s blocks away)",
+	"qolbundle.module.respawn_point.hud.set_other_dimension": "Respawn: %s %s",
+	"qolbundle.module.respawn_point.hud.broken": "Respawn point LOST (was at %s)",
+	"qolbundle.module.respawn_point.hud.warning_title": "RESPAWN POINT LOST",
+	"qolbundle.module.respawn_point.hud.warning_bed": "Your bed is gone. Sleep in a bed again!",
+	"qolbundle.module.respawn_point.hud.warning_anchor": "Your respawn anchor is gone or empty.",
+	"qolbundle.module.respawn_point.hud.bed_yours": "This is your respawn bed",
+	"qolbundle.module.respawn_point.hud.bed_not_yours": "Not your respawn bed",
+	"qolbundle.module.respawn_point.hud.bed_unsure": "Unknown whether this is your bed",
+	"qolbundle.module.respawn_point.setting.position": "Position",
+	"qolbundle.module.respawn_point.setting.show_distance": "Show distance",
+	"qolbundle.module.respawn_point.setting.show_when_unknown": "Show a line while unknown",
+	"qolbundle.module.respawn_point.setting.bed_hint": "Tell whether the bed you look at is yours",
+	"qolbundle.module.respawn_point.setting.warn_sound": "Warning sound"
 }

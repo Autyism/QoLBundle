@@ -11,12 +11,16 @@ import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
+import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.tutorial.TutorialStep;
 import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -49,6 +53,7 @@ final class Scenarios {
 		test.scenario("break_progress", false, Scenarios::breakProgress);
 		test.scenario("fall_damage", false, Scenarios::fallDamage);
 		test.scenario("portal_calculator", false, Scenarios::portalCalculator);
+		test.scenario("respawn_point", false, Scenarios::respawnPoint);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -257,6 +262,53 @@ final class Scenarios {
 		s.check("link to the nether portal is now known", client -> module.getInfo() != null && module.getInfo().link() != null);
 		s.check("way back returns to this portal", client -> module.getInfo() != null && module.getInfo().returnsHere());
 		s.screenshot("08_portal_linked");
+	}
+
+	private static void respawnPoint(SelfTest.Script s) {
+		RespawnPointModule module = module("respawn_point");
+		BlockPos bedHead = new BlockPos(0, GROUND_Y, -4);
+		isolate(s, module);
+		// The world remembers the respawn point of earlier runs; move it away so that using the bed
+		// really changes it (the game only announces a respawn point when it changes).
+		s.command("spawnpoint @a 100 " + GROUND_Y + " 100");
+		s.run("forget the recorded respawn point", client -> module.forget());
+		s.command("setblock 0 " + GROUND_Y + " -4 red_bed[facing=north,part=head]");
+		s.command("setblock 0 " + GROUND_Y + " -3 red_bed[facing=north,part=foot]");
+		s.command("tp @a 0.5 " + GROUND_Y + " -1.0 180 40");
+		s.waitTicks(15);
+		s.check("nothing recorded yet", client -> module.getStatus() == RespawnPointModule.Status.UNKNOWN);
+		s.screenshot("09_respawn_unknown");
+
+		s.run("right-click the bed", Scenarios::useLookedAtBlock);
+		s.waitTicks(20);
+		s.check("respawn point recorded at the head of the bed after the set-spawn message",
+				client -> module.getStatus() == RespawnPointModule.Status.SET && bedHead.equals(module.getRespawnPos()));
+		s.screenshot("09_respawn_set");
+
+		// Same bed again: the game stays silent, and that silence must be read as "already yours".
+		s.run("forget, then click the same bed again", client -> {
+			module.forget();
+			useLookedAtBlock(client);
+		});
+		s.waitTicks(70);
+		s.check("silent click on the own bed is recognised",
+				client -> module.getStatus() == RespawnPointModule.Status.SET && bedHead.equals(module.getRespawnPos()));
+
+		s.command("setblock 0 " + GROUND_Y + " -4 air");
+		s.command("kill @e[type=item]");
+		s.waitTicks(25);
+		s.clearChat();
+		s.check("bed removal is noticed", client -> module.getStatus() == RespawnPointModule.Status.BROKEN);
+		s.screenshot("09_respawn_lost");
+		s.command("kill @e[type=item]");
+	}
+
+	private static void useLookedAtBlock(MinecraftClient client) {
+		if (client.crosshairTarget instanceof BlockHitResult hit && client.interactionManager != null) {
+			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
+		} else {
+			throw new IllegalStateException("not looking at a block");
+		}
 	}
 
 	@SuppressWarnings("unchecked")

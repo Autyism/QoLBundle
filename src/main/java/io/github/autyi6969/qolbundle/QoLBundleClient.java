@@ -13,6 +13,7 @@ import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
+import io.github.autyi6969.qolbundle.modules.RespawnPointModule;
 import io.github.autyi6969.qolbundle.selftest.SelfTest;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -69,6 +70,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new BreakProgressModule());
 		ModuleRegistry.register(new PortalCalculatorModule());
 		ModuleRegistry.register(new FallDamageModule());
+		ModuleRegistry.register(new RespawnPointModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
 	}
 
