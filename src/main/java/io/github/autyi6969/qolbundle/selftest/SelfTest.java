@@ -239,6 +239,15 @@ public final class SelfTest {
 			return this;
 		}
 
+		/** Empties the chat so that server messages ("game mode updated") are not in the screenshot. */
+		public Script clearChat() {
+			add("clear chat", (client, ticks) -> {
+				client.inGameHud.getChatHud().clear(false);
+				return true;
+			});
+			return this;
+		}
+
 		/** Checks a condition and logs it; a failed check fails the scenario but lets it continue. */
 		public Script check(String description, Predicate<MinecraftClient> condition) {
 			add("check " + description, (client, ticks) -> {
@@ -264,6 +273,10 @@ public final class SelfTest {
 		/** Saves run/screenshots/selftest/NAME.png. Waits a few ticks first so the frame is up to date. */
 		public Script screenshot(String name) {
 			add("screenshot " + name, (client, ticks) -> {
+				if (ticks == 0) {
+					// Pop-ups like "Advancement made!" only hide what the screenshot is about.
+					client.getToastManager().clear();
+				}
 				if (ticks < 6) {
 					return false;
 				}

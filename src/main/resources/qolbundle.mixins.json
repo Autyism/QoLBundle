@@ -3,6 +3,8 @@
 	"package": "io.github.autyi6969.qolbundle.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"ClientPlayerInteractionManagerAccessor",
+		"LightmapTextureManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

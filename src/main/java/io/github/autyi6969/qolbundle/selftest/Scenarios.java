@@ -4,7 +4,12 @@ import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
+import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.FallDamageModule;
+import io.github.autyi6969.qolbundle.modules.FullbrightModule;
+import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -36,6 +41,11 @@ final class Scenarios {
 		test.scenario("settings_screen", false, Scenarios::settingsScreen);
 		test.scenario("enter_world", true, Scenarios::enterWorld);
 		test.scenario("durability_alert", false, Scenarios::durabilityAlert);
+		test.scenario("fullbright", false, Scenarios::fullbright);
+		test.scenario("info_hud", false, Scenarios::infoHud);
+		test.scenario("armor_hud", false, Scenarios::armorHud);
+		test.scenario("break_progress", false, Scenarios::breakProgress);
+		test.scenario("fall_damage", false, Scenarios::fallDamage);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -121,6 +131,98 @@ final class Scenarios {
 		s.screenshot("02_durability_alert");
 	}
 
+	private static void fullbright(SelfTest.Script s) {
+		FullbrightModule module = module("fullbright");
+		isolate(s, module);
+		// A closed stone room around the player: pitch dark inside.
+		s.command("fill -3 -60 -3 3 -55 3 stone hollow");
+		s.command("tp @a 0.5 -59 0.5 180 0");
+		s.run("fullbright off", client -> module.setEnabled(false));
+		s.waitTicks(30);
+		s.screenshot("03_fullbright_off");
+		s.run("fullbright on", client -> module.setEnabled(true));
+		s.waitTicks(20);
+		s.screenshot("03_fullbright_on");
+	}
+
+	private static void infoHud(SelfTest.Script s) {
+		InfoHudModule module = module("info_hud");
+		isolate(s, module);
+		s.waitTicks(10);
+		s.check("a line shows the player's x coordinate 0.5",
+				client -> module.getLines().stream().anyMatch(line -> line.getString().contains("0.5")));
+		s.check("at least 4 lines are shown", client -> module.getLines().size() >= 4);
+		s.screenshot("04_info_hud");
+	}
+
+	private static void armorHud(SelfTest.Script s) {
+		ArmorHudModule module = module("armor_hud");
+		isolate(s, module);
+		s.command("item replace entity @a armor.head with diamond_helmet");
+		s.command("item replace entity @a armor.chest with iron_chestplate[damage=120]");
+		s.command("item replace entity @a armor.legs with golden_leggings[damage=95]");
+		s.command("item replace entity @a armor.feet with netherite_boots[damage=200]");
+		s.command("give @a diamond_pickaxe[damage=700]");
+		s.waitTicks(15);
+		s.clearChat();
+		s.check("4 armor pieces + 1 tool are shown", client -> module.getShownCount() == 5);
+		s.screenshot("05_armor_hud");
+	}
+
+	private static void breakProgress(SelfTest.Script s) {
+		BreakProgressModule module = module("break_progress");
+		isolate(s, module);
+		// A stone pillar right in front of the player, mined by hand in survival (takes 7.5 s).
+		s.command("fill 0 -60 -2 0 -58 -2 stone");
+		s.command("gamemode survival @a");
+		s.waitTicks(10);
+		s.run("grab the mouse as a focused window would", client -> {
+			// The game only mines while the mouse is grabbed, and only grabs it when the window has
+			// focus. The test window is usually in the background, so tell the game it is focused.
+			client.onWindowFocusChanged(true);
+			client.mouse.lockCursor();
+		});
+		s.waitTicks(3);
+		s.run("hold the attack key", client -> client.options.attackKey.setPressed(true));
+		s.waitTicks(40);
+		s.clearChat();
+		s.info("break progress", client -> module.getLastProgress());
+		s.check("break progress is above 5 %", client -> module.getLastProgress() > 0.05F);
+		s.screenshot("06_break_progress");
+		s.run("release the attack key", client -> client.options.attackKey.setPressed(false));
+		s.command("gamemode creative @a");
+	}
+
+	private static void fallDamage(SelfTest.Script s) {
+		FallDamageModule module = module("fall_damage");
+		isolate(s, module);
+		// 20 blocks above the ground: 20 - 3 safe blocks = 17 damage = 8.5 hearts, survivable with 10 hearts.
+		s.command("gamemode survival @a");
+		s.command("tp @a 0.5 " + (GROUND_Y + 20) + " 0.5 180 20");
+		s.waitTicks(5);
+		s.clearChat();
+		s.info("predicted damage from 20 blocks", client -> module.getPredictedDamage());
+		s.check("20 block fall predicts 17 damage", client -> module.getPredictedDamage() == 17F);
+		s.check("20 block fall is not lethal", client -> !module.isLethal());
+		s.screenshot("07_fall_damage_survivable");
+		// Creative before touching down, so the test player never actually gets hurt.
+		s.command("gamemode creative @a");
+		s.waitTicks(30);
+
+		s.command("gamemode survival @a");
+		s.command("tp @a 0.5 " + (GROUND_Y + 100) + " 0.5 180 20");
+		s.waitTicks(8);
+		s.clearChat();
+		s.info("predicted damage from 100 blocks", client -> module.getPredictedDamage());
+		s.check("100 block fall predicts 97 damage", client -> module.getPredictedDamage() == 97F);
+		s.check("100 block fall is lethal", client -> module.isLethal());
+		s.screenshot("07_fall_damage_lethal");
+		s.command("gamemode creative @a");
+		s.waitTicks(70);
+		s.check("player is back on the ground and alive",
+				client -> client.player != null && client.player.isOnGround() && client.player.isAlive());
+	}
+
 	@SuppressWarnings("unchecked")
 	private static <M extends Module> M module(String id) {
 		Module module = ModuleRegistry.get(id);
@@ -139,6 +241,8 @@ final class Scenarios {
 		s.command("gamemode creative @a");
 		s.command("clear @a");
 		s.command("effect clear @a");
+		// Remove anything an earlier scenario built around the origin.
+		s.command("fill -8 -60 -8 8 -50 8 air");
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
 		s.run("select hotbar slot 1 and clear chat", client -> {
 			if (client.player != null) {

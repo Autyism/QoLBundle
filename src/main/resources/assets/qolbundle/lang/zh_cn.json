@@ -27,5 +27,55 @@
 	"qolbundle.module.durability_alert.setting.check_armor": "也检查身上的盔甲",
 	"qolbundle.module.durability_alert.setting.flash": "屏幕边缘闪红",
 	"qolbundle.module.durability_alert.setting.sound": "播放提示音",
-	"qolbundle.module.durability_alert.setting.show_text": "显示物品名和剩余耐久"
+	"qolbundle.module.durability_alert.setting.show_text": "显示物品名和剩余耐久",
+
+	"qolbundle.direction.north": "北",
+	"qolbundle.direction.south": "南",
+	"qolbundle.direction.east": "东",
+	"qolbundle.direction.west": "西",
+
+	"qolbundle.option.durabilitydisplay.remaining": "剩余耐久",
+	"qolbundle.option.durabilitydisplay.percent": "百分比",
+	"qolbundle.option.durabilitydisplay.both": "两个都显示",
+
+	"qolbundle.module.fullbright.name": "夜视（Fullbright）",
+	"qolbundle.module.fullbright.desc": "不喝药水也能像夜视一样看清黑暗的地方。",
+	"qolbundle.module.fullbright.setting.strength": "亮度",
+
+	"qolbundle.module.info_hud.name": "信息 HUD",
+	"qolbundle.module.info_hud.desc": "在屏幕角落显示坐标、朝向、FPS 和时间。",
+	"qolbundle.module.info_hud.line.coords": "坐标：%s / %s / %s",
+	"qolbundle.module.info_hud.line.facing": "朝向：%s（%s）",
+	"qolbundle.module.info_hud.line.fps": "FPS：%s",
+	"qolbundle.module.info_hud.line.game_time": "第 %s 天 %s",
+	"qolbundle.module.info_hud.line.real_time": "现实时间：%s",
+	"qolbundle.module.info_hud.setting.position": "位置",
+	"qolbundle.module.info_hud.setting.show_coords": "坐标",
+	"qolbundle.module.info_hud.setting.show_facing": "朝向",
+	"qolbundle.module.info_hud.setting.show_fps": "FPS",
+	"qolbundle.module.info_hud.setting.show_game_time": "游戏内时间",
+	"qolbundle.module.info_hud.setting.show_real_time": "现实时间",
+
+	"qolbundle.module.armor_hud.name": "盔甲耐久 HUD",
+	"qolbundle.module.armor_hud.desc": "显示身上盔甲和手持工具的剩余耐久。",
+	"qolbundle.module.armor_hud.setting.position": "位置",
+	"qolbundle.module.armor_hud.setting.display": "耐久显示方式",
+	"qolbundle.module.armor_hud.setting.show_hands": "包括手持物品",
+
+	"qolbundle.module.break_progress.name": "破坏进度",
+	"qolbundle.module.break_progress.desc": "挖方块时显示已挖百分比和还要多久。",
+	"qolbundle.module.break_progress.setting.show_bar": "进度条",
+	"qolbundle.module.break_progress.setting.show_percent": "百分比",
+	"qolbundle.module.break_progress.setting.show_time": "剩余时间",
+
+	"qolbundle.module.fall_damage.name": "落地伤害预告",
+	"qolbundle.module.fall_damage.desc": "下落时显示落地会扣几颗心、会不会死。",
+	"qolbundle.module.fall_damage.hud.damage": "落地：-%s ❤",
+	"qolbundle.module.fall_damage.hud.lethal": "落地：-%s ❤  会死",
+	"qolbundle.module.fall_damage.hud.lethal_totem": "落地：-%s ❤  会死（图腾会救你）",
+	"qolbundle.module.fall_damage.hud.safe": "落地：安全",
+	"qolbundle.module.fall_damage.hud.no_ground": "落地：下面没有地面",
+	"qolbundle.module.fall_damage.hud.distance": "  （%s 格）",
+	"qolbundle.module.fall_damage.setting.show_distance": "显示下落高度",
+	"qolbundle.module.fall_damage.setting.show_when_safe": "落地安全时也显示"
 }

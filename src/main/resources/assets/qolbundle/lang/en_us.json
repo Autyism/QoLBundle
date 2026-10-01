@@ -27,5 +27,55 @@
 	"qolbundle.module.durability_alert.setting.check_armor": "Also watch worn armor",
 	"qolbundle.module.durability_alert.setting.flash": "Flash screen edges red",
 	"qolbundle.module.durability_alert.setting.sound": "Play a sound",
-	"qolbundle.module.durability_alert.setting.show_text": "Show item name and uses left"
+	"qolbundle.module.durability_alert.setting.show_text": "Show item name and uses left",
+
+	"qolbundle.direction.north": "North",
+	"qolbundle.direction.south": "South",
+	"qolbundle.direction.east": "East",
+	"qolbundle.direction.west": "West",
+
+	"qolbundle.option.durabilitydisplay.remaining": "Uses left",
+	"qolbundle.option.durabilitydisplay.percent": "Percent",
+	"qolbundle.option.durabilitydisplay.both": "Both",
+
+	"qolbundle.module.fullbright.name": "Fullbright",
+	"qolbundle.module.fullbright.desc": "See in the dark as if you had Night Vision, without the potion.",
+	"qolbundle.module.fullbright.setting.strength": "Brightness",
+
+	"qolbundle.module.info_hud.name": "Info HUD",
+	"qolbundle.module.info_hud.desc": "Coordinates, facing, FPS and time in a screen corner.",
+	"qolbundle.module.info_hud.line.coords": "XYZ: %s / %s / %s",
+	"qolbundle.module.info_hud.line.facing": "Facing: %s (%s)",
+	"qolbundle.module.info_hud.line.fps": "FPS: %s",
+	"qolbundle.module.info_hud.line.game_time": "Day %s, %s",
+	"qolbundle.module.info_hud.line.real_time": "Clock: %s",
+	"qolbundle.module.info_hud.setting.position": "Position",
+	"qolbundle.module.info_hud.setting.show_coords": "Coordinates",
+	"qolbundle.module.info_hud.setting.show_facing": "Facing",
+	"qolbundle.module.info_hud.setting.show_fps": "FPS",
+	"qolbundle.module.info_hud.setting.show_game_time": "In-game time",
+	"qolbundle.module.info_hud.setting.show_real_time": "Real-world clock",
+
+	"qolbundle.module.armor_hud.name": "Armor Durability HUD",
+	"qolbundle.module.armor_hud.desc": "Worn armor and held tools with their remaining durability.",
+	"qolbundle.module.armor_hud.setting.position": "Position",
+	"qolbundle.module.armor_hud.setting.display": "Show durability as",
+	"qolbundle.module.armor_hud.setting.show_hands": "Include held items",
+
+	"qolbundle.module.break_progress.name": "Break Progress",
+	"qolbundle.module.break_progress.desc": "Shows how far the block you are mining is broken, and the time left.",
+	"qolbundle.module.break_progress.setting.show_bar": "Progress bar",
+	"qolbundle.module.break_progress.setting.show_percent": "Percentage",
+	"qolbundle.module.break_progress.setting.show_time": "Time left",
+
+	"qolbundle.module.fall_damage.name": "Fall Damage Preview",
+	"qolbundle.module.fall_damage.desc": "While falling, shows how many hearts the landing will cost and whether it kills you.",
+	"qolbundle.module.fall_damage.hud.damage": "Landing: -%s ❤",
+	"qolbundle.module.fall_damage.hud.lethal": "Landing: -%s ❤  FATAL",
+	"qolbundle.module.fall_damage.hud.lethal_totem": "Landing: -%s ❤  FATAL (totem will save you)",
+	"qolbundle.module.fall_damage.hud.safe": "Landing: safe",
+	"qolbundle.module.fall_damage.hud.no_ground": "Landing: no ground below",
+	"qolbundle.module.fall_damage.hud.distance": "  (%s blocks)",
+	"qolbundle.module.fall_damage.setting.show_distance": "Show fall height",
+	"qolbundle.module.fall_damage.setting.show_when_safe": "Also show when the landing is safe"
 }

@@ -5,7 +5,12 @@ import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.hud.HudLayout;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
+import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
+import io.github.autyi6969.qolbundle.modules.FallDamageModule;
+import io.github.autyi6969.qolbundle.modules.FullbrightModule;
+import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.selftest.SelfTest;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -55,6 +60,11 @@ public class QoLBundleClient implements ClientModInitializer {
 
 	/** The one place where modules are added. Order here = order in the settings screen and on the HUD. */
 	private static void registerModules() {
+		ModuleRegistry.register(new FullbrightModule());
+		ModuleRegistry.register(new InfoHudModule());
+		ModuleRegistry.register(new ArmorHudModule());
+		ModuleRegistry.register(new BreakProgressModule());
+		ModuleRegistry.register(new FallDamageModule());
 		ModuleRegistry.register(new DurabilityAlertModule());
 	}
 
