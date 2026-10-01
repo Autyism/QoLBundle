@@ -10,6 +10,7 @@ import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
+import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -18,6 +19,7 @@ import net.minecraft.resource.DataConfiguration;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.WorldPresets;
 import net.minecraft.world.level.LevelInfo;
@@ -46,6 +48,7 @@ final class Scenarios {
 		test.scenario("armor_hud", false, Scenarios::armorHud);
 		test.scenario("break_progress", false, Scenarios::breakProgress);
 		test.scenario("fall_damage", false, Scenarios::fallDamage);
+		test.scenario("portal_calculator", false, Scenarios::portalCalculator);
 	}
 
 	private static void boot(SelfTest.Script s) {
@@ -223,6 +226,39 @@ final class Scenarios {
 				client -> client.player != null && client.player.isOnGround() && client.player.isAlive());
 	}
 
+	private static void portalCalculator(SelfTest.Script s) {
+		PortalCalculatorModule module = module("portal_calculator");
+		isolate(s, module);
+		s.run("forget portals remembered by earlier runs", client -> module.forgetAll());
+		// A 2x3 portal in an obsidian frame, 3 blocks in front of where the player will stand.
+		s.command("fill 2 -60 -5 5 -56 -5 obsidian");
+		s.command("fill 3 -59 -5 4 -57 -5 nether_portal[axis=x]");
+		s.command("tp @a 3.5 -60 -1.5 180 0");
+		s.waitTicks(20);
+		s.check("portal is recognised when looked at", client -> module.getInfo() != null);
+		// Portal centre x=4.0, z=-4.5 -> divided by 8 and rounded down: 0, -1.
+		s.check("nether side is x=0 z=-1", client -> module.getInfo() != null
+				&& module.getInfo().target().getX() == 0 && module.getInfo().target().getZ() == -1);
+		s.check("no link known yet", client -> module.getInfo() != null && module.getInfo().link() == null);
+		s.screenshot("08_portal_new");
+
+		// Walk through it for real: the game creates the nether-side portal, the module should spot it.
+		s.command("tp @a 3.5 -59 -4.5 180 0");
+		s.waitUntil("arrived in the nether", client -> client.world != null
+				&& client.world.getRegistryKey() == World.NETHER && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitTicks(60);
+		s.info("nether portals known", client -> module.getKnownCount("minecraft:the_nether"));
+		s.check("nether-side portal was remembered", client -> module.getKnownCount("minecraft:the_nether") >= 1);
+		s.command("execute in minecraft:overworld run tp @a 3.5 -60 -1.5 180 0");
+		s.waitUntil("back in the overworld", client -> client.world != null
+				&& client.world.getRegistryKey() == World.OVERWORLD && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitTicks(40);
+		s.clearChat();
+		s.check("link to the nether portal is now known", client -> module.getInfo() != null && module.getInfo().link() != null);
+		s.check("way back returns to this portal", client -> module.getInfo() != null && module.getInfo().returnsHere());
+		s.screenshot("08_portal_linked");
+	}
+
 	@SuppressWarnings("unchecked")
 	private static <M extends Module> M module(String id) {
 		Module module = ModuleRegistry.get(id);
@@ -243,7 +279,8 @@ final class Scenarios {
 		s.command("effect clear @a");
 		// Remove anything an earlier scenario built around the origin.
 		s.command("fill -8 -60 -8 8 -50 8 air");
-		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		// "execute in overworld" also brings the player back if a scenario left them in the nether.
+		s.command("execute in minecraft:overworld run tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
 		s.run("select hotbar slot 1 and clear chat", client -> {
 			if (client.player != null) {
 				client.player.getInventory().setSelectedSlot(0);

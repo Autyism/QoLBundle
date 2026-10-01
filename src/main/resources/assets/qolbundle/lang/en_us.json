@@ -77,5 +77,18 @@
 	"qolbundle.module.fall_damage.hud.no_ground": "Landing: no ground below",
 	"qolbundle.module.fall_damage.hud.distance": "  (%s blocks)",
 	"qolbundle.module.fall_damage.setting.show_distance": "Show fall height",
-	"qolbundle.module.fall_damage.setting.show_when_safe": "Also show when the landing is safe"
+	"qolbundle.module.fall_damage.setting.show_when_safe": "Also show when the landing is safe",
+
+	"qolbundle.module.portal_calculator.name": "Portal Calculator",
+	"qolbundle.module.portal_calculator.desc": "Look at a nether portal to see the matching coordinates on the other side and which portal it links to.",
+	"qolbundle.module.portal_calculator.hud.target_nether": "Nether side: %s, %s, %s",
+	"qolbundle.module.portal_calculator.hud.target_overworld": "Overworld side: %s, %s, %s",
+	"qolbundle.module.portal_calculator.hud.link_known": "Links to: portal at %s, %s, %s (%s blocks off sideways)",
+	"qolbundle.module.portal_calculator.hud.link_new": "Links to: no known portal within %s blocks, a new one will be created",
+	"qolbundle.module.portal_calculator.hud.note": "(only portals you have seen are known)",
+	"qolbundle.module.portal_calculator.hud.return_ok": "Way back: returns to this portal",
+	"qolbundle.module.portal_calculator.hud.return_other": "Way back: comes out at %s, %s, %s instead!",
+	"qolbundle.module.portal_calculator.setting.range": "Look distance (blocks)",
+	"qolbundle.module.portal_calculator.setting.show_link": "Show which portal it links to",
+	"qolbundle.module.portal_calculator.setting.show_return": "Check the way back"
 }

@@ -77,5 +77,18 @@
 	"qolbundle.module.fall_damage.hud.no_ground": "落地：下面没有地面",
 	"qolbundle.module.fall_damage.hud.distance": "  （%s 格）",
 	"qolbundle.module.fall_damage.setting.show_distance": "显示下落高度",
-	"qolbundle.module.fall_damage.setting.show_when_safe": "落地安全时也显示"
+	"qolbundle.module.fall_damage.setting.show_when_safe": "落地安全时也显示",
+
+	"qolbundle.module.portal_calculator.name": "传送门计算器",
+	"qolbundle.module.portal_calculator.desc": "看着下界传送门，显示另一边的对应坐标，以及会连到哪个门。",
+	"qolbundle.module.portal_calculator.hud.target_nether": "对应下界坐标：%s, %s, %s",
+	"qolbundle.module.portal_calculator.hud.target_overworld": "对应主世界坐标：%s, %s, %s",
+	"qolbundle.module.portal_calculator.hud.link_known": "会连到：%s, %s, %s 的门（水平偏差 %s 格）",
+	"qolbundle.module.portal_calculator.hud.link_new": "会连到：%s 格内没有已知的门，会新建一个",
+	"qolbundle.module.portal_calculator.hud.note": "（只认得你亲眼见过的门）",
+	"qolbundle.module.portal_calculator.hud.return_ok": "回程：会回到这个门",
+	"qolbundle.module.portal_calculator.hud.return_other": "回程：会从 %s, %s, %s 的门出来，不是这个门！",
+	"qolbundle.module.portal_calculator.setting.range": "多远能识别（格）",
+	"qolbundle.module.portal_calculator.setting.show_link": "显示会连到哪个门",
+	"qolbundle.module.portal_calculator.setting.show_return": "检查回程"
 }
