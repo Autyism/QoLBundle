@@ -2,6 +2,7 @@ package io.github.autyi6969.qolbundle.selftest;
 
 import io.github.autyi6969.qolbundle.QoLBundleClient;
 import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
+import io.github.autyi6969.qolbundle.config.ConfigManager;
 import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
 import io.github.autyi6969.qolbundle.gui.HotbarLayoutScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
@@ -85,6 +86,7 @@ public final class Scenarios {
 	static void build(SelfTest test) {
 		test.scenario("boot", true, s -> boot(test, s));
 		test.scenario("settings_screen", false, Scenarios::settingsScreen);
+		test.scenario("share_code", false, Scenarios::shareCode);
 		test.scenario("enter_world", true, Scenarios::enterWorld);
 		test.scenario("durability_alert", false, Scenarios::durabilityAlert);
 		test.scenario("fullbright", false, Scenarios::fullbright);
@@ -193,6 +195,37 @@ public final class Scenarios {
 		} catch (ReflectiveOperationException e) {
 			return false;
 		}
+	}
+
+	/** Export the settings as a share code, change them, import the code: everything must be back. */
+	private static void shareCode(SelfTest.Script s) {
+		InfoHudModule infoHud = module("info_hud");
+		FullbrightModule fullbright = module("fullbright");
+		HotbarLayoutsModule layouts = module("hotbar_layouts");
+		String[] code = new String[1];
+		boolean[] wasOn = new boolean[1];
+		s.run("set some unusual values and export", client -> {
+			wasOn[0] = fullbright.isEnabled();
+			infoHud.textSizeSetting().set(150);
+			fullbright.setEnabled(!wasOn[0]);
+			layouts.setLayoutName(4, "Shared");
+			code[0] = ConfigManager.exportCode();
+		});
+		s.info("share code length", client -> code[0].length());
+		s.run("change them back", client -> {
+			infoHud.textSizeSetting().reset();
+			fullbright.setEnabled(wasOn[0]);
+			layouts.setLayoutName(4, "");
+		});
+		s.check("text that is not a share code is refused and changes nothing", client ->
+				!ConfigManager.importCode("hello") && !ConfigManager.importCode("QOL1:not-base64!") && infoHud.textSizeSetting().get() == 100);
+		s.check("importing the code brings all three values back", client -> ConfigManager.importCode(code[0])
+				&& infoHud.textSizeSetting().get() == 150 && fullbright.isEnabled() != wasOn[0] && layouts.getLayoutName(4).equals("Shared"));
+		s.run("restore the real values", client -> {
+			infoHud.textSizeSetting().reset();
+			fullbright.setEnabled(wasOn[0]);
+			layouts.setLayoutName(4, "");
+		});
 	}
 
 	private static void enterWorld(SelfTest.Script s) {

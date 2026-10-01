@@ -4,6 +4,8 @@ import io.github.autyi6969.qolbundle.config.ConfigManager;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import com.google.gson.JsonObject;
+import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -52,6 +54,36 @@ public class ModuleListScreen extends ScrollListScreen {
 			ConfigManager.save();
 		}).size(40, 20).build());
 		toggle.setTooltip(Tooltip.of(module.getDescription()));
+	}
+
+	/** Share code buttons next to "Done". */
+	@Override
+	protected void addFooter() {
+		int y = this.height - 27;
+		int left = this.width / 2 - 154;
+		Tooltip tooltip = Tooltip.of(Text.translatable("qolbundle.gui.share.tooltip"));
+		ButtonWidget export = addDrawableChild(ButtonWidget.builder(Text.translatable("qolbundle.gui.export"), button -> {
+			this.client.keyboard.setClipboard(ConfigManager.exportCode());
+			button.setMessage(Text.translatable("qolbundle.gui.export.done"));
+		}).dimensions(left, y, 100, 20).build());
+		export.setTooltip(tooltip);
+		ButtonWidget importButton = addDrawableChild(ButtonWidget.builder(Text.translatable("qolbundle.gui.import"), button -> {
+			String clipboard = this.client.keyboard.getClipboard();
+			JsonObject parsed = ConfigManager.parseCode(clipboard);
+			if (parsed == null) {
+				button.setMessage(Text.translatable("qolbundle.gui.import.invalid").formatted(Formatting.RED));
+				return;
+			}
+			this.client.setScreen(new ConfirmScreen(confirmed -> {
+				if (confirmed) {
+					ConfigManager.importCode(clipboard);
+				}
+				this.client.setScreen(this);
+			}, Text.translatable("qolbundle.gui.import.title"),
+					Text.translatable("qolbundle.gui.import.message", ConfigManager.countModules(parsed))));
+		}).dimensions(left + 104, y, 100, 20).build());
+		importButton.setTooltip(tooltip);
+		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> close()).dimensions(left + 208, y, 100, 20).build());
 	}
 
 	static Text toggleText(Module module) {

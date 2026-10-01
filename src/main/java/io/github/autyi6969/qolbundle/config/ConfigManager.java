@@ -11,11 +11,16 @@ import io.github.autyi6969.qolbundle.module.ModuleRegistry;
 import io.github.autyi6969.qolbundle.module.setting.Setting;
 import net.fabricmc.loader.api.FabricLoader;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Base64;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Reads and writes config/qolbundle.json.
@@ -58,17 +63,7 @@ public final class ConfigManager {
 			if (!root.isJsonObject()) {
 				throw new IllegalStateException("root is not an object");
 			}
-			JsonElement modules = root.getAsJsonObject().get("modules");
-			if (modules == null || !modules.isJsonObject()) {
-				return;
-			}
-			for (Module module : ModuleRegistry.all()) {
-				JsonElement entry = modules.getAsJsonObject().get(module.getId());
-				if (entry == null || !entry.isJsonObject()) {
-					continue;
-				}
-				readModule(module, entry.getAsJsonObject());
-			}
+			apply(root.getAsJsonObject());
 		} catch (Exception e) {
 			QoLBundleClient.LOGGER.error("Could not read {}, keeping defaults. The broken file is kept as {}.broken",
 					path, path.getFileName(), e);
@@ -78,6 +73,23 @@ public final class ConfigManager {
 				// best effort only
 			}
 		}
+	}
+
+	/** Takes over every module found in the given config tree; returns how many modules it covered. */
+	private static int apply(JsonObject root) {
+		JsonElement modules = root.get("modules");
+		if (modules == null || !modules.isJsonObject()) {
+			return 0;
+		}
+		int count = 0;
+		for (Module module : ModuleRegistry.all()) {
+			JsonElement entry = modules.getAsJsonObject().get(module.getId());
+			if (entry != null && entry.isJsonObject()) {
+				readModule(module, entry.getAsJsonObject());
+				count++;
+			}
+		}
+		return count;
 	}
 
 	private static void readModule(Module module, JsonObject json) {
@@ -98,10 +110,63 @@ public final class ConfigManager {
 		}
 	}
 
-	public static void save() {
-		if (savingSuppressed) {
-			return;
+	// ---- share codes ---------------------------------------------------------------------------
+
+	private static final String CODE_PREFIX = "QOL1:";
+
+	/** Everything in the config as one line of text that can be pasted into a chat. */
+	public static String exportCode() {
+		try {
+			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+			try (GZIPOutputStream gzip = new GZIPOutputStream(bytes)) {
+				gzip.write(new Gson().toJson(toJson()).getBytes(StandardCharsets.UTF_8));
+			}
+			return CODE_PREFIX + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes.toByteArray());
+		} catch (IOException e) {
+			throw new IllegalStateException(e); // writing to memory cannot fail
 		}
+	}
+
+	/** The settings inside a share code, or null when the text is not a (readable) share code. */
+	public static JsonObject parseCode(String code) {
+		String text = code == null ? "" : code.trim();
+		if (!text.startsWith(CODE_PREFIX)) {
+			return null;
+		}
+		try {
+			byte[] packed = Base64.getUrlDecoder().decode(text.substring(CODE_PREFIX.length()));
+			try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(packed))) {
+				// A share code is a few kilobytes; refuse anything that unpacks to more than 1 MB.
+				byte[] json = gzip.readNBytes(1 << 20);
+				if (gzip.read() != -1) {
+					return null;
+				}
+				JsonElement root = JsonParser.parseString(new String(json, StandardCharsets.UTF_8));
+				return root.isJsonObject() && root.getAsJsonObject().has("modules") ? root.getAsJsonObject() : null;
+			}
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/** How many modules a parsed share code has settings for. */
+	public static int countModules(JsonObject parsed) {
+		JsonElement modules = parsed.get("modules");
+		return modules != null && modules.isJsonObject() ? modules.getAsJsonObject().size() : 0;
+	}
+
+	/** Applies a share code. Returns false, changing nothing, when the text is not a share code. */
+	public static boolean importCode(String code) {
+		JsonObject parsed = parseCode(code);
+		if (parsed == null) {
+			return false;
+		}
+		apply(parsed);
+		save();
+		return true;
+	}
+
+	private static JsonObject toJson() {
 		JsonObject modules = new JsonObject();
 		for (Module module : ModuleRegistry.all()) {
 			JsonObject entry = new JsonObject();
@@ -114,6 +179,14 @@ public final class ConfigManager {
 		JsonObject root = new JsonObject();
 		root.addProperty("version", VERSION);
 		root.add("modules", modules);
+		return root;
+	}
+
+	public static void save() {
+		if (savingSuppressed) {
+			return;
+		}
+		JsonObject root = toJson();
 
 		Path path = getPath();
 		try {
