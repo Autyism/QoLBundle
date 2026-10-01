@@ -90,6 +90,10 @@ public abstract class Module {
 	protected void onEnabledChanged(boolean enabled) {
 	}
 
+	/** Called at the very start of each client tick, before the game looks at the keys. */
+	public void onStartTick(MinecraftClient client) {
+	}
+
 	/** Called once per client tick. {@code client.player} and {@code client.world} may be null. */
 	public void onTick(MinecraftClient client) {
 	}

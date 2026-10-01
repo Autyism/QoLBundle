@@ -1,11 +1,13 @@
 package io.github.autyi6969.qolbundle;
 
+import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.config.ConfigManager;
 import io.github.autyi6969.qolbundle.data.WorldData;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.hud.HudLayout;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import io.github.autyi6969.qolbundle.modules.AfkClickerModule;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
@@ -29,6 +31,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.option.KeyBinding;
@@ -38,6 +41,8 @@ import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class QoLBundleClient implements ClientModInitializer {
 	public static final String MOD_ID = "qolbundle";
@@ -60,6 +65,13 @@ public class QoLBundleClient implements ClientModInitializer {
 		openSettingsKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 				"key.qolbundle.open_settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
 
+		ClientTickEvents.START_CLIENT_TICK.register(client -> {
+			for (Module module : ModuleRegistry.all()) {
+				if (module.isEnabled()) {
+					module.onStartTick(client);
+				}
+			}
+		});
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
@@ -89,6 +101,17 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new ElytraDashboardModule());
 		ModuleRegistry.register(new SoundCompassModule());
 		ModuleRegistry.register(new ChatEnhancementsModule());
+		// Grey zone (single-player / own server), all off by default.
+		ModuleRegistry.register(new AfkClickerModule());
+		// Modules from add-on mods (the X-ray add-on lives in its own jar).
+		for (QoLBundleAddon addon : addons()) {
+			addon.registerModules();
+		}
+	}
+
+	/** Add-on mods that declared the "qolbundle" entrypoint. */
+	public static List<QoLBundleAddon> addons() {
+		return FabricLoader.getInstance().getEntrypoints(QoLBundleAddon.ENTRYPOINT_KEY, QoLBundleAddon.class);
 	}
 
 	private void onClientTick(MinecraftClient client) {

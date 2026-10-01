@@ -8,7 +8,9 @@ import java.util.Locale;
 public enum ModuleCategory {
 	TECHNICAL,
 	INFO,
-	TOOLS;
+	TOOLS,
+	/** Automation and information advantages: fine alone or on your own server, risky on public ones. */
+	GREY;
 
 	public Text getDisplayName() {
 		return Text.translatable("qolbundle.category." + name().toLowerCase(Locale.ROOT));

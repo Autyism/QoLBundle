@@ -1,11 +1,14 @@
 package io.github.autyi6969.qolbundle.selftest;
 
+import io.github.autyi6969.qolbundle.QoLBundleClient;
+import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.gui.ChatSearchScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleListScreen;
 import io.github.autyi6969.qolbundle.gui.ModuleSettingsScreen;
 import io.github.autyi6969.qolbundle.mixin.ChatHudAccessor;
 import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleRegistry;
+import io.github.autyi6969.qolbundle.modules.AfkClickerModule;
 import io.github.autyi6969.qolbundle.modules.ArmorHudModule;
 import io.github.autyi6969.qolbundle.modules.BreakProgressModule;
 import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
@@ -33,6 +36,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
@@ -52,9 +56,9 @@ import java.util.concurrent.CompletableFuture;
  *
  * <p>The player stands on the superflat surface at y = -60.
  */
-final class Scenarios {
+public final class Scenarios {
 	private static final String WORLD_NAME = "selftest";
-	static final int GROUND_Y = -60;
+	public static final int GROUND_Y = -60;
 
 	private Scenarios() {
 	}
@@ -77,6 +81,10 @@ final class Scenarios {
 		test.scenario("elytra_dashboard", false, Scenarios::elytraDashboard);
 		test.scenario("sound_compass", false, Scenarios::soundCompass);
 		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
+		test.scenario("afk_clicker", false, Scenarios::afkClicker);
+		for (QoLBundleAddon addon : QoLBundleClient.addons()) {
+			addon.registerSelfTests(test);
+		}
 		test.scenario("chinese_ui", false, Scenarios::chineseUi);
 	}
 
@@ -595,6 +603,44 @@ final class Scenarios {
 		return lines.isEmpty() ? "" : lines.get(0);
 	}
 
+	private static void afkClicker(SelfTest.Script s) {
+		AfkClickerModule module = module("afk_clicker");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("give @a stone 16");
+		// Looking down at the ground a little ahead: every right click places one stone.
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 50");
+		s.waitTicks(10);
+		s.run("custom preset: right click every 5 ticks, then start", client -> {
+			module.presetSetting().set(AfkClickerModule.AfkPreset.CUSTOM);
+			module.actionSetting().set(AfkClickerModule.AfkAction.RIGHT_CLICK);
+			module.intervalSetting().set(5);
+			module.start(client);
+		});
+		s.waitTicks(32);
+		s.clearChat();
+		s.info("afk clicker", client -> "running=" + module.isRunning() + " clicks=" + module.getClicks()
+				+ " stone left=" + client.player.getMainHandStack().getCount());
+		s.check("the clicker is running and has clicked at least 5 times", client -> module.isRunning() && module.getClicks() >= 5);
+		s.check("the clicks really placed stone (fewer than 16 left)", client -> client.player.getMainHandStack().getCount() < 16);
+		s.run("try to turn the view with the mouse", client -> client.player.changeLookDirection(400, 200));
+		s.waitTicks(3);
+		s.check("the view stayed locked", client -> Math.abs(client.player.getPitch() - 50F) < 0.5F
+				&& Math.abs(MathHelper.wrapDegrees(client.player.getYaw() - 180F)) < 0.5F);
+		s.screenshot("17_afk_clicker");
+		// "damage" takes exactly one entity, so @p rather than @a.
+		s.command("damage @p 1");
+		s.waitTicks(15);
+		s.check("getting hurt stopped the clicker", client -> !module.isRunning() && module.wasStoppedByDamage());
+		s.screenshot("17_afk_clicker_stopped");
+		s.run("restore AFK settings", client -> {
+			module.presetSetting().reset();
+			module.actionSetting().reset();
+			module.intervalSetting().reset();
+		});
+		s.command("gamemode creative @a");
+	}
+
 	private static void useLookedAtBlock(MinecraftClient client) {
 		if (client.crosshairTarget instanceof BlockHitResult hit && client.interactionManager != null) {
 			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
@@ -604,7 +650,7 @@ final class Scenarios {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <M extends Module> M module(String id) {
+	public static <M extends Module> M module(String id) {
 		Module module = ModuleRegistry.get(id);
 		if (module == null) {
 			throw new IllegalStateException("module not registered: " + id);
@@ -617,7 +663,7 @@ final class Scenarios {
 	}
 
 	/** Puts the player back to a known state: empty inventory, creative, standing at the origin looking north. */
-	static void resetPlayer(SelfTest.Script s) {
+	public static void resetPlayer(SelfTest.Script s) {
 		s.command("gamemode creative @a");
 		s.command("clear @a");
 		s.command("effect clear @a");
@@ -636,7 +682,7 @@ final class Scenarios {
 	}
 
 	/** Start of a module scenario: known player state, and only this one module switched on. */
-	static void isolate(SelfTest.Script s, Module only) {
+	public static void isolate(SelfTest.Script s, Module only) {
 		s.run("enable only " + only.getId(), client -> {
 			for (Module module : ModuleRegistry.all()) {
 				module.setEnabled(module == only);

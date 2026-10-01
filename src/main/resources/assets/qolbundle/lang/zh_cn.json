@@ -4,6 +4,7 @@
 	"key.category.qolbundle.main": "QoL 全家桶",
 	"key.qolbundle.open_settings": "打开 QoL 全家桶设置",
 	"key.qolbundle.chat_search": "搜索聊天记录",
+	"key.qolbundle.afk_toggle": "开始 / 停止 AFK 自动操作",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -14,6 +15,7 @@
 	"qolbundle.category.technical": "生电",
 	"qolbundle.category.info": "信息显示",
 	"qolbundle.category.tools": "工具",
+	"qolbundle.category.grey": "灰档 · 公服慎用",
 
 	"qolbundle.option.hudanchor.top_left": "左上",
 	"qolbundle.option.hudanchor.top_right": "右上",
@@ -230,5 +232,31 @@
 	"qolbundle.module.chat_enhancements.setting.keywords": "额外关注的词",
 	"qolbundle.module.chat_enhancements.setting.keywords.desc": "用英文逗号隔开。消息里出现这些词也算提到你。",
 	"qolbundle.module.chat_enhancements.setting.keep_history": "断线重连后保留聊天记录",
-	"qolbundle.module.chat_enhancements.setting.search_button": "聊天界面显示搜索按钮"
+	"qolbundle.module.chat_enhancements.setting.search_button": "聊天界面显示搜索按钮",
+
+	"qolbundle.option.afkaction.left_click": "点左键",
+	"qolbundle.option.afkaction.right_click": "点右键",
+	"qolbundle.option.afkaction.hold_left": "按住左键",
+	"qolbundle.option.afkaction.hold_right": "按住右键",
+
+	"qolbundle.option.afkpreset.custom": "自定义（用下面两项）",
+	"qolbundle.option.afkpreset.mob_farm_sword": "刷怪塔：挥剑",
+	"qolbundle.option.afkpreset.hold_use": "按住右键（钓鱼机、吃东西）",
+	"qolbundle.option.afkpreset.hold_mine": "按住左键（刷石机）",
+	"qolbundle.option.afkpreset.fast_use": "快速点右键",
+
+	"qolbundle.module.afk_clicker.name": "AFK 自动操作器",
+	"qolbundle.module.afk_clicker.desc": "仅限单人 / 自建服，公服慎用。锁住视角帮你自动点鼠标，被打会自动停。开关键：F7。",
+	"qolbundle.module.afk_clicker.started": "AFK 自动操作已开始",
+	"qolbundle.module.afk_clicker.stopped": "AFK 自动操作已停止",
+	"qolbundle.module.afk_clicker.stopped_damage": "AFK 自动操作已停止：你被打了！",
+	"qolbundle.module.afk_clicker.hud.clicking": "AFK：%s，每 %s 刻一次（已 %s 次）",
+	"qolbundle.module.afk_clicker.hud.holding": "AFK：%s",
+	"qolbundle.module.afk_clicker.setting.preset": "场景预设",
+	"qolbundle.module.afk_clicker.setting.action": "动作",
+	"qolbundle.module.afk_clicker.setting.interval": "每隔多少刻点一次",
+	"qolbundle.module.afk_clicker.setting.interval.desc": "20 刻 = 1 秒。",
+	"qolbundle.module.afk_clicker.setting.lock_view": "锁住视角",
+	"qolbundle.module.afk_clicker.setting.stop_on_damage": "受击自动停止",
+	"qolbundle.module.afk_clicker.setting.position": "状态行的位置"
 }
