@@ -5,6 +5,8 @@
 	"key.qolbundle.open_settings": "Open QoL Bundle settings",
 	"key.qolbundle.chat_search": "Search chat history",
 	"key.qolbundle.afk_toggle": "Start / stop the AFK clicker",
+	"key.qolbundle.freecam_toggle": "Toggle Freecam",
+	"key.qolbundle.elytra_takeoff": "Elytra one-key take-off",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
@@ -246,7 +248,7 @@
 	"qolbundle.option.afkpreset.fast_use": "Fast right click",
 
 	"qolbundle.module.afk_clicker.name": "AFK Clicker",
-	"qolbundle.module.afk_clicker.desc": "Single-player / own server only. Locks the view and clicks for you; stops when you get hurt. Toggle key: F7.",
+	"qolbundle.module.afk_clicker.desc": "Single-player / own server only. Locks the view and clicks for you; stops when you get hurt. Toggle key: F7 by default.",
 	"qolbundle.module.afk_clicker.started": "AFK clicker started",
 	"qolbundle.module.afk_clicker.stopped": "AFK clicker stopped",
 	"qolbundle.module.afk_clicker.stopped_damage": "AFK clicker stopped: you were hurt!",
@@ -258,5 +260,23 @@
 	"qolbundle.module.afk_clicker.setting.interval.desc": "20 ticks = 1 second.",
 	"qolbundle.module.afk_clicker.setting.lock_view": "Lock the view",
 	"qolbundle.module.afk_clicker.setting.stop_on_damage": "Stop when hurt",
-	"qolbundle.module.afk_clicker.setting.position": "Position of the status line"
+	"qolbundle.module.afk_clicker.setting.position": "Position of the status line",
+
+	"qolbundle.module.freecam.name": "Freecam",
+	"qolbundle.module.freecam.desc": "Single-player / own server only; public servers kick for this. The camera flies free while your body stays put. Toggle key: F6 by default.",
+	"qolbundle.module.freecam.on": "Freecam on",
+	"qolbundle.module.freecam.off": "Freecam off",
+	"qolbundle.module.freecam.off_damage": "Freecam off: you were hurt!",
+	"qolbundle.module.freecam.hud": "FREECAM - %s to leave - %s blocks from your body",
+	"qolbundle.module.freecam.setting.speed": "Flying speed (blocks per tick)",
+	"qolbundle.module.freecam.setting.speed.desc": "Hold the sprint key to fly three times as fast.",
+	"qolbundle.module.freecam.setting.exit_on_damage": "Leave when hurt",
+	"qolbundle.module.freecam.setting.show_hud": "Show the FREECAM banner",
+
+	"qolbundle.module.elytra_takeoff.name": "Elytra One-Key Take-off",
+	"qolbundle.module.elytra_takeoff.desc": "Single-player / own server only. One key jumps, opens the elytra and fires a rocket. Look up first. Key: V by default.",
+	"qolbundle.module.elytra_takeoff.no_elytra": "No usable elytra on your chest",
+	"qolbundle.module.elytra_takeoff.no_rockets": "No rockets in the hotbar or off hand",
+	"qolbundle.module.elytra_takeoff.already_flying": "Already flying",
+	"qolbundle.module.elytra_takeoff.cannot_now": "Cannot take off right now"
 }

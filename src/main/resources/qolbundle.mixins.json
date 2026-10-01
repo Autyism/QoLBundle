@@ -3,10 +3,13 @@
 	"package": "io.github.autyi6969.qolbundle.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"CameraMixin",
 		"ChatHudAccessor",
 		"ChatHudMixin",
 		"ClientPlayerInteractionManagerAccessor",
 		"EntityMixin",
+		"GameRendererMixin",
+		"KeyboardInputMixin",
 		"LightmapTextureManagerMixin"
 	],
 	"injectors": {

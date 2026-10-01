@@ -5,6 +5,8 @@
 	"key.qolbundle.open_settings": "打开 QoL 全家桶设置",
 	"key.qolbundle.chat_search": "搜索聊天记录",
 	"key.qolbundle.afk_toggle": "开始 / 停止 AFK 自动操作",
+	"key.qolbundle.freecam_toggle": "开关 Freecam",
+	"key.qolbundle.elytra_takeoff": "鞘翅一键起飞",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -246,7 +248,7 @@
 	"qolbundle.option.afkpreset.fast_use": "快速点右键",
 
 	"qolbundle.module.afk_clicker.name": "AFK 自动操作器",
-	"qolbundle.module.afk_clicker.desc": "仅限单人 / 自建服，公服慎用。锁住视角帮你自动点鼠标，被打会自动停。开关键：F7。",
+	"qolbundle.module.afk_clicker.desc": "仅限单人 / 自建服，公服慎用。锁住视角帮你自动点鼠标，被打会自动停。开关键默认 F7。",
 	"qolbundle.module.afk_clicker.started": "AFK 自动操作已开始",
 	"qolbundle.module.afk_clicker.stopped": "AFK 自动操作已停止",
 	"qolbundle.module.afk_clicker.stopped_damage": "AFK 自动操作已停止：你被打了！",
@@ -258,5 +260,23 @@
 	"qolbundle.module.afk_clicker.setting.interval.desc": "20 刻 = 1 秒。",
 	"qolbundle.module.afk_clicker.setting.lock_view": "锁住视角",
 	"qolbundle.module.afk_clicker.setting.stop_on_damage": "受击自动停止",
-	"qolbundle.module.afk_clicker.setting.position": "状态行的位置"
+	"qolbundle.module.afk_clicker.setting.position": "状态行的位置",
+
+	"qolbundle.module.freecam.name": "Freecam 自由视角",
+	"qolbundle.module.freecam.desc": "仅限单人 / 自建服，公服会被踢。镜头离开身体自由飞，身体留在原地。开关键默认 F6。",
+	"qolbundle.module.freecam.on": "Freecam 已开启",
+	"qolbundle.module.freecam.off": "Freecam 已关闭",
+	"qolbundle.module.freecam.off_damage": "Freecam 已关闭：你被打了！",
+	"qolbundle.module.freecam.hud": "FREECAM · 按 %s 退出 · 离身体 %s 格",
+	"qolbundle.module.freecam.setting.speed": "飞行速度（格 / 刻）",
+	"qolbundle.module.freecam.setting.speed.desc": "按住疾跑键速度变 3 倍。",
+	"qolbundle.module.freecam.setting.exit_on_damage": "受击自动退出",
+	"qolbundle.module.freecam.setting.show_hud": "显示 FREECAM 提示条",
+
+	"qolbundle.module.elytra_takeoff.name": "鞘翅一键起飞",
+	"qolbundle.module.elytra_takeoff.desc": "仅限单人 / 自建服，公服慎用。一个键完成跳、开鞘翅、放烟花。先抬头再按。默认按键 V。",
+	"qolbundle.module.elytra_takeoff.no_elytra": "胸甲栏没有能用的鞘翅",
+	"qolbundle.module.elytra_takeoff.no_rockets": "快捷栏和副手里没有烟花火箭",
+	"qolbundle.module.elytra_takeoff.already_flying": "已经在飞了",
+	"qolbundle.module.elytra_takeoff.cannot_now": "现在没法起飞"
 }

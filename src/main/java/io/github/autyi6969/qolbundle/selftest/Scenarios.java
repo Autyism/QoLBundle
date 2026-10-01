@@ -15,8 +15,10 @@ import io.github.autyi6969.qolbundle.modules.ChatEnhancementsModule;
 import io.github.autyi6969.qolbundle.modules.ChunkBordersModule;
 import io.github.autyi6969.qolbundle.modules.DurabilityAlertModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
+import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
+import io.github.autyi6969.qolbundle.modules.FreecamModule;
 import io.github.autyi6969.qolbundle.modules.FullbrightModule;
 import io.github.autyi6969.qolbundle.modules.InfoHudModule;
 import io.github.autyi6969.qolbundle.modules.PortalCalculatorModule;
@@ -82,6 +84,8 @@ public final class Scenarios {
 		test.scenario("sound_compass", false, Scenarios::soundCompass);
 		test.scenario("chat_enhancements", false, Scenarios::chatEnhancements);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
+		test.scenario("freecam", false, Scenarios::freecam);
+		test.scenario("elytra_takeoff", false, Scenarios::elytraTakeoff);
 		for (QoLBundleAddon addon : QoLBundleClient.addons()) {
 			addon.registerSelfTests(test);
 		}
@@ -638,6 +642,68 @@ public final class Scenarios {
 			module.actionSetting().reset();
 			module.intervalSetting().reset();
 		});
+		s.command("gamemode creative @a");
+	}
+
+	private static void freecam(SelfTest.Script s) {
+		FreecamModule module = module("freecam");
+		isolate(s, module);
+		s.waitTicks(10);
+		s.run("switch freecam on", client -> module.setActive(client, true));
+		// The player looks north; "back" and "jump" fly the camera south and up, behind the body.
+		s.run("hold back + jump", client -> {
+			client.options.backKey.setPressed(true);
+			client.options.jumpKey.setPressed(true);
+		});
+		s.waitTicks(12);
+		s.run("release the keys", client -> {
+			client.options.backKey.setPressed(false);
+			client.options.jumpKey.setPressed(false);
+		});
+		s.run("move the mouse down a little", client -> client.player.changeLookDirection(0, 150));
+		s.waitTicks(5);
+		s.info("freecam", client -> "camera=" + module.getCameraPos(1F) + " cameraPitch=" + module.getPitch()
+				+ " player=" + client.player.getEntityPos() + " playerPitch=" + client.player.getPitch());
+		s.check("freecam is on", client -> module.isActive());
+		s.check("the camera flew away (south and up)", client -> module.getCameraPos(1F).z > 3.0
+				&& module.getCameraPos(1F).y > GROUND_Y + 4.0);
+		s.check("the body did not move or jump", client -> Math.abs(client.player.getX() - 0.5) < 0.01
+				&& Math.abs(client.player.getZ() - 0.5) < 0.01 && Math.abs(client.player.getY() - GROUND_Y) < 0.01);
+		s.check("the mouse turned the camera, not the body", client -> Math.abs(module.getPitch() - 22.5F) < 0.1F
+				&& Math.abs(client.player.getPitch()) < 0.1F);
+		s.check("the game camera really is at the freecam position", client ->
+				client.gameRenderer.getCamera().getCameraPos().distanceTo(module.getCameraPos(1F)) < 0.5);
+		s.screenshot("18_freecam");
+		s.run("switch freecam off", client -> module.setActive(client, false));
+		s.waitTicks(5);
+		s.check("the camera is back at the eyes", client ->
+				client.gameRenderer.getCamera().getCameraPos().distanceTo(client.player.getEyePos()) < 0.5);
+	}
+
+	private static void elytraTakeoff(SelfTest.Script s) {
+		ElytraTakeoffModule module = module("elytra_takeoff");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("item replace entity @a armor.chest with elytra");
+		// Rockets in hotbar slot 4 while slot 1 is selected: the module has to switch and switch back.
+		s.command("item replace entity @a hotbar.3 with firework_rocket 5");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -40");
+		s.waitTicks(15);
+		int[] before = new int[1];
+		s.run("press the take-off key", client -> {
+			before[0] = module.getTakeoffs();
+			module.trigger(client);
+		});
+		s.waitTicks(25);
+		s.clearChat();
+		s.info("take-off", client -> "gliding=" + client.player.isGliding() + " y=" + client.player.getY()
+				+ " rockets=" + client.player.getInventory().getStack(3).getCount()
+				+ " selectedSlot=" + client.player.getInventory().getSelectedSlot());
+		s.check("the sequence completed", client -> module.getTakeoffs() == before[0] + 1 && !module.isBusy());
+		s.check("the player is gliding and has climbed", client -> client.player.isGliding() && client.player.getY() > GROUND_Y + 5);
+		s.check("exactly one rocket was used", client -> client.player.getInventory().getStack(3).getCount() == 4);
+		s.check("the selected hotbar slot is the first one again", client -> client.player.getInventory().getSelectedSlot() == 0);
+		s.screenshot("19_elytra_takeoff");
 		s.command("gamemode creative @a");
 	}
 
