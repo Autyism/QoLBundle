@@ -54,7 +54,8 @@ public class AfkClickerModule extends Module {
 		MOB_FARM_SWORD(AfkAction.LEFT_CLICK, 14),
 		HOLD_USE(AfkAction.HOLD_RIGHT, 0),
 		HOLD_MINE(AfkAction.HOLD_LEFT, 0),
-		FAST_USE(AfkAction.RIGHT_CLICK, 4);
+		FAST_USE(AfkAction.RIGHT_CLICK, 4),
+		SLOW_USE(AfkAction.RIGHT_CLICK, 20);
 
 		final AfkAction action;
 		final int interval;

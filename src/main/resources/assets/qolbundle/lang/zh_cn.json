@@ -25,7 +25,7 @@
 	"qolbundle.option.hudanchor.bottom_right": "右下",
 
 	"qolbundle.module.durability_alert.name": "耐久报警",
-	"qolbundle.module.durability_alert.desc": "工具或盔甲快坏时屏幕边缘闪红并响提示音。",
+	"qolbundle.module.durability_alert.desc": "工具或盔甲快坏时屏幕边缘闪红并响提示音。每件装备只提醒一次，修好后才会再提醒。",
 	"qolbundle.module.durability_alert.warning": "%s 快坏了：还剩 %s 点耐久（%s%%）",
 	"qolbundle.module.durability_alert.setting.threshold": "耐久低于多少时报警",
 	"qolbundle.module.durability_alert.setting.threshold.desc": "剩余耐久占该物品满耐久的百分比。",
@@ -33,6 +33,7 @@
 	"qolbundle.module.durability_alert.setting.flash": "屏幕边缘闪红",
 	"qolbundle.module.durability_alert.setting.sound": "播放提示音",
 	"qolbundle.module.durability_alert.setting.show_text": "显示物品名和剩余耐久",
+	"qolbundle.module.durability_alert.setting.remind_again": "之后每掉一点耐久都再提醒",
 
 	"qolbundle.direction.north": "北",
 	"qolbundle.direction.south": "南",
@@ -60,12 +61,14 @@
 	"qolbundle.module.info_hud.setting.show_fps": "FPS",
 	"qolbundle.module.info_hud.setting.show_game_time": "游戏内时间",
 	"qolbundle.module.info_hud.setting.show_real_time": "现实时间",
+	"qolbundle.module.info_hud.setting.text_size": "字号",
 
 	"qolbundle.module.armor_hud.name": "盔甲耐久 HUD",
 	"qolbundle.module.armor_hud.desc": "显示身上盔甲和手持工具的剩余耐久。",
 	"qolbundle.module.armor_hud.setting.position": "位置",
 	"qolbundle.module.armor_hud.setting.display": "耐久显示方式",
 	"qolbundle.module.armor_hud.setting.show_hands": "包括手持物品",
+	"qolbundle.module.armor_hud.setting.show_bar": "图标下方显示耐久条",
 
 	"qolbundle.module.break_progress.name": "破坏进度",
 	"qolbundle.module.break_progress.desc": "挖方块时显示已挖百分比和还要多久。",
@@ -243,9 +246,10 @@
 
 	"qolbundle.option.afkpreset.custom": "自定义（用下面两项）",
 	"qolbundle.option.afkpreset.mob_farm_sword": "刷怪塔：挥剑",
-	"qolbundle.option.afkpreset.hold_use": "按住右键（钓鱼机、吃东西）",
-	"qolbundle.option.afkpreset.hold_mine": "按住左键（刷石机）",
+	"qolbundle.option.afkpreset.hold_use": "钓鱼机 / 吃东西（按住右键）",
+	"qolbundle.option.afkpreset.hold_mine": "刷石机（按住左键）",
 	"qolbundle.option.afkpreset.fast_use": "快速点右键",
+	"qolbundle.option.afkpreset.slow_use": "交易 / 慢速右键（每秒一次）",
 
 	"qolbundle.module.afk_clicker.name": "AFK 自动操作器",
 	"qolbundle.module.afk_clicker.desc": "仅限单人 / 自建服，公服慎用。锁住视角帮你自动点鼠标，被打会自动停。开关键默认 F7。",
@@ -263,7 +267,7 @@
 	"qolbundle.module.afk_clicker.setting.position": "状态行的位置",
 
 	"qolbundle.module.freecam.name": "Freecam 自由视角",
-	"qolbundle.module.freecam.desc": "仅限单人 / 自建服，公服会被踢。镜头离开身体自由飞，身体留在原地。开关键默认 F6。",
+	"qolbundle.module.freecam.desc": "仅限单人 / 自建服，公服慎用（会被反作弊踢）。镜头离开身体自由飞，身体留在原地。开关键默认 F6。",
 	"qolbundle.module.freecam.on": "Freecam 已开启",
 	"qolbundle.module.freecam.off": "Freecam 已关闭",
 	"qolbundle.module.freecam.off_damage": "Freecam 已关闭：你被打了！",
@@ -274,9 +278,9 @@
 	"qolbundle.module.freecam.setting.show_hud": "显示 FREECAM 提示条",
 
 	"qolbundle.module.elytra_takeoff.name": "鞘翅一键起飞",
-	"qolbundle.module.elytra_takeoff.desc": "仅限单人 / 自建服，公服慎用。一个键完成跳、开鞘翅、放烟花。先抬头再按。默认按键 V。",
+	"qolbundle.module.elytra_takeoff.desc": "仅限单人 / 自建服，公服慎用。一个键完成跳、开鞘翅、放烟花（没有烟花时只跳和开鞘翅）。先抬头再按。默认按键 V。",
 	"qolbundle.module.elytra_takeoff.no_elytra": "胸甲栏没有能用的鞘翅",
-	"qolbundle.module.elytra_takeoff.no_rockets": "快捷栏和副手里没有烟花火箭",
+	"qolbundle.module.elytra_takeoff.no_rockets": "没有烟花：只张开了鞘翅",
 	"qolbundle.module.elytra_takeoff.already_flying": "已经在飞了",
 	"qolbundle.module.elytra_takeoff.cannot_now": "现在没法起飞"
 }

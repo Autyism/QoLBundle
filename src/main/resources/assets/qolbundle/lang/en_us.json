@@ -25,7 +25,7 @@
 	"qolbundle.option.hudanchor.bottom_right": "Bottom right",
 
 	"qolbundle.module.durability_alert.name": "Durability Alert",
-	"qolbundle.module.durability_alert.desc": "Red screen edges and a sound when a tool or armor piece is about to break.",
+	"qolbundle.module.durability_alert.desc": "Red screen edges and a sound when a tool or armor piece is about to break. Once per item until it is repaired.",
 	"qolbundle.module.durability_alert.warning": "%s is about to break: %s uses left (%s%%)",
 	"qolbundle.module.durability_alert.setting.threshold": "Warn at or below",
 	"qolbundle.module.durability_alert.setting.threshold.desc": "Remaining durability, in percent of the item's maximum.",
@@ -33,6 +33,7 @@
 	"qolbundle.module.durability_alert.setting.flash": "Flash screen edges red",
 	"qolbundle.module.durability_alert.setting.sound": "Play a sound",
 	"qolbundle.module.durability_alert.setting.show_text": "Show item name and uses left",
+	"qolbundle.module.durability_alert.setting.remind_again": "Remind again on every further use",
 
 	"qolbundle.direction.north": "North",
 	"qolbundle.direction.south": "South",
@@ -60,12 +61,14 @@
 	"qolbundle.module.info_hud.setting.show_fps": "FPS",
 	"qolbundle.module.info_hud.setting.show_game_time": "In-game time",
 	"qolbundle.module.info_hud.setting.show_real_time": "Real-world clock",
+	"qolbundle.module.info_hud.setting.text_size": "Text size",
 
 	"qolbundle.module.armor_hud.name": "Armor Durability HUD",
 	"qolbundle.module.armor_hud.desc": "Worn armor and held tools with their remaining durability.",
 	"qolbundle.module.armor_hud.setting.position": "Position",
 	"qolbundle.module.armor_hud.setting.display": "Show durability as",
 	"qolbundle.module.armor_hud.setting.show_hands": "Include held items",
+	"qolbundle.module.armor_hud.setting.show_bar": "Durability bar under the icon",
 
 	"qolbundle.module.break_progress.name": "Break Progress",
 	"qolbundle.module.break_progress.desc": "Shows how far the block you are mining is broken, and the time left.",
@@ -243,9 +246,10 @@
 
 	"qolbundle.option.afkpreset.custom": "Custom (use the two settings below)",
 	"qolbundle.option.afkpreset.mob_farm_sword": "Mob farm: swing sword",
-	"qolbundle.option.afkpreset.hold_use": "Hold right button (fishing farm, eating)",
-	"qolbundle.option.afkpreset.hold_mine": "Hold left button (cobble generator)",
+	"qolbundle.option.afkpreset.hold_use": "Fishing farm / eating (hold right button)",
+	"qolbundle.option.afkpreset.hold_mine": "Cobblestone generator (hold left button)",
 	"qolbundle.option.afkpreset.fast_use": "Fast right click",
+	"qolbundle.option.afkpreset.slow_use": "Trading / slow right click (once a second)",
 
 	"qolbundle.module.afk_clicker.name": "AFK Clicker",
 	"qolbundle.module.afk_clicker.desc": "Single-player / own server only. Locks the view and clicks for you; stops when you get hurt. Toggle key: F7 by default.",
@@ -263,7 +267,7 @@
 	"qolbundle.module.afk_clicker.setting.position": "Position of the status line",
 
 	"qolbundle.module.freecam.name": "Freecam",
-	"qolbundle.module.freecam.desc": "Single-player / own server only; public servers kick for this. The camera flies free while your body stays put. Toggle key: F6 by default.",
+	"qolbundle.module.freecam.desc": "Single-player / own server only, careful on public servers (anti-cheat kicks for this). The camera flies free while your body stays put. Toggle key: F6 by default.",
 	"qolbundle.module.freecam.on": "Freecam on",
 	"qolbundle.module.freecam.off": "Freecam off",
 	"qolbundle.module.freecam.off_damage": "Freecam off: you were hurt!",
@@ -274,9 +278,9 @@
 	"qolbundle.module.freecam.setting.show_hud": "Show the FREECAM banner",
 
 	"qolbundle.module.elytra_takeoff.name": "Elytra One-Key Take-off",
-	"qolbundle.module.elytra_takeoff.desc": "Single-player / own server only. One key jumps, opens the elytra and fires a rocket. Look up first. Key: V by default.",
+	"qolbundle.module.elytra_takeoff.desc": "Single-player / own server only, careful on public servers. One key jumps, opens the elytra and fires a rocket (without rockets: just jumps and opens). Look up first. Key: V by default.",
 	"qolbundle.module.elytra_takeoff.no_elytra": "No usable elytra on your chest",
-	"qolbundle.module.elytra_takeoff.no_rockets": "No rockets in the hotbar or off hand",
+	"qolbundle.module.elytra_takeoff.no_rockets": "No rockets: elytra opened without a boost",
 	"qolbundle.module.elytra_takeoff.already_flying": "Already flying",
 	"qolbundle.module.elytra_takeoff.cannot_now": "Cannot take off right now"
 }

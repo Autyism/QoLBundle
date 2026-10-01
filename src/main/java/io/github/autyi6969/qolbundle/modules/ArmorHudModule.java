@@ -30,6 +30,7 @@ public class ArmorHudModule extends Module {
 	private final EnumSetting<HudAnchor> position = add(new EnumSetting<>("position", HudAnchor.BOTTOM_RIGHT));
 	private final EnumSetting<DurabilityDisplay> display = add(new EnumSetting<>("display", DurabilityDisplay.REMAINING));
 	private final BoolSetting showHands = add(new BoolSetting("show_hands", true));
+	private final BoolSetting showBar = add(new BoolSetting("show_bar", true));
 
 	private int shownLastFrame;
 
@@ -75,6 +76,10 @@ public class ArmorHudModule extends Module {
 			int iconX = anchor.right ? x + rowWidth - 16 : x;
 			int textX = anchor.right ? x : x + 19;
 			context.drawItem(stack, iconX, y);
+			if (showBar.get()) {
+				// The same coloured bar the inventory shows under a damaged item.
+				context.drawStackOverlay(client.textRenderer, stack, iconX, y);
+			}
 			context.drawTextWithShadow(client.textRenderer, text, textX, y + 4, colorFor(fraction));
 		}
 	}

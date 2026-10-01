@@ -3,7 +3,7 @@
 	"id": "qolbundle",
 	"version": "${version}",
 	"name": "QoL Bundle",
-	"description": "A client-side bundle of independent quality-of-life modules. Every module has its own switch and settings.",
+	"description": "A client-side bundle of independent quality-of-life modules. Every module has its own switch and settings. The grey-zone modules (AFK clicker, Freecam, elytra one-key take-off) are off by default and meant for single-player and your own server only.",
 	"authors": [
 		"Autyi6969"
 	],

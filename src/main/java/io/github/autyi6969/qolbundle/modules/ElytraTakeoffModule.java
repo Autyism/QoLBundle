@@ -46,6 +46,7 @@ public class ElytraTakeoffModule extends Module {
 	private Step step = Step.IDLE;
 	private int ticksInSequence;
 	private int slotToRestore = NO_SLOT;
+	private boolean fireRocket;
 	private int takeoffs;
 
 	public ElytraTakeoffModule() {
@@ -73,8 +74,6 @@ public class ElytraTakeoffModule extends Module {
 		ItemStack chest = player.getEquippedStack(EquipmentSlot.CHEST);
 		if (!chest.isOf(Items.ELYTRA) || chest.getMaxDamage() - chest.getDamage() <= 1) {
 			problem = "no_elytra";
-		} else if (findRocketSlot(player) == NO_SLOT && !player.getOffHandStack().isOf(Items.FIREWORK_ROCKET)) {
-			problem = "no_rockets";
 		} else if (player.isGliding()) {
 			problem = "already_flying";
 		} else if (player.getAbilities().flying || player.isTouchingWater() || player.hasVehicle()) {
@@ -85,6 +84,8 @@ public class ElytraTakeoffModule extends Module {
 			return;
 		}
 		ticksInSequence = 0;
+		// Without rockets the first two steps still happen: jump and open the elytra.
+		fireRocket = findRocketSlot(player) != NO_SLOT || player.getOffHandStack().isOf(Items.FIREWORK_ROCKET);
 		if (player.isOnGround()) {
 			client.options.jumpKey.setPressed(true);
 			step = Step.JUMPING;
@@ -147,7 +148,14 @@ public class ElytraTakeoffModule extends Module {
 			case OPENING -> {
 				client.options.jumpKey.setPressed(false);
 				// If the elytra did not open on that press, go back one step and press again.
-				step = player.isGliding() ? Step.FIRE : Step.WAIT_AIRBORNE;
+				if (!player.isGliding()) {
+					step = Step.WAIT_AIRBORNE;
+				} else if (fireRocket) {
+					step = Step.FIRE;
+				} else {
+					client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".no_rockets"), false);
+					finish();
+				}
 			}
 			case FIRE -> {
 				if (player.getOffHandStack().isOf(Items.FIREWORK_ROCKET)) {

@@ -10,23 +10,27 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Warns when a held tool or worn armor piece is about to break: the screen edges flash red,
  * a sound plays and a line of text names the item and how many uses are left.
+ * Each item is announced once; it is announced again only after it has been repaired.
  */
 public class DurabilityAlertModule extends Module {
 	private static final EquipmentSlot[] HANDS = {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND};
 	private static final EquipmentSlot[] ARMOR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 	private static final long FLASH_MS = 2500;
+	private static final long TEXT_MS = 6000;
 	private static final long SOUND_COOLDOWN_MS = 1500;
 	private static final int EDGE_DEPTH = 28;
 
@@ -35,16 +39,18 @@ public class DurabilityAlertModule extends Module {
 	private final BoolSetting flash = add(new BoolSetting("flash", true));
 	private final BoolSetting sound = add(new BoolSetting("sound", true));
 	private final BoolSetting showText = add(new BoolSetting("show_text", true));
+	private final BoolSetting remindAgain = add(new BoolSetting("remind_again", false));
 
-	/** What each slot held last tick, to notice "just became low" and "lost more durability". */
-	private final Item[] lastItem = new Item[EquipmentSlot.values().length];
-	private final int[] lastRemaining = new int[EquipmentSlot.values().length];
-	private final boolean[] wasLow = new boolean[EquipmentSlot.values().length];
-
+	/**
+	 * Items already announced, with the durability they had when last seen. The key describes the
+	 * item (kind, name, enchantments) because the game gives items no id of their own.
+	 */
+	private final Map<String, Integer> announced = new HashMap<>();
 	private final List<Text> warnings = new ArrayList<>();
-	private boolean handItemLow;
 	private long flashUntilMs;
+	private long textUntilMs;
 	private long lastSoundMs;
+	private int alerts;
 
 	public DurabilityAlertModule() {
 		super("durability_alert", ModuleCategory.TOOLS, true);
@@ -55,6 +61,11 @@ public class DurabilityAlertModule extends Module {
 		return !warnings.isEmpty();
 	}
 
+	/** How many times the alert has gone off since the game started (for the self-test). */
+	public int getAlertCount() {
+		return alerts;
+	}
+
 	@Override
 	protected void onEnabledChanged(boolean enabled) {
 		forget();
@@ -62,10 +73,9 @@ public class DurabilityAlertModule extends Module {
 
 	private void forget() {
 		warnings.clear();
-		handItemLow = false;
+		announced.clear();
 		flashUntilMs = 0;
-		java.util.Arrays.fill(wasLow, false);
-		java.util.Arrays.fill(lastItem, null);
+		textUntilMs = 0;
 	}
 
 	@Override
@@ -75,19 +85,20 @@ public class DurabilityAlertModule extends Module {
 			return;
 		}
 		warnings.clear();
-		handItemLow = false;
 		boolean triggered = false;
 		for (EquipmentSlot slot : HANDS) {
-			triggered |= checkSlot(client, slot, true);
+			triggered |= checkSlot(client, slot);
 		}
 		if (checkArmor.get()) {
 			for (EquipmentSlot slot : ARMOR) {
-				triggered |= checkSlot(client, slot, false);
+				triggered |= checkSlot(client, slot);
 			}
 		}
 		if (triggered) {
+			alerts++;
 			long now = Util.getMeasuringTimeMs();
 			flashUntilMs = now + FLASH_MS;
+			textUntilMs = now + TEXT_MS;
 			if (sound.get() && now - lastSoundMs > SOUND_COOLDOWN_MS) {
 				lastSoundMs = now;
 				client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 0.6F));
@@ -96,55 +107,40 @@ public class DurabilityAlertModule extends Module {
 	}
 
 	/** @return true when this slot should set off the flash and sound right now */
-	private boolean checkSlot(MinecraftClient client, EquipmentSlot slot, boolean hand) {
-		int i = slot.ordinal();
+	private boolean checkSlot(MinecraftClient client, EquipmentSlot slot) {
 		ItemStack stack = client.player.getEquippedStack(slot);
 		if (stack.isEmpty() || !stack.isDamageable()) {
-			wasLow[i] = false;
-			lastItem[i] = null;
 			return false;
 		}
 		int max = stack.getMaxDamage();
 		int remaining = max - stack.getDamage();
-		boolean low = remaining * 100 <= threshold.get() * max;
-		boolean sameItem = lastItem[i] == stack.getItem();
-		// Fires when the item first becomes low, when a different low item is taken into this slot,
-		// and every time a low item loses more durability.
-		boolean trigger = low && (!wasLow[i] || !sameItem || remaining < lastRemaining[i]);
-		wasLow[i] = low;
-		lastItem[i] = stack.getItem();
-		lastRemaining[i] = remaining;
-		if (low) {
-			handItemLow |= hand;
-			int percent = Math.max(0, Math.round(remaining * 100F / max));
-			warnings.add(Text.translatable(getTranslationKey() + ".warning", stack.getName(), remaining, percent));
+		String key = Registries.ITEM.getId(stack.getItem()) + "|" + stack.getName().getString() + "|" + stack.getEnchantments();
+		if (remaining * 100 > threshold.get() * max) {
+			announced.remove(key); // healthy (again): the next time it runs low it is announced anew
+			return false;
 		}
-		return trigger;
+		Integer before = announced.put(key, remaining);
+		int percent = Math.max(0, Math.round(remaining * 100F / max));
+		warnings.add(Text.translatable(getTranslationKey() + ".warning", stack.getName(), remaining, percent));
+		// Once per item. With "remind again" on, also every time it loses more durability.
+		return before == null || remindAgain.get() && remaining < before;
 	}
 
 	@Override
 	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		if (warnings.isEmpty()) {
+		long now = Util.getMeasuringTimeMs();
+		if (warnings.isEmpty() || now >= Math.max(flashUntilMs, textUntilMs)) {
 			return;
 		}
 		MinecraftClient client = MinecraftClient.getInstance();
-		long now = Util.getMeasuringTimeMs();
 
-		if (flash.get()) {
-			float strength;
-			if (now < flashUntilMs) {
-				// Pulse about twice a second, never fully fading out.
-				strength = 0.55F + 0.45F * (float) Math.sin(now / 80.0);
-			} else {
-				// After the flash: a faint steady edge while the low item is still in hand.
-				strength = handItemLow ? 0.3F : 0F;
-			}
-			if (strength > 0) {
-				drawRedEdges(context, layout.getScreenWidth(), layout.getScreenHeight(), strength);
-			}
+		if (flash.get() && now < flashUntilMs) {
+			// Pulse about twice a second, never fully fading out.
+			float strength = 0.55F + 0.45F * (float) Math.sin(now / 80.0);
+			drawRedEdges(context, layout.getScreenWidth(), layout.getScreenHeight(), strength);
 		}
 
-		if (showText.get()) {
+		if (showText.get() && now < textUntilMs) {
 			int y = layout.getScreenHeight() - 72 - warnings.size() * HudLayout.LINE_HEIGHT;
 			for (Text warning : warnings) {
 				int width = client.textRenderer.getWidth(warning);

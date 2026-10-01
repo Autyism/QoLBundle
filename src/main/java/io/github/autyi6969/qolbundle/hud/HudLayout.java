@@ -55,17 +55,27 @@ public final class HudLayout {
 
 	/** Draws a block of text lines (each with a dark backdrop, like F3) in a corner. */
 	public void drawLines(DrawContext context, TextRenderer textRenderer, HudAnchor anchor, List<Text> lines) {
+		drawLines(context, textRenderer, anchor, lines, 1F);
+	}
+
+	/** @param scale font size, 1 = the normal size */
+	public void drawLines(DrawContext context, TextRenderer textRenderer, HudAnchor anchor, List<Text> lines, float scale) {
 		if (lines.isEmpty() || isBlocked(anchor)) {
 			return;
 		}
-		int top = reserve(anchor, lines.size() * LINE_HEIGHT);
+		int lineHeight = Math.max(1, Math.round(LINE_HEIGHT * scale));
+		int top = reserve(anchor, lines.size() * lineHeight);
 		for (int i = 0; i < lines.size(); i++) {
 			Text line = lines.get(i);
 			int width = textRenderer.getWidth(line);
-			int x = xFor(anchor, width);
-			int y = top + i * LINE_HEIGHT;
-			context.fill(x - 2, y - 1, x + width + 2, y + LINE_HEIGHT - 1, BACKGROUND);
-			context.drawTextWithShadow(textRenderer, line, x, y, WHITE);
+			int x = xFor(anchor, Math.round(width * scale));
+			int y = top + i * lineHeight;
+			context.getMatrices().pushMatrix();
+			context.getMatrices().translate(x, y);
+			context.getMatrices().scale(scale, scale);
+			context.fill(-2, -1, width + 2, LINE_HEIGHT - 1, BACKGROUND);
+			context.drawTextWithShadow(textRenderer, line, 0, 0, WHITE);
+			context.getMatrices().popMatrix();
 		}
 	}
 }

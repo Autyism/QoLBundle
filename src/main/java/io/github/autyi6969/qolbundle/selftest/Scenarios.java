@@ -206,6 +206,18 @@ public final class Scenarios {
 		s.waitTicks(15);
 		s.check("alert active with a pickaxe at 2 %", client -> module.isAlertActive());
 		s.screenshot("02_durability_alert");
+
+		// One reminder per item until it is repaired.
+		int[] alerts = new int[1];
+		s.run("remember how often the alert has fired", client -> alerts[0] = module.getAlertCount());
+		s.command("item replace entity @a weapon.mainhand with diamond_pickaxe[damage=1545]");
+		s.waitTicks(15);
+		s.check("the same pickaxe losing more durability does not alert again", client -> module.getAlertCount() == alerts[0]);
+		s.command("item replace entity @a weapon.mainhand with diamond_pickaxe[damage=0]");
+		s.waitTicks(15);
+		s.command("item replace entity @a weapon.mainhand with diamond_pickaxe[damage=1530]");
+		s.waitTicks(15);
+		s.check("after a repair it alerts again when it runs low", client -> module.getAlertCount() == alerts[0] + 1);
 	}
 
 	private static void fullbright(SelfTest.Script s) {
@@ -230,6 +242,9 @@ public final class Scenarios {
 				client -> module.getLines().stream().anyMatch(line -> line.getString().contains("0.5")));
 		s.check("at least 4 lines are shown", client -> module.getLines().size() >= 4);
 		s.screenshot("04_info_hud");
+		s.run("text size 150 %", client -> module.textSizeSetting().set(150));
+		s.screenshot("04_info_hud_large");
+		s.run("text size back to normal", client -> module.textSizeSetting().reset());
 	}
 
 	private static void armorHud(SelfTest.Script s) {
@@ -710,6 +725,21 @@ public final class Scenarios {
 		s.check("exactly one rocket was used", client -> client.player.getInventory().getStack(3).getCount() == 4);
 		s.check("the selected hotbar slot is the first one again", client -> client.player.getInventory().getSelectedSlot() == 0);
 		s.screenshot("19_elytra_takeoff");
+		s.command("gamemode creative @a");
+
+		// Without rockets: still jump and open the elytra.
+		resetPlayer(s);
+		s.command("gamemode survival @a");
+		s.command("item replace entity @a armor.chest with elytra");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -40");
+		s.waitTicks(15);
+		s.run("press the take-off key with no rockets", client -> {
+			before[0] = module.getTakeoffs();
+			module.trigger(client);
+		});
+		s.waitUntil("the elytra opens", client -> client.player.isGliding(), 20);
+		s.waitTicks(3);
+		s.check("without rockets the sequence still completes", client -> module.getTakeoffs() == before[0] + 1 && !module.isBusy());
 		s.command("gamemode creative @a");
 	}
 

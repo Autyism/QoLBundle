@@ -6,6 +6,7 @@ import io.github.autyi6969.qolbundle.module.Module;
 import io.github.autyi6969.qolbundle.module.ModuleCategory;
 import io.github.autyi6969.qolbundle.module.setting.BoolSetting;
 import io.github.autyi6969.qolbundle.module.setting.EnumSetting;
+import io.github.autyi6969.qolbundle.module.setting.IntSetting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -20,6 +21,7 @@ import java.util.Locale;
 /** A few always-useful lines in a screen corner: coordinates, facing, FPS, in-game time, real clock. */
 public class InfoHudModule extends Module {
 	private final EnumSetting<HudAnchor> position = add(new EnumSetting<>("position", HudAnchor.TOP_LEFT));
+	private final IntSetting textSize = add(new IntSetting("text_size", 100, 50, 200, "%"));
 	private final BoolSetting showCoords = add(new BoolSetting("show_coords", true));
 	private final BoolSetting showFacing = add(new BoolSetting("show_facing", true));
 	private final BoolSetting showFps = add(new BoolSetting("show_fps", true));
@@ -30,6 +32,10 @@ public class InfoHudModule extends Module {
 
 	public InfoHudModule() {
 		super("info_hud", ModuleCategory.TECHNICAL, true);
+	}
+
+	public IntSetting textSizeSetting() {
+		return textSize;
 	}
 
 	/** The lines drawn in the last frame (for the self-test). */
@@ -72,6 +78,6 @@ public class InfoHudModule extends Module {
 			lines.add(Text.translatable(key + "real_time",
 					String.format(Locale.ROOT, "%02d:%02d", now.getHour(), now.getMinute())));
 		}
-		layout.drawLines(context, client.textRenderer, position.get(), lines);
+		layout.drawLines(context, client.textRenderer, position.get(), lines, textSize.get() / 100F);
 	}
 }
