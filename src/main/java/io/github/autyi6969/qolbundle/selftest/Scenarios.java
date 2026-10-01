@@ -32,6 +32,7 @@ import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
+import io.github.autyi6969.qolbundle.modules.EscapeTrailModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
@@ -135,6 +136,7 @@ public final class Scenarios {
 		test.scenario("recipe_helper", false, Scenarios::recipeHelper);
 		test.scenario("placement_master", false, Scenarios::placementMaster);
 		test.scenario("diagnostics", false, Scenarios::diagnostics);
+		test.scenario("escape_trail", false, Scenarios::escapeTrail);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1354,6 +1356,65 @@ public final class Scenarios {
 			client.player.sendAbilitiesUpdate();
 			chests.forgetAll();
 		});
+	}
+
+	private static void walkForward(SelfTest.Script s, int ticks) {
+		s.run("walk forward", client -> client.options.forwardKey.setPressed(true));
+		s.waitTicks(ticks);
+		s.run("stop", client -> client.options.forwardKey.setPressed(false));
+		s.waitTicks(8);
+	}
+
+	private static void escapeTrail(SelfTest.Script s) {
+		EscapeTrailModule module = module("escape_trail");
+		isolate(s, module);
+		s.waitTicks(10);
+		s.run("show the trail all the time, start with an empty trail", client -> {
+			module.showSetting().set(EscapeTrailModule.Show.ALWAYS);
+			// The short teleport back to the origin counts as moving; this test wants only its own walk.
+			module.setEnabled(false);
+			module.setEnabled(true);
+		});
+		s.waitTicks(5);
+		// An L-shaped walk: north, then east.
+		walkForward(s, 40);
+		s.command("execute as @a at @s run tp @s ~ ~ ~ -90 0");
+		s.waitTicks(5);
+		walkForward(s, 40);
+		s.info("trail", client -> "player=" + client.player.getEntityPos() + " points=" + module.getPointCount()
+				+ " length=" + module.getTrailLength() + " target=" + module.getTarget());
+		s.check("the walk went north and then east", client -> client.player.getZ() < -5 && client.player.getX() > 5);
+		s.check("the trail is about as long as the walk", client -> {
+			double walked = Math.abs(client.player.getZ() - 0.5) + Math.abs(client.player.getX() - 0.5);
+			return Math.abs(module.getTrailLength() - walked) < 2.5;
+		});
+		s.check("the arrow points back along the last leg (west), not straight at the start", client -> module.getTarget() != null
+				&& module.getTarget().x < client.player.getX() - 3.5 && Math.abs(module.getTarget().z - client.player.getZ()) < 1.0);
+		s.screenshot("35_escape_trail");
+		// Turn round and walk back a bit: the trail gets used up and the arrow leads further back.
+		s.command("execute as @a at @s run tp @s ~ ~ ~ 90 25");
+		s.waitTicks(5);
+		s.screenshot("35_escape_trail_back");
+		double[] before = new double[1];
+		s.run("remember the length", client -> before[0] = module.getTrailLength());
+		walkForward(s, 25);
+		s.info("trail after walking back", client -> "player=" + client.player.getEntityPos() + " length=" + module.getTrailLength()
+				+ " (was " + before[0] + ") target=" + module.getTarget());
+		s.check("walking back uses the trail up (at least 3 blocks shorter)", client -> module.getTrailLength() < before[0] - 3.0);
+		s.check("the arrow still leads further back", client -> module.getTarget() != null
+				&& module.getTarget().distanceTo(client.player.getEntityPos()) >= 3.5 && module.getTarget().x < client.player.getX());
+
+		// Default setting: only shown for a while after getting hurt.
+		s.run("show only after damage", client -> module.showSetting().set(EscapeTrailModule.Show.AFTER_DAMAGE));
+		s.waitTicks(3);
+		s.check("unhurt, nothing is shown", client -> !module.isShowing());
+		s.command("gamemode survival @a");
+		s.waitTicks(10);
+		s.command("damage @p 1");
+		s.waitUntil("the trail shows after the damage", client -> module.isShowing(), 100);
+		s.screenshot("35_escape_trail_hurt");
+		s.command("gamemode creative @a");
+		s.run("restore the setting", client -> module.showSetting().reset());
 	}
 
 	private static void shulkerManager(SelfTest.Script s) {

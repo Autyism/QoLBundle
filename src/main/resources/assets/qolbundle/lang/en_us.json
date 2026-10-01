@@ -19,6 +19,7 @@
 	"key.qolbundle.diagnostics_scan": "Diagnostics: scan the machine you look at / clear",
 	"key.qolbundle.diagnostics_slice_next": "Diagnostics: next layer",
 	"key.qolbundle.diagnostics_slice_previous": "Diagnostics: previous layer",
+	"key.qolbundle.escape_trail_show": "Escape trail: show / hide the way back",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
@@ -569,5 +570,17 @@
 
 	"qolbundle.option.sliceaxis.y": "Layers by height (Y)",
 	"qolbundle.option.sliceaxis.x": "Slices east-west (X)",
-	"qolbundle.option.sliceaxis.z": "Slices north-south (Z)"
+	"qolbundle.option.sliceaxis.z": "Slices north-south (Z)",
+
+	"qolbundle.module.escape_trail.name": "Escape Trail",
+	"qolbundle.module.escape_trail.desc": "Remembers the way you came (the last 30 seconds of moving). When you get hurt, an orange arrow points back along that way, around the corners you took.",
+	"qolbundle.module.escape_trail.setting.seconds": "How much of the way to remember",
+	"qolbundle.module.escape_trail.setting.seconds.desc": "Counted in seconds of moving. Standing still does not use it up.",
+	"qolbundle.module.escape_trail.setting.show": "When to show",
+	"qolbundle.module.escape_trail.setting.damage_seconds": "Stay visible after damage for",
+	"qolbundle.module.escape_trail.setting.show_trail": "Draw the way on the ground",
+	"qolbundle.module.escape_trail.hud": "way back %s m",
+
+	"qolbundle.option.show.after_damage": "After taking damage",
+	"qolbundle.option.show.always": "Always"
 }

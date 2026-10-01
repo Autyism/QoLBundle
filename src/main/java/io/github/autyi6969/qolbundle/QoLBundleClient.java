@@ -19,6 +19,7 @@ import io.github.autyi6969.qolbundle.modules.EffectRangeModule;
 import io.github.autyi6969.qolbundle.modules.ElytraDashboardModule;
 import io.github.autyi6969.qolbundle.modules.ElytraTakeoffModule;
 import io.github.autyi6969.qolbundle.modules.EntityCounterModule;
+import io.github.autyi6969.qolbundle.modules.EscapeTrailModule;
 import io.github.autyi6969.qolbundle.modules.FallDamageModule;
 import io.github.autyi6969.qolbundle.modules.FluidVisionModule;
 import io.github.autyi6969.qolbundle.modules.FreecamModule;
@@ -129,6 +130,7 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new RecipeHelperModule());
 		ModuleRegistry.register(new PlacementMasterModule());
 		ModuleRegistry.register(new DiagnosticsModule());
+		ModuleRegistry.register(new EscapeTrailModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());

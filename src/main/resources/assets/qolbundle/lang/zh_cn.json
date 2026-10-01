@@ -19,6 +19,7 @@
 	"key.qolbundle.diagnostics_scan": "诊断台：扫描对着的机器 / 清除",
 	"key.qolbundle.diagnostics_slice_next": "诊断台：切片下一层",
 	"key.qolbundle.diagnostics_slice_previous": "诊断台：切片上一层",
+	"key.qolbundle.escape_trail_show": "逃跑轨迹：显示 / 收起退路",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -569,5 +570,17 @@
 
 	"qolbundle.option.sliceaxis.y": "按高度分层（Y）",
 	"qolbundle.option.sliceaxis.x": "按东西方向切（X）",
-	"qolbundle.option.sliceaxis.z": "按南北方向切（Z）"
+	"qolbundle.option.sliceaxis.z": "按南北方向切（Z）",
+
+	"qolbundle.module.escape_trail.name": "逃跑轨迹",
+	"qolbundle.module.escape_trail.desc": "记住你来时的路（最近 30 秒走过的）。受伤时出现一个橙色箭头，沿着你来的路往回指，拐过的弯也照着拐。",
+	"qolbundle.module.escape_trail.setting.seconds": "记多长的路",
+	"qolbundle.module.escape_trail.setting.seconds.desc": "按走动的秒数算，站着不动不会消耗。",
+	"qolbundle.module.escape_trail.setting.show": "什么时候显示",
+	"qolbundle.module.escape_trail.setting.damage_seconds": "受伤后显示多久",
+	"qolbundle.module.escape_trail.setting.show_trail": "在地上画出来路",
+	"qolbundle.module.escape_trail.hud": "退路 %s 格",
+
+	"qolbundle.option.show.after_damage": "受伤之后",
+	"qolbundle.option.show.always": "一直显示"
 }
