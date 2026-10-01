@@ -20,6 +20,7 @@
 	"key.qolbundle.diagnostics_slice_next": "诊断台：切片下一层",
 	"key.qolbundle.diagnostics_slice_previous": "诊断台：切片上一层",
 	"key.qolbundle.escape_trail_show": "逃跑轨迹：显示 / 收起退路",
+	"key.qolbundle.combat_stats_reset": "战损统计：清零",
 
 	"qolbundle.gui.title": "QoL 全家桶",
 	"qolbundle.gui.settings": "设置...",
@@ -39,6 +40,7 @@
 	"qolbundle.category.info": "信息显示",
 	"qolbundle.category.tools": "工具",
 	"qolbundle.category.grey": "灰档 · 公服慎用",
+	"qolbundle.category.pvp": "PvP 信息",
 
 	"qolbundle.option.hudanchor.top_left": "左上",
 	"qolbundle.option.hudanchor.top_right": "右上",
@@ -582,5 +584,62 @@
 	"qolbundle.module.escape_trail.hud": "退路 %s 格",
 
 	"qolbundle.option.show.after_damage": "受伤之后",
-	"qolbundle.option.show.always": "一直显示"
+	"qolbundle.option.show.always": "一直显示",
+
+	"qolbundle.module.attack_cooldown.name": "攻击冷却条",
+	"qolbundle.module.attack_cooldown.desc": "武器蓄力时准星下方有一条进度条，写着还差几个 tick；蓄满的一瞬间有一声轻响。",
+	"qolbundle.module.attack_cooldown.setting.sound": "蓄满提示音",
+	"qolbundle.module.attack_cooldown.setting.volume": "提示音音量",
+	"qolbundle.module.attack_cooldown.setting.show_ticks": "显示还差几个 tick",
+
+	"qolbundle.module.loot_timer.name": "抢夺倒计时",
+	"qolbundle.module.loot_timer.desc": "掉落物头上显示还有多久消失（共 5 分钟）。从你第一次看到它开始算，所以对早就躺在那的东西只是上限（≤）。只标你看得见的。",
+	"qolbundle.module.loot_timer.setting.radius": "范围（格）",
+	"qolbundle.module.loot_timer.setting.min_stacks": "至少几组才显示",
+
+	"qolbundle.module.projectile_direction.name": "弹道来向",
+	"qolbundle.module.projectile_direction.desc": "被箭、三叉戟等远程打中的一瞬间，准星旁出现红色箭头指向它飞来的方向，持续几秒。",
+	"qolbundle.module.projectile_direction.setting.seconds": "显示多久",
+	"qolbundle.module.projectile_direction.hud": "%s 从这边来",
+
+	"qolbundle.module.combat_stats.name": "击杀确认与战损统计",
+	"qolbundle.module.combat_stats.desc": "你打过的目标死了会提示击杀确认；累计击杀数、造成伤害、承受伤害、阵亡次数，战斗后显示一会。造成伤害靠的是服务器告诉你的对方血量。",
+	"qolbundle.module.combat_stats.setting.position": "位置",
+	"qolbundle.module.combat_stats.setting.always_show": "一直显示",
+	"qolbundle.module.combat_stats.setting.combat_seconds": "战斗后显示多久",
+	"qolbundle.module.combat_stats.setting.kill_sound": "击杀提示音",
+	"qolbundle.module.combat_stats.kill": "击杀确认：%s",
+	"qolbundle.module.combat_stats.hud": "击杀 %s · 造成 %s · 承受 %s · 阵亡 %s",
+
+	"qolbundle.module.enemy_gear.name": "对手装备情报",
+	"qolbundle.module.enemy_gear.desc": "看向一个玩家：显示他手里拿的、身上穿的和附魔，以及他是不是正在喝药、吃东西、拉弓、举盾。只对你面前、中间没有遮挡的玩家有效。",
+	"qolbundle.module.enemy_gear.setting.position": "面板位置",
+	"qolbundle.module.enemy_gear.setting.range": "范围（格）",
+	"qolbundle.module.enemy_gear.setting.show_enchantments": "显示附魔",
+	"qolbundle.module.enemy_gear.setting.show_action": "显示对方正在做什么",
+	"qolbundle.module.enemy_gear.hud.title": "%s · %s 格",
+	"qolbundle.module.enemy_gear.hud.nothing": "什么都没装备",
+	"qolbundle.module.enemy_gear.action.drink": "! 正在喝 %s",
+	"qolbundle.module.enemy_gear.action.eat": "! 正在吃 %s",
+	"qolbundle.module.enemy_gear.action.bow": "! 正在拉弓",
+	"qolbundle.module.enemy_gear.action.crossbow": "! 正在上弩",
+	"qolbundle.module.enemy_gear.action.block": "! 举着盾",
+	"qolbundle.module.enemy_gear.action.throw": "! 正要投出 %s",
+	"qolbundle.module.enemy_gear.action.other": "! 正在使用 %s",
+
+	"qolbundle.module.approach_alert.name": "接近警报",
+	"qolbundle.module.approach_alert.desc": "有玩家靠近时（任何方向，中间没有遮挡，比如从背后摸过来）响一声并出现箭头。隔着墙不会触发；箭头只指向那一刻他所在的位置，不会一直跟着他。",
+	"qolbundle.module.approach_alert.setting.radius": "多近算靠近（格）",
+	"qolbundle.module.approach_alert.setting.cooldown": "同一个人多久后再提醒",
+	"qolbundle.module.approach_alert.setting.only_sneaking": "只提醒潜行的人",
+	"qolbundle.module.approach_alert.setting.sound": "提示音",
+	"qolbundle.module.approach_alert.hud": "%s 靠近了：%s 格",
+
+	"qolbundle.module.stare_alert.name": "被盯上检测",
+	"qolbundle.module.stare_alert.desc": "你面前的玩家如果准星一直对着你超过几秒，就提示出来。",
+	"qolbundle.module.stare_alert.setting.seconds": "盯多久算",
+	"qolbundle.module.stare_alert.setting.angle": "对得多准才算",
+	"qolbundle.module.stare_alert.setting.range": "范围（格）",
+	"qolbundle.module.stare_alert.setting.sound": "提示音",
+	"qolbundle.module.stare_alert.hud": "%s 在盯着你"
 }

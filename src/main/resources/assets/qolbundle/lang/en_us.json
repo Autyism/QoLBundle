@@ -20,6 +20,7 @@
 	"key.qolbundle.diagnostics_slice_next": "Diagnostics: next layer",
 	"key.qolbundle.diagnostics_slice_previous": "Diagnostics: previous layer",
 	"key.qolbundle.escape_trail_show": "Escape trail: show / hide the way back",
+	"key.qolbundle.combat_stats_reset": "Combat stats: reset",
 
 	"qolbundle.gui.title": "QoL Bundle",
 	"qolbundle.gui.settings": "Settings...",
@@ -39,6 +40,7 @@
 	"qolbundle.category.info": "Information",
 	"qolbundle.category.tools": "Tools",
 	"qolbundle.category.grey": "Grey zone - careful on public servers",
+	"qolbundle.category.pvp": "PvP awareness",
 
 	"qolbundle.option.hudanchor.top_left": "Top left",
 	"qolbundle.option.hudanchor.top_right": "Top right",
@@ -582,5 +584,62 @@
 	"qolbundle.module.escape_trail.hud": "way back %s m",
 
 	"qolbundle.option.show.after_damage": "After taking damage",
-	"qolbundle.option.show.always": "Always"
+	"qolbundle.option.show.always": "Always",
+
+	"qolbundle.module.attack_cooldown.name": "Attack Cooldown Bar",
+	"qolbundle.module.attack_cooldown.desc": "A bar under the crosshair while your weapon recharges, with the ticks left, and a soft click when the next hit is at full strength again.",
+	"qolbundle.module.attack_cooldown.setting.sound": "Sound when ready",
+	"qolbundle.module.attack_cooldown.setting.volume": "Sound volume",
+	"qolbundle.module.attack_cooldown.setting.show_ticks": "Show ticks left",
+
+	"qolbundle.module.loot_timer.name": "Loot Timer",
+	"qolbundle.module.loot_timer.desc": "A countdown over dropped items until they disappear (5 minutes). Counted from when the item first showed up for you, so for items that were already lying there it is an upper limit (≤). Only items in plain sight.",
+	"qolbundle.module.loot_timer.setting.radius": "Range (blocks)",
+	"qolbundle.module.loot_timer.setting.min_stacks": "Only piles of at least this many stacks",
+
+	"qolbundle.module.projectile_direction.name": "Shot Direction",
+	"qolbundle.module.projectile_direction.desc": "When an arrow, trident or other projectile hits you, a red arrow at the crosshair shows where it came from for a few seconds.",
+	"qolbundle.module.projectile_direction.setting.seconds": "Show for",
+	"qolbundle.module.projectile_direction.hud": "%s came from here",
+
+	"qolbundle.module.combat_stats.name": "Kill Confirmation & Combat Stats",
+	"qolbundle.module.combat_stats.desc": "Says so when something you hit dies, and keeps count of kills, damage dealt, damage taken and deaths. Shown for a while after fighting. Damage dealt relies on the health the server shows for others.",
+	"qolbundle.module.combat_stats.setting.position": "Position",
+	"qolbundle.module.combat_stats.setting.always_show": "Always show",
+	"qolbundle.module.combat_stats.setting.combat_seconds": "Stay visible after a fight for",
+	"qolbundle.module.combat_stats.setting.kill_sound": "Sound on a kill",
+	"qolbundle.module.combat_stats.kill": "Kill confirmed: %s",
+	"qolbundle.module.combat_stats.hud": "Kills %s - dealt %s - taken %s - deaths %s",
+
+	"qolbundle.module.enemy_gear.name": "Opponent Gear Panel",
+	"qolbundle.module.enemy_gear.desc": "Look at a player: shows what they hold and wear, with enchantments, and whether they are drinking, eating, drawing a bow or blocking. Only players in front of you with nothing in between.",
+	"qolbundle.module.enemy_gear.setting.position": "Panel position",
+	"qolbundle.module.enemy_gear.setting.range": "Range (blocks)",
+	"qolbundle.module.enemy_gear.setting.show_enchantments": "Show enchantments",
+	"qolbundle.module.enemy_gear.setting.show_action": "Show what they are doing",
+	"qolbundle.module.enemy_gear.hud.title": "%s - %s blocks",
+	"qolbundle.module.enemy_gear.hud.nothing": "no gear",
+	"qolbundle.module.enemy_gear.action.drink": "! drinking %s",
+	"qolbundle.module.enemy_gear.action.eat": "! eating %s",
+	"qolbundle.module.enemy_gear.action.bow": "! drawing a bow",
+	"qolbundle.module.enemy_gear.action.crossbow": "! loading a crossbow",
+	"qolbundle.module.enemy_gear.action.block": "! blocking",
+	"qolbundle.module.enemy_gear.action.throw": "! about to throw %s",
+	"qolbundle.module.enemy_gear.action.other": "! using %s",
+
+	"qolbundle.module.approach_alert.name": "Approach Alert",
+	"qolbundle.module.approach_alert.desc": "A sound and an arrow when a player comes close from any side with nothing solid in between, e.g. sneaking up behind you. Never through walls; the arrow shows where they were at that moment and does not follow them.",
+	"qolbundle.module.approach_alert.setting.radius": "Alert distance (blocks)",
+	"qolbundle.module.approach_alert.setting.cooldown": "Same player again after",
+	"qolbundle.module.approach_alert.setting.only_sneaking": "Only sneaking players",
+	"qolbundle.module.approach_alert.setting.sound": "Sound",
+	"qolbundle.module.approach_alert.hud": "%s is close: %s blocks",
+
+	"qolbundle.module.stare_alert.name": "Being Watched",
+	"qolbundle.module.stare_alert.desc": "Calls out a player in front of you who keeps their crosshair on you for more than a few seconds.",
+	"qolbundle.module.stare_alert.setting.seconds": "After how long",
+	"qolbundle.module.stare_alert.setting.angle": "How exactly they must aim at you",
+	"qolbundle.module.stare_alert.setting.range": "Range (blocks)",
+	"qolbundle.module.stare_alert.setting.sound": "Sound",
+	"qolbundle.module.stare_alert.hud": "%s is watching you"
 }

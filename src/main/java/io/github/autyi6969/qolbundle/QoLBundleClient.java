@@ -1,5 +1,12 @@
 package io.github.autyi6969.qolbundle;
 
+import io.github.autyi6969.qolbundle.modules.StareAlertModule;
+import io.github.autyi6969.qolbundle.modules.ApproachAlertModule;
+import io.github.autyi6969.qolbundle.modules.EnemyGearModule;
+import io.github.autyi6969.qolbundle.modules.CombatStatsModule;
+import io.github.autyi6969.qolbundle.modules.ProjectileDirectionModule;
+import io.github.autyi6969.qolbundle.modules.LootTimerModule;
+import io.github.autyi6969.qolbundle.modules.AttackCooldownModule;
 import io.github.autyi6969.qolbundle.api.QoLBundleAddon;
 import io.github.autyi6969.qolbundle.config.ConfigManager;
 import io.github.autyi6969.qolbundle.data.WorldData;
@@ -131,6 +138,13 @@ public class QoLBundleClient implements ClientModInitializer {
 		ModuleRegistry.register(new PlacementMasterModule());
 		ModuleRegistry.register(new DiagnosticsModule());
 		ModuleRegistry.register(new EscapeTrailModule());
+		ModuleRegistry.register(new AttackCooldownModule());
+		ModuleRegistry.register(new LootTimerModule());
+		ModuleRegistry.register(new ProjectileDirectionModule());
+		ModuleRegistry.register(new CombatStatsModule());
+		ModuleRegistry.register(new EnemyGearModule());
+		ModuleRegistry.register(new ApproachAlertModule());
+		ModuleRegistry.register(new StareAlertModule());
 		// Grey zone (single-player / own server), all off by default.
 		ModuleRegistry.register(new AfkClickerModule());
 		ModuleRegistry.register(new FreecamModule());

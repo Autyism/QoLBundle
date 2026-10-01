@@ -1,5 +1,14 @@
 package io.github.autyi6969.qolbundle.selftest;
 
+import net.minecraft.util.math.Box;
+import net.minecraft.entity.passive.PigEntity;
+import io.github.autyi6969.qolbundle.modules.StareAlertModule;
+import io.github.autyi6969.qolbundle.modules.ApproachAlertModule;
+import io.github.autyi6969.qolbundle.modules.EnemyGearModule;
+import io.github.autyi6969.qolbundle.modules.CombatStatsModule;
+import io.github.autyi6969.qolbundle.modules.ProjectileDirectionModule;
+import io.github.autyi6969.qolbundle.modules.LootTimerModule;
+import io.github.autyi6969.qolbundle.modules.AttackCooldownModule;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.input.KeyInput;
 import io.github.autyi6969.qolbundle.modules.PlacementMasterModule;
@@ -137,6 +146,13 @@ public final class Scenarios {
 		test.scenario("placement_master", false, Scenarios::placementMaster);
 		test.scenario("diagnostics", false, Scenarios::diagnostics);
 		test.scenario("escape_trail", false, Scenarios::escapeTrail);
+		test.scenario("attack_cooldown", false, Scenarios::attackCooldown);
+		test.scenario("loot_timer", false, Scenarios::lootTimer);
+		test.scenario("projectile_direction", false, Scenarios::projectileDirection);
+		test.scenario("combat_stats", false, Scenarios::combatStats);
+		test.scenario("enemy_gear", false, Scenarios::enemyGear);
+		test.scenario("approach_alert", false, Scenarios::approachAlert);
+		test.scenario("stare_alert", false, Scenarios::stareAlert);
 		test.scenario("afk_clicker", false, Scenarios::afkClicker);
 		test.scenario("fluid_vision", false, Scenarios::fluidVision);
 		test.scenario("freecam", false, Scenarios::freecam);
@@ -1417,6 +1433,179 @@ public final class Scenarios {
 		s.run("restore the setting", client -> module.showSetting().reset());
 	}
 
+	private static void attackCooldown(SelfTest.Script s) {
+		AttackCooldownModule module = module("attack_cooldown");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("item replace entity @a weapon.mainhand with diamond_axe");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 -30");
+		// Taking the axe in hand starts a recharge of its own; let it finish.
+		s.waitTicks(40);
+		int[] ready = new int[1];
+		s.check("ready before swinging", client -> !module.isCharging());
+		s.run("swing the axe at the air", client -> {
+			ready[0] = module.getReadyCount();
+			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.attackKey));
+		});
+		s.waitTicks(5);
+		s.info("cooldown", client -> "charging=" + module.isCharging() + " ticksLeft=" + module.ticksLeft(client.player));
+		s.check("an axe needs 20 ticks: a few ticks after the swing between 10 and 18 are left", client -> module.isCharging()
+				&& module.ticksLeft(client.player) >= 10 && module.ticksLeft(client.player) <= 18);
+		s.screenshot("36_attack_cooldown");
+		s.waitUntil("the axe is ready again", client -> !module.isCharging(), 60);
+		s.check("the 'ready' moment was announced exactly once", client -> module.getReadyCount() == ready[0] + 1);
+		s.command("gamemode creative @a");
+	}
+
+	private static void lootTimer(SelfTest.Script s) {
+		LootTimerModule module = module("loot_timer");
+		isolate(s, module);
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 20");
+		s.command("summon item 0.5 " + (GROUND_Y + 1) + " -2.5 {Item:{id:\"minecraft:diamond\",count:3}}");
+		s.waitTicks(60);
+		s.info("loot", client -> module.getPiles().toString());
+		s.check("the dropped item has a countdown of nearly 5 minutes", client -> module.getPiles().size() == 1
+				&& module.getPiles().get(0).secondsLeft() >= 294 && module.getPiles().get(0).secondsLeft() <= 299);
+		s.screenshot("37_loot_timer");
+		// A wall in between: the item is out of sight and loses its label.
+		s.command("fill -2 " + GROUND_Y + " -1 2 " + (GROUND_Y + 2) + " -1 stone");
+		s.waitTicks(15);
+		s.check("an item behind a wall gets no label", client -> module.getPiles().isEmpty());
+		s.command("kill @e[type=item]");
+	}
+
+	private static void projectileDirection(SelfTest.Script s) {
+		ProjectileDirectionModule module = module("projectile_direction");
+		isolate(s, module);
+		s.command("gamemode survival @a");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		s.waitTicks(15);
+		s.check("nothing shown before being hit", client -> module.getSource() == null);
+		// An arrow from behind (the player faces north, the arrow comes from the south).
+		s.command("summon arrow 0.5 " + (GROUND_Y + 1.4) + " 8.5 {Motion:[0.0d,0.05d,-1.6d]}");
+		s.waitUntil("the arrow hit and the direction is shown", client -> module.getHits() == 1, 100);
+		s.info("shot", client -> "source=" + module.getSource() + " health=" + client.player.getHealth());
+		s.check("the arrow points behind the player, to the south where the shot came from", client -> module.getSource() != null
+				&& module.getSource().z > client.player.getZ() + 5
+				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePos(), client.player.getYaw(), module.getSource())) > 150);
+		s.screenshot("38_projectile_direction");
+		s.command("gamemode creative @a");
+		s.command("kill @e[type=arrow]");
+	}
+
+	private static void combatStats(SelfTest.Script s) {
+		CombatStatsModule module = module("combat_stats");
+		isolate(s, module);
+		s.run("start from zero", client -> module.reset());
+		s.command("gamemode survival @a");
+		s.command("item replace entity @a weapon.mainhand with diamond_sword");
+		s.command("summon pig 0.5 " + GROUND_Y + " -1.5 {NoAI:1b}");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 20");
+		s.waitTicks(40);
+		// A pig has 10 health, a diamond sword does 7: two hits.
+		for (int hit = 0; hit < 2; hit++) {
+			s.run("hit the pig", client -> {
+				List<PigEntity> pigs = client.world.getEntitiesByClass(PigEntity.class, new Box(client.player.getBlockPos()).expand(6), pig -> pig.isAlive());
+				if (pigs.isEmpty()) {
+					throw new IllegalStateException("no pig");
+				}
+				client.interactionManager.attackEntity(client.player, pigs.get(0));
+				client.player.swingHand(Hand.MAIN_HAND);
+			});
+			s.waitTicks(25);
+		}
+		s.waitUntil("the kill is confirmed", client -> module.getKills() == 1, 100);
+		s.info("combat", client -> "kills=" + module.getKills() + " dealt=" + module.getDealt() + " taken=" + module.getTaken());
+		s.check("the 10 health the pig had are counted as damage dealt", client -> Math.abs(module.getDealt() - 10.0) < 0.5);
+		s.screenshot("39_combat_stats");
+		s.command("damage @p 3");
+		s.waitUntil("the damage taken is counted", client -> module.getTaken() > 2.5, 100);
+		s.check("3 damage taken, no deaths", client -> Math.abs(module.getTaken() - 3.0) < 0.2 && module.getDeaths() == 0);
+		s.command("gamemode creative @a");
+		s.command("kill @e[type=item]");
+		s.command("kill @e[type=experience_orb]");
+	}
+
+	private static final String FIGURE = "@e[type=minecraft:mannequin,limit=1]";
+
+	private static void enemyGear(SelfTest.Script s) {
+		EnemyGearModule module = module("enemy_gear");
+		isolate(s, module);
+		// The game's player-shaped figure stands in for another player.
+		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " -5.5");
+		s.command("item replace entity " + FIGURE + " weapon.mainhand with diamond_sword[enchantments={\"minecraft:sharpness\":5}]");
+		s.command("item replace entity " + FIGURE + " armor.chest with diamond_chestplate[enchantments={\"minecraft:protection\":4,\"minecraft:unbreaking\":3}]");
+		s.command("item replace entity " + FIGURE + " armor.head with iron_helmet");
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		s.waitTicks(30);
+		s.info("gear", client -> module.getTarget() == null ? "no target" : module.rowsOf(module.getTarget()).stream()
+				.map(row -> row.name().getString() + " [" + (row.enchantments() == null ? "" : row.enchantments().getString()) + "]").toList());
+		s.check("the figure in front is picked up with its three pieces of gear", client -> module.getTarget() != null
+				&& module.rowsOf(module.getTarget()).size() == 3);
+		s.check("the sword's Sharpness V and the chestplate's two enchantments are read", client -> module.getTarget() != null
+				&& module.rowsOf(module.getTarget()).get(0).enchantments() != null
+				&& module.rowsOf(module.getTarget()).get(0).enchantments().getString().equals("Sharpness V")
+				&& module.rowsOf(module.getTarget()).get(2).enchantments().getString().contains("Protection IV")
+				&& module.rowsOf(module.getTarget()).get(2).enchantments().getString().contains("Unbreaking III"));
+		s.screenshot("40_enemy_gear");
+		// Behind a wall there is nothing to read.
+		s.command("fill -2 " + GROUND_Y + " -3 2 " + (GROUND_Y + 2) + " -3 stone");
+		s.waitTicks(60);
+		s.check("a player behind a wall is not shown", client -> module.getTarget() == null);
+		s.command("kill @e[type=minecraft:mannequin]");
+		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
+	}
+
+	private static void approachAlert(SelfTest.Script s) {
+		ApproachAlertModule module = module("approach_alert");
+		isolate(s, module);
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		// Far behind the player: no alert.
+		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " 25.5");
+		s.waitTicks(30);
+		s.check("a player 25 blocks away does not set it off", client -> module.getAlerts() == 0);
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 6.5");
+		s.waitUntil("the alert goes off when they are 6 blocks behind", client -> module.getAlerts() == 1, 60);
+		s.check("the arrow points behind the player", client -> module.getAlertPos() != null
+				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePos(), client.player.getYaw(), module.getAlertPos())) > 150);
+		s.screenshot("41_approach_alert");
+		// Away and back at once: the same player is not announced again so soon.
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 25.5");
+		s.waitTicks(15);
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 6.5");
+		s.waitTicks(30);
+		s.check("the same player coming back right away is not announced twice", client -> module.getAlerts() == 1);
+		// Somebody else, but behind a wall: nothing.
+		s.command("kill @e[type=minecraft:mannequin]");
+		s.command("fill -3 " + GROUND_Y + " 3 3 " + (GROUND_Y + 3) + " 3 stone");
+		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " 5.5");
+		s.waitTicks(40);
+		s.check("a player close by but behind a wall does not set it off", client -> module.getAlerts() == 1);
+		s.command("kill @e[type=minecraft:mannequin]");
+		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
+	}
+
+	private static void stareAlert(SelfTest.Script s) {
+		StareAlertModule module = module("stare_alert");
+		isolate(s, module);
+		s.run("one second of staring is enough", client -> module.secondsSetting().set(1));
+		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
+		// A figure 8 blocks ahead, turned away at first.
+		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " -7.5");
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 90 0");
+		s.waitTicks(50);
+		s.check("somebody looking elsewhere is not reported", client -> module.getStarers().isEmpty());
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 0 0");
+		s.waitUntil("facing the player for over a second gets them reported", client -> module.getStarers().size() == 1, 100);
+		s.screenshot("42_stare_alert");
+		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 90 0");
+		s.waitTicks(20);
+		s.check("turning away ends it", client -> module.getStarers().isEmpty());
+		s.run("restore the setting", client -> module.secondsSetting().reset());
+		s.command("kill @e[type=minecraft:mannequin]");
+		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
+	}
+
 	private static void shulkerManager(SelfTest.Script s) {
 		ShulkerManagerModule module = module("shulker_manager");
 		isolate(s, module);
@@ -1712,6 +1901,7 @@ public final class Scenarios {
 		s.command("clear @a");
 		s.command("effect clear @a");
 		s.command("kill @e[type=item]");
+		s.command("kill @e[type=minecraft:mannequin]");
 		s.command("fill -8 " + (GROUND_Y - 1) + " -8 8 " + (GROUND_Y - 1) + " 8 grass_block");
 		// Remove anything an earlier scenario built around the origin.
 		s.command("fill -8 -60 -8 8 -50 8 air");

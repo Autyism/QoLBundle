@@ -9,6 +9,8 @@ public enum ModuleCategory {
 	TECHNICAL,
 	INFO,
 	TOOLS,
+	/** Reading other players: only what is in plain sight, never through walls. */
+	PVP,
 	/** Automation and information advantages: fine alone or on your own server, risky on public ones. */
 	GREY;
 
