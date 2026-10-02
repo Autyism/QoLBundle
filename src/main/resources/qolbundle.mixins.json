@@ -2,6 +2,7 @@
 	"required": true,
 	"package": "io.github.autyi6969.qolbundle.mixin",
 	"compatibilityLevel": "JAVA_21",
+	"plugin": "io.github.autyi6969.qolbundle.mixin.QoLBundleMixinPlugin",
 	"client": [
 		"BlockItemInvoker",
 		"CameraMixin",
@@ -19,6 +20,7 @@
 		"RecipeBookScreenAccessor",
 		"RecipeBookWidgetAccessor",
 		"WaterFogModifierMixin",
+		"WorldRendererCullingMixin",
 		"WorldRendererMixin"
 	],
 	"injectors": {
