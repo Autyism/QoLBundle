@@ -1,8 +1,8 @@
 {
 	"required": true,
-	"package": "io.github.autyi6969.qolbundle.mixin",
+	"package": "io.github.autyism.qolbundle.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"plugin": "io.github.autyi6969.qolbundle.mixin.QoLBundleMixinPlugin",
+	"plugin": "io.github.autyism.qolbundle.mixin.QoLBundleMixinPlugin",
 	"client": [
 		"BlockItemInvoker",
 		"CameraMixin",

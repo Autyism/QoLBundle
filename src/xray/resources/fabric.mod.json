@@ -3,14 +3,22 @@
 	"id": "qolbundle_xray",
 	"version": "${version}",
 	"name": "QoL Bundle: X-ray add-on",
-	"description": "Add-on for QoL Bundle: outlines ores through walls. Single-player and your own server only; do not use it on public servers.",
+	"description": "Optional add-on for QoL Bundle: outlines nearby ores through walls. Off by default and meant for single-player and your own server only; many servers ban X-ray.",
 	"authors": [
-		"Autyi6969"
+		"Autyism"
 	],
-	"license": "GPL-3.0",
+	"contact": {
+		"homepage": "https://github.com/Autyism/QoLBundle",
+		"sources": "https://github.com/Autyism/QoLBundle",
+		"issues": "https://github.com/Autyism/QoLBundle/issues"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/qolbundle_xray/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"qolbundle": ["io.github.autyi6969.qolbundle.xray.XrayAddon"]
+		"qolbundle": [
+			"io.github.autyism.qolbundle.xray.XrayAddon"
+		]
 	},
 	"depends": {
 		"fabricloader": ">=0.19.5",

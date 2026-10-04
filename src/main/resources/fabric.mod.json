@@ -3,15 +3,25 @@
 	"id": "qolbundle",
 	"version": "${version}",
 	"name": "QoL Bundle",
-	"description": "A client-side bundle of independent quality-of-life modules. Every module has its own switch and settings. The grey-zone modules (AFK clicker, Freecam, elytra one-key take-off) are off by default and meant for single-player and your own server only.",
+	"description": "A client-side bundle of 39 independent quality-of-life modules, each with its own switch and settings (press K or use Mod Menu). The grey-zone modules (AFK Clicker, Freecam, Elytra One-Key Take-off, Water & Lava Vision, Rear-view Mirror) are off by default and meant for single-player and your own server.",
 	"authors": [
-		"Autyi6969"
+		"Autyism"
 	],
-	"license": "GPL-3.0",
+	"contact": {
+		"homepage": "https://github.com/Autyism/QoLBundle",
+		"sources": "https://github.com/Autyism/QoLBundle",
+		"issues": "https://github.com/Autyism/QoLBundle/issues"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/qolbundle/icon.png",
 	"environment": "client",
 	"entrypoints": {
-		"client": ["io.github.autyi6969.qolbundle.QoLBundleClient"],
-		"modmenu": ["io.github.autyi6969.qolbundle.compat.ModMenuIntegration"]
+		"client": [
+			"io.github.autyism.qolbundle.QoLBundleClient"
+		],
+		"modmenu": [
+			"io.github.autyism.qolbundle.compat.ModMenuIntegration"
+		]
 	},
 	"mixins": [
 		"qolbundle.mixins.json"
