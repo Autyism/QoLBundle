@@ -18,5 +18,7 @@
 	"qolbundle.module.xray.setting.extra_blocks": "Extra blocks",
 	"qolbundle.module.xray.setting.extra_blocks.desc": "Block ids separated by commas, e.g. minecraft:spawner,minecraft:chest",
 	"qolbundle.module.xray.setting.show_count": "Show how many are outlined",
-	"qolbundle.module.xray.setting.position": "Position of that line"
+	"qolbundle.module.xray.setting.position": "Position of that line",
+	"modmenu.nameTranslation.qolbundle_xray": "QoL Bundle: X-ray add-on",
+	"modmenu.descriptionTranslation.qolbundle_xray": "Optional add-on for QoL Bundle: outlines nearby ores through walls. Off by default and meant for single-player and your own server only; many servers ban X-ray."
 }

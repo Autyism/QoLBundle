@@ -506,7 +506,7 @@
 	"qolbundle.module.diagnostics.desc": "Look at a redstone component and press F8: everything connected to it is scanned as one machine. Shows where signals run and die, locked hoppers and slow parts, a count of all components, how many items it produces per hour, and single layers of it. F8 at the sky (or while sneaking) clears it.",
 	"qolbundle.module.diagnostics.setting.position": "Panel position",
 	"qolbundle.module.diagnostics.setting.signal_flow": "Signal flow",
-	"qolbundle.module.diagnostics.setting.signal_flow.desc": "Arrows along redstone dust from strong to weak, arrows out of repeaters, comparators and observers, and a red mark where a signal runs out or a repeater is locked.",
+	"qolbundle.module.diagnostics.setting.signal_flow.desc": "Arrows along redstone dust from strong to weak, arrows out of repeaters, comparators and observers, a red mark where a signal runs out and an orange one where a repeater is locked.",
 	"qolbundle.module.diagnostics.setting.bottlenecks": "Bottlenecks",
 	"qolbundle.module.diagnostics.setting.bottlenecks.desc": "Locked hoppers, total repeater delay, the component that repeats most slowly, and a warning when more items drop than one hopper line can carry.",
 	"qolbundle.module.diagnostics.setting.overview": "Component overview",
@@ -648,5 +648,7 @@
 	"qolbundle.module.rear_mirror.setting.position": "Position",
 	"qolbundle.module.rear_mirror.setting.size": "Size (share of the screen width)",
 	"qolbundle.module.rear_mirror.setting.flip": "Left-right like a real mirror",
-	"qolbundle.module.rear_mirror.setting.flip.desc": "On: what is behind your left shoulder appears on the left. Off: the picture is what you would see after turning round."
+	"qolbundle.module.rear_mirror.setting.flip.desc": "On: what is behind your left shoulder appears on the left. Off: the picture is what you would see after turning round.",
+	"modmenu.nameTranslation.qolbundle": "QoL Bundle",
+	"modmenu.descriptionTranslation.qolbundle": "A client-side bundle of 39 independent quality-of-life modules, each with its own switch and settings (press K or use Mod Menu). The grey-zone modules (AFK Clicker, Freecam, Elytra One-Key Take-off, Water & Lava Vision, Rear-view Mirror) are off by default and meant for single-player and your own server."
 }

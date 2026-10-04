@@ -18,5 +18,7 @@
 	"qolbundle.module.xray.setting.extra_blocks": "额外要找的方块",
 	"qolbundle.module.xray.setting.extra_blocks.desc": "方块 id，用英文逗号隔开，例如 minecraft:spawner,minecraft:chest",
 	"qolbundle.module.xray.setting.show_count": "显示描边数量",
-	"qolbundle.module.xray.setting.position": "那行字的位置"
+	"qolbundle.module.xray.setting.position": "那行字的位置",
+	"modmenu.nameTranslation.qolbundle_xray": "QoL 全家桶：X-ray 附属包",
+	"modmenu.descriptionTranslation.qolbundle_xray": "QoL 全家桶的可选附属包：隔着墙给附近的矿石描边。默认关闭，仅限单人和自建服使用，很多服务器禁止 X-ray。"
 }
