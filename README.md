@@ -3,7 +3,7 @@
 <p align="center">39 client-side quality-of-life modules in one mod, each with its own switch and settings.</p>
 <div align="center">
 
-<p align="center">-><a href="README.cn.md">简体中文</a><-</p>
+<p align="center">-><a href="docs/README.cn.md">简体中文</a><-</p>
 <p align="center">-><a href="docs/README_detailed.md">Detailed</a><-</p>
 
 
