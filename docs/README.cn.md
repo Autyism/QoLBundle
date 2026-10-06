@@ -2,6 +2,7 @@
 <h1 align="center">QoL Bundle</h1>
 <p align="center">39 个纯客户端的 QoL 小功能装进一个模组，每个都有自己的开关和设置。</p>
 
+<div align="center">
 <p align="center">-><a href="../README.md">English</a><-</p>
 <p align="center">-><a href="README_detailed.md">详细手册</a><-</p>
 
