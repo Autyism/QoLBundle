@@ -1,3 +1,16 @@
+<p align="center"><img src="icon.png" width="128" alt="icon"></p>
+<h1 align="center">QoL Bundle</h1>
+<p align="center">39 client-side quality-of-life modules in one mod, each with its own switch and settings.</p>
+<div align="center">
+<p align="center">39 个纯客户端的 QoL 小功能装进一个模组，每个都有自己的开关和设置。</p>
+
+<p align="center">-><a href="../README.md">English</a><-</p>
+<p align="center">-><a href="README_detailed.md">详细手册</a><-</p>
+
+![Minecraft 1.21.11](https://img.shields.io/badge/Minecraft-1.21.11-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
+
+</div>
+
 ## 一些功能
 
 | 功能 |详情|
@@ -34,19 +47,19 @@ X-ray 是特意没放进 QoL 全家桶的。很多服务器禁止透视。你可
 
 ## 截图
 
-![信息 HUD、重生点那一行和背包空格数](docs/images/hud-overview.png)
+![信息 HUD、重生点那一行和背包空格数](images/hud-overview.png)
 
 左上角是信息 HUD（坐标、朝向、FPS、游戏内时间），下面是床与重生点管家的那一行，这里正在提示记录的床已经没了。右下角是盔甲耐久 HUD 的背包空格数。
 
-![Freecam 自由视角](docs/images/freecam.png)
+![Freecam 自由视角](images/freecam.png)
 
 Freecam：镜头离开身体自由飞，顶部提示条写着退出键和离身体多远。
 
-![回到身体后看到的 Freecam 标记](docs/images/freecam-marker.png)
+![回到身体后看到的 Freecam 标记](images/freecam-marker.png)
 
 回到身体后，粉色箭头和光柱带你去飞的时候标记的地方。
 
-![Freecam 在黑暗的洞穴里](docs/images/freecam-cave.png)
+![Freecam 在黑暗的洞穴里](images/freecam-cave.png)
 
 Freecam 飞的时候会自动照亮黑暗的洞穴。
 
