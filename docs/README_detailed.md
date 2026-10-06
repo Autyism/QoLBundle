@@ -115,19 +115,19 @@ When the add-on is installed next to QoL Bundle, the module **X-ray (add-on)** a
 
 ## Screenshots
 
-![Info HUD, respawn point line and free slot counter](docs/images/hud-overview.png)
+![Info HUD, respawn point line and free slot counter](images/hud-overview.png)
 
 Info HUD in the top-left corner (coordinates, facing, FPS, in-game time) with the Bed & Respawn Point Keeper line below it, here warning that the recorded bed is gone. Bottom right: the free inventory slots counter of the Armor Durability HUD.
 
-![Freecam](docs/images/freecam.png)
+![Freecam](images/freecam.png)
 
 Freecam: the camera flies away from your body; the banner shows the key to leave and how far you are from your body.
 
-![Freecam marker seen from the body](docs/images/freecam-marker.png)
+![Freecam marker seen from the body](images/freecam-marker.png)
 
 Back in your body, a pink arrow and a beam lead to a spot you marked while flying.
 
-![Freecam in a dark cave](docs/images/freecam-cave.png)
+![Freecam in a dark cave](images/freecam-cave.png)
 
 Freecam lights up dark caves while you fly.
 
@@ -480,19 +480,19 @@ X-ray 是特意不放进 QoL 全家桶的。很多服务器禁止 X-ray，也不
 
 ## 截图
 
-![信息 HUD、重生点那一行和背包空格数](docs/images/hud-overview.png)
+![信息 HUD、重生点那一行和背包空格数](images/hud-overview.png)
 
 左上角是信息 HUD（坐标、朝向、FPS、游戏内时间），下面是床与重生点管家的那一行，这里正在提示记录的床已经没了。右下角是盔甲耐久 HUD 的背包空格数。
 
-![Freecam 自由视角](docs/images/freecam.png)
+![Freecam 自由视角](images/freecam.png)
 
 Freecam：镜头离开身体自由飞，顶部提示条写着退出键和离身体多远。
 
-![回到身体后看到的 Freecam 标记](docs/images/freecam-marker.png)
+![回到身体后看到的 Freecam 标记](images/freecam-marker.png)
 
 回到身体后，粉色箭头和光柱带你去飞的时候标记的地方。
 
-![Freecam 在黑暗的洞穴里](docs/images/freecam-cave.png)
+![Freecam 在黑暗的洞穴里](images/freecam-cave.png)
 
 Freecam 飞的时候会自动照亮黑暗的洞穴。
 
