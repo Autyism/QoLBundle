@@ -76,6 +76,7 @@ public class ItemSearchModule extends Module {
 		Screens.getButtons(screen).add(box);
 
 		// While typing, keys must not reach the inventory ("e" would close it, numbers would move items).
+		//? if >=1.21.9 {
 		ScreenKeyboardEvents.allowKeyPress(screen).register((current, input) -> {
 			if (!box.isFocused() || input.isEscape()) {
 				return true;
@@ -88,6 +89,20 @@ public class ItemSearchModule extends Module {
 			}
 			return false;
 		});
+		//?} else {
+		/*ScreenKeyboardEvents.allowKeyPress(screen).register((current, key, scancode, modifiers) -> {
+			if (!box.isFocused() || key == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE) {
+				return true;
+			}
+			if (key == com.mojang.blaze3d.platform.InputConstants.KEY_RETURN || key == com.mojang.blaze3d.platform.InputConstants.KEY_NUMPADENTER) {
+				box.setFocused(false);
+				current.setFocused(null);
+			} else {
+				box.keyPressed(key, scancode, modifiers);
+			}
+			return false;
+		});
+		*///?}
 		ScreenEvents.afterRender(screen).register((current, context, mouseX, mouseY, tickDelta) -> highlight(context, screen));
 		ScreenEvents.remove(screen).register(current -> {
 			if (field == box) {

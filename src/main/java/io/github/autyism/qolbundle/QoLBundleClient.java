@@ -77,7 +77,11 @@ public class QoLBundleClient implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("QoLBundle");
 
 	/** The "QoL Bundle" section in Options > Controls > Key Binds. */
+	//? if >=1.21.9 {
 	public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(id("main"));
+	//?} else {
+	/*public static final String KEY_CATEGORY = "key.category.qolbundle.main";
+	*///?}
 	private static KeyMapping openSettingsKey;
 
 	public static Identifier id(String path) {

@@ -94,8 +94,13 @@ public class RecipeHelperModule extends Module {
 			if (isEnabled() && screen instanceof AbstractRecipeBookScreen<?> book) {
 				reset();
 				ScreenEvents.afterRender(screen).register((current, context, mouseX, mouseY, tickDelta) -> render(context, book, mouseX, mouseY));
+				//? if >=1.21.9 {
 				ScreenMouseEvents.allowMouseClick(screen).register((current, click) ->
 						!(click.button() == 0 && activate(chipAt(click.x(), click.y()))));
+				//?} else {
+				/*ScreenMouseEvents.allowMouseClick(screen).register((current, mouseX, mouseY, button) ->
+						!(button == 0 && activate(chipAt(mouseX, mouseY))));
+				*///?}
 				ScreenEvents.remove(screen).register(current -> reset());
 			}
 		});

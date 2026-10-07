@@ -41,6 +41,19 @@ stonecutter parameters {
     oneWay(current.parsed >= "1.21.9" && current.parsed < "1.21.11",
         "\\.renderOutline\\(" to ".submitOutline(",
     )
+    // Before 1.21.9: Fabric's older world-rendering package, no Avatar (players were just Player), and the
+    // window handle had another getter. Self-test only: key presses were plain numbers, the chat screen took one
+    // argument, and leaving a world went through the pause screen.
+    oneWay(current.parsed < "1.21.9",
+        "\\brendering\\.v1\\.world\\.WorldRenderContext\\b" to "rendering.v1.WorldRenderContext",
+        "\\brendering\\.v1\\.world\\.WorldRenderEvents\\b" to "rendering.v1.WorldRenderEvents",
+        "\\bnet\\.minecraft\\.world\\.entity\\.Avatar\\b" to "net.minecraft.world.entity.player.Player",
+        "\\bAvatar\\b" to "Player",
+        "\\.getWindow\\(\\)\\.handle\\(\\)" to ".getWindow().getWindow()",
+        "\\.keyPressed\\(new KeyEvent\\(([^()]*)\\)\\)" to ".keyPressed($1)",
+        "\\bnew ChatScreen\\(\"\", false\\)" to "new ChatScreen(\"\")",
+        "\\bclient\\.disconnectFromWorld\\(" to "net.minecraft.client.gui.screens.PauseScreen.disconnectFromWorld(client, ",
+    )
     // 26.1: GUI drawing renamed (same arguments). These calls only ever go to GuiGraphics in this code.
     oneWay(current.parsed >= "26.1",
         "\\bGuiGraphics\\b" to "GuiGraphicsExtractor",

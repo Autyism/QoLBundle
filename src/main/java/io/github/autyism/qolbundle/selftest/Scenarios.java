@@ -64,6 +64,7 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+//? if >=1.21.9
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.tutorial.TutorialSteps;
 import net.minecraft.core.BlockPos;
@@ -1584,15 +1585,76 @@ public final class Scenarios {
 	}
 
 	private static final String FIGURE = "@e[type=minecraft:mannequin,limit=1]";
+	//? if <1.21.9 {
+	/*/^*
+	 * Before 1.21.9 there is no mannequin. The PvP modules only look at what this client sees, so a player that
+	 * exists only on this client stands in for the other player.
+	 ^/
+	private static net.minecraft.client.player.RemotePlayer figure;
+
+	private static void summonFigure(SelfTest.Script s, double x, double z, float yaw) {
+		s.run("a stand-in player at " + x + ", " + z, client -> {
+			removeFigureNow(client);
+			figure = new net.minecraft.client.player.RemotePlayer(client.level,
+					new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "Mannequin"));
+			placeFigure(x, z, yaw);
+			client.level.addEntity(figure);
+		});
+	}
+
+	private static void moveFigure(SelfTest.Script s, double x, double z, float yaw) {
+		s.run("move the stand-in player to " + x + ", " + z, client -> placeFigure(x, z, yaw));
+	}
+
+	private static void placeFigure(double x, double z, float yaw) {
+		figure.setPos(x, GROUND_Y, z);
+		figure.setYRot(yaw);
+		figure.setYHeadRot(yaw);
+		figure.setYBodyRot(yaw);
+		figure.setXRot(0F);
+		figure.setOldPosAndRot();
+	}
+
+	private static void removeFigure(SelfTest.Script s) {
+		s.run("remove the stand-in player", Scenarios::removeFigureNow);
+	}
+
+	private static void removeFigureNow(Minecraft client) {
+		if (figure != null && client.level != null) {
+			client.level.removeEntity(figure.getId(), net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+		}
+		figure = null;
+	}
+
+	private static void equipFigure(SelfTest.Script s) {
+		s.run("give the stand-in player its gear", client -> {
+			var enchantments = client.level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+			net.minecraft.world.item.ItemStack sword = new net.minecraft.world.item.ItemStack(Items.DIAMOND_SWORD);
+			sword.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS), 5);
+			net.minecraft.world.item.ItemStack chestplate = new net.minecraft.world.item.ItemStack(Items.DIAMOND_CHESTPLATE);
+			chestplate.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.PROTECTION), 4);
+			chestplate.enchant(enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING), 3);
+			figure.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, sword);
+			figure.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chestplate);
+			figure.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(Items.IRON_HELMET));
+		});
+	}
+
+	*///?}
 
 	private static void enemyGear(SelfTest.Script s) {
 		EnemyGearModule module = module("enemy_gear");
 		isolate(s, module);
 		// The game's player-shaped figure stands in for another player.
+		//? if >=1.21.9 {
 		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " -5.5");
 		s.command("item replace entity " + FIGURE + " weapon.mainhand with diamond_sword[enchantments={\"minecraft:sharpness\":5}]");
 		s.command("item replace entity " + FIGURE + " armor.chest with diamond_chestplate[enchantments={\"minecraft:protection\":4,\"minecraft:unbreaking\":3}]");
 		s.command("item replace entity " + FIGURE + " armor.head with iron_helmet");
+		//?} else {
+		/*summonFigure(s, 0.5, -5.5, 0F);
+		equipFigure(s);
+		*///?}
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
 		s.waitTicks(30);
 		s.info("gear", client -> module.getTarget() == null ? "no target" : module.rowsOf(module.getTarget()).stream()
@@ -1609,7 +1671,11 @@ public final class Scenarios {
 		s.command("fill -2 " + GROUND_Y + " -3 2 " + (GROUND_Y + 2) + " -3 stone");
 		s.waitTicks(60);
 		s.check("a player behind a wall is not shown", client -> module.getTarget() == null);
+		//? if >=1.21.9 {
 		s.command("kill @e[type=minecraft:mannequin]");
+		//?} else {
+		/*removeFigure(s);
+		*///?}
 		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
 	}
 
@@ -1618,27 +1684,51 @@ public final class Scenarios {
 		isolate(s, module);
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
 		// Far behind the player: no alert.
+		//? if >=1.21.9 {
 		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " 25.5");
+		//?} else {
+		/*summonFigure(s, 0.5, 25.5, 0F);
+		*///?}
 		s.waitTicks(30);
 		s.check("a player 25 blocks away does not set it off", client -> module.getAlerts() == 0);
+		//? if >=1.21.9 {
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 6.5");
+		//?} else {
+		/*moveFigure(s, 0.5, 6.5, 0F);
+		*///?}
 		s.waitUntil("the alert goes off when they are 6 blocks behind", client -> module.getAlerts() == 1, 60);
 		s.check("the arrow points behind the player", client -> module.getAlertPos() != null
 				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePosition(), client.player.getYRot(), module.getAlertPos())) > 150);
 		s.screenshot("41_approach_alert");
 		// Away and back at once: the same player is not announced again so soon.
+		//? if >=1.21.9 {
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 25.5");
 		s.waitTicks(15);
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 6.5");
+		//?} else {
+		/*moveFigure(s, 0.5, 25.5, 0F);
+		s.waitTicks(15);
+		moveFigure(s, 0.5, 6.5, 0F);
+		*///?}
 		s.waitTicks(30);
 		s.check("the same player coming back right away is not announced twice", client -> module.getAlerts() == 1);
 		// Somebody else, but behind a wall: nothing.
+		//? if >=1.21.9 {
 		s.command("kill @e[type=minecraft:mannequin]");
 		s.command("fill -3 " + GROUND_Y + " 3 3 " + (GROUND_Y + 3) + " 3 stone");
 		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " 5.5");
+		//?} else {
+		/*removeFigure(s);
+		s.command("fill -3 " + GROUND_Y + " 3 3 " + (GROUND_Y + 3) + " 3 stone");
+		summonFigure(s, 0.5, 5.5, 0F);
+		*///?}
 		s.waitTicks(40);
 		s.check("a player close by but behind a wall does not set it off", client -> module.getAlerts() == 1);
+		//? if >=1.21.9 {
 		s.command("kill @e[type=minecraft:mannequin]");
+		//?} else {
+		/*removeFigure(s);
+		*///?}
 		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
 	}
 
@@ -1648,18 +1738,34 @@ public final class Scenarios {
 		s.run("one second of staring is enough", client -> module.secondsSetting().set(1));
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
 		// A figure 8 blocks ahead, turned away at first.
+		//? if >=1.21.9 {
 		s.command("summon minecraft:mannequin 0.5 " + GROUND_Y + " -7.5");
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 90 0");
+		//?} else {
+		/*summonFigure(s, 0.5, -7.5, 90F);
+		*///?}
 		s.waitTicks(50);
 		s.check("somebody looking elsewhere is not reported", client -> module.getStarers().isEmpty());
+		//? if >=1.21.9 {
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 0 0");
+		//?} else {
+		/*moveFigure(s, 0.5, -7.5, 0F);
+		*///?}
 		s.waitUntil("facing the player for over a second gets them reported", client -> module.getStarers().size() == 1, 100);
 		s.screenshot("42_stare_alert");
+		//? if >=1.21.9 {
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " -7.5 90 0");
+		//?} else {
+		/*moveFigure(s, 0.5, -7.5, 90F);
+		*///?}
 		s.waitTicks(20);
 		s.check("turning away ends it", client -> module.getStarers().isEmpty());
 		s.run("restore the setting", client -> module.secondsSetting().reset());
+		//? if >=1.21.9 {
 		s.command("kill @e[type=minecraft:mannequin]");
+		//?} else {
+		/*removeFigure(s);
+		*///?}
 		s.waitTicks(25); // let the figure finish falling over; the game cannot save one that is mid-death
 	}
 
@@ -1992,7 +2098,11 @@ public final class Scenarios {
 		s.command("clear @a");
 		s.command("effect clear @a");
 		s.command("kill @e[type=item]");
+		//? if >=1.21.9 {
 		s.command("kill @e[type=minecraft:mannequin]");
+		//?} else {
+		/*removeFigure(s);
+		*///?}
 		s.command("fill -8 " + (GROUND_Y - 1) + " -8 8 " + (GROUND_Y - 1) + " 8 grass_block");
 		// Remove anything an earlier scenario built around the origin.
 		s.command("fill -8 -60 -8 8 -50 8 air");
