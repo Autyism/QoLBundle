@@ -6,7 +6,7 @@
 <p align="center">-><a href="../README.md">English</a><-</p>
 <p align="center">-><a href="README_detailed.md">详细手册</a><-</p>
 
-![Minecraft 1.21.11 | 26.1–26.1.2](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.1.2-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Minecraft 1.21.11 | 26.1–26.2](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.2-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
 
 </div>
 
@@ -80,7 +80,7 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 
 | | 版本 |
 |---|---|
-| Minecraft | Java 版 1.21.11，或 26.1–26.1.2（每个版本有单独的 jar，见下面） |
+| Minecraft | Java 版 1.21.11，或 26.1–26.2（每个版本有单独的 jar，见下面） |
 | Fabric 加载器（Fabric Loader） | 0.19.5 或更新 |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | 必需，要对应同一个 Minecraft 版本 |
 | Java | 21 或更新 |
@@ -97,9 +97,9 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 
 1. 为你的 Minecraft 版本安装 [Fabric 加载器](https://fabricmc.net/use/) 0.19.5 或更新版本。
 2. 下载这个 Minecraft 版本对应的 [Fabric API](https://modrinth.com/mod/fabric-api)，放进 `mods` 文件夹。
-3. 下载对应版本的 QoL 全家桶 jar，放进同一个 `mods` 文件夹：1.21.11 用 `qolbundle-0.1.0.jar`，26.1–26.1.2 用 `qolbundle-0.1.0+26.1.2.jar`（需要 Java 25）。
+3. 下载对应版本的 QoL 全家桶 jar，放进同一个 `mods` 文件夹：1.21.11 用 `qolbundle-0.1.0.jar`，26.1–26.1.2 用 `qolbundle-0.1.0+26.1.2.jar`，26.2 用 `qolbundle-0.1.0+26.2.jar`（都需要 Java 25）。
 4. 可选：装 [Mod Menu](https://modrinth.com/mod/modmenu)，模组列表里就有设置按钮。
-5. 可选，只有想要 X-ray 时才装：`qolbundle-xray-addon-0.1.0.jar`（1.21.11）或 `qolbundle-xray-addon-0.1.0+26.1.2.jar`（26.1–26.1.2）。
+5. 可选，只有想要 X-ray 时才装：`qolbundle-xray-addon-0.1.0.jar`（1.21.11）、`qolbundle-xray-addon-0.1.0+26.1.2.jar`（26.1–26.1.2）或 `qolbundle-xray-addon-0.1.0+26.2.jar`（26.2）。
 6. 启动游戏，进入世界后按 **K**。
 
 ## 致谢
