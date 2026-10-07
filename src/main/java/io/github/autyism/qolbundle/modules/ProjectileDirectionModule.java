@@ -4,20 +4,20 @@ import io.github.autyism.qolbundle.hud.HudLayout;
 import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Where was I shot from? The moment an arrow (or trident, snowball, fireball ...) hits the player,
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class ProjectileDirectionModule extends Module {
 	/** A projectile that was near the player, as last seen. */
-	private record Seen(Vec3d pos, Vec3d velocity, Text name, long tick) {
+	private record Seen(Vec3 pos, Vec3 velocity, Component name, long tick) {
 	}
 
 	private static final double WATCH_RANGE = 8.0;
@@ -43,9 +43,9 @@ public class ProjectileDirectionModule extends Module {
 	private long tick;
 	private float lastHealth;
 	@Nullable
-	private Vec3d source;
+	private Vec3 source;
 	@Nullable
-	private Text sourceName;
+	private Component sourceName;
 	private long showUntil;
 	private int hits;
 
@@ -55,7 +55,7 @@ public class ProjectileDirectionModule extends Module {
 
 	/** A point in the direction the last shot came from; null when nothing is shown. */
 	@Nullable
-	public Vec3d getSource() {
+	public Vec3 getSource() {
 		return tick < showUntil ? source : null;
 	}
 
@@ -71,27 +71,27 @@ public class ProjectileDirectionModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		ClientPlayerEntity player = client.player;
-		if (player == null || client.world == null) {
+		LocalPlayer player = client.player;
+		if (player == null || client.level == null) {
 			seen.clear();
 			return;
 		}
-		Box near = player.getBoundingBox().expand(WATCH_RANGE);
-		for (ProjectileEntity projectile : client.world.getEntitiesByClass(ProjectileEntity.class, near, entity -> true)) {
+		AABB near = player.getBoundingBox().inflate(WATCH_RANGE);
+		for (Projectile projectile : client.level.getEntitiesOfClass(Projectile.class, near, entity -> true)) {
 			Entity owner = projectile.getOwner();
-			Vec3d velocity = projectile.getVelocity();
-			if (owner == player || velocity.lengthSquared() < 0.01) {
+			Vec3 velocity = projectile.getDeltaMovement();
+			if (owner == player || velocity.lengthSqr() < 0.01) {
 				continue; // my own, or lying / stuck somewhere
 			}
 			// Keep the velocity it had in full flight: on hitting something the client's copy of an
 			// arrow bounces back slowly, and that last velocity would point the wrong way.
 			Seen before = seen.get(projectile.getId());
-			if (before != null && before.velocity.lengthSquared() > velocity.lengthSquared()) {
+			if (before != null && before.velocity.lengthSqr() > velocity.lengthSqr()) {
 				velocity = before.velocity;
 			}
-			seen.put(projectile.getId(), new Seen(projectile.getEntityPos(), velocity, projectile.getName(), tick));
+			seen.put(projectile.getId(), new Seen(projectile.position(), velocity, projectile.getName(), tick));
 		}
 		seen.values().removeIf(entry -> tick - entry.tick > RECENT_TICKS);
 
@@ -99,13 +99,13 @@ public class ProjectileDirectionModule extends Module {
 			// Hurt while something was flying at me: the closest of them is what hit.
 			Seen closest = null;
 			for (Seen entry : seen.values()) {
-				if (closest == null || entry.pos.squaredDistanceTo(player.getEyePos()) < closest.pos.squaredDistanceTo(player.getEyePos())) {
+				if (closest == null || entry.pos.distanceToSqr(player.getEyePosition()) < closest.pos.distanceToSqr(player.getEyePosition())) {
 					closest = entry;
 				}
 			}
-			if (closest.pos.squaredDistanceTo(player.getEyePos()) < 5.0 * 5.0) {
+			if (closest.pos.distanceToSqr(player.getEyePosition()) < 5.0 * 5.0) {
 				// Back along the way it flew.
-				source = closest.pos.subtract(closest.velocity.normalize().multiply(24.0));
+				source = closest.pos.subtract(closest.velocity.normalize().scale(24.0));
 				sourceName = closest.name;
 				showUntil = tick + seconds.get() * 20L;
 				hits++;
@@ -116,31 +116,31 @@ public class ProjectileDirectionModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		Vec3d from = getSource();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Vec3 from = getSource();
 		if (from == null) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		int centerX = layout.getScreenWidth() / 2;
 		int centerY = layout.getScreenHeight() / 2;
-		float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(client.gameRenderer.getCamera().getCameraPos(),
-				client.gameRenderer.getCamera().getYaw(), from));
-		context.getMatrices().pushMatrix();
-		context.getMatrices().translate(centerX, centerY);
-		context.getMatrices().rotate(angle);
+		float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(client.gameRenderer.getMainCamera().position(),
+				client.gameRenderer.getMainCamera().yRot(), from));
+		context.pose().pushMatrix();
+		context.pose().translate(centerX, centerY);
+		context.pose().rotate(angle);
 		for (int row = 0; row < 10; row++) {
 			context.fill(-row, -RING + row, row + 1, -RING + row + 1, COLOR);
 		}
-		context.getMatrices().popMatrix();
+		context.pose().popMatrix();
 
-		Text label = Text.translatable(getTranslationKey() + ".hud", sourceName);
-		int width = client.textRenderer.getWidth(label);
+		Component label = Component.translatable(getTranslationKey() + ".hud", sourceName);
+		int width = client.font.width(label);
 		int labelRadius = RING + 12;
-		int x = centerX + Math.round(MathHelper.sin(angle) * (labelRadius + width / 2F)) - width / 2;
-		int y = centerY - Math.round(MathHelper.cos(angle) * labelRadius) - 4;
-		x = MathHelper.clamp(x, 2, layout.getScreenWidth() - width - 2);
+		int x = centerX + Math.round(Mth.sin(angle) * (labelRadius + width / 2F)) - width / 2;
+		int y = centerY - Math.round(Mth.cos(angle) * labelRadius) - 4;
+		x = Mth.clamp(x, 2, layout.getScreenWidth() - width - 2);
 		context.fill(x - 2, y - 1, x + width + 2, y + 9, 0x80000000);
-		context.drawTextWithShadow(client.textRenderer, label, x, y, COLOR);
+		context.drawString(client.font, label, x, y, COLOR);
 	}
 }

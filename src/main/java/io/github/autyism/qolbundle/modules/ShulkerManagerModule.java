@@ -7,18 +7,18 @@ import io.github.autyism.qolbundle.module.ModuleRegistry;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.util.ItemNames;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class ShulkerManagerModule extends Module {
 	}
 
 	/** One box in the player's inventory that holds something matching a search. */
-	public record InventoryHit(int slot, ItemStack box, Text name, int count) {
+	public record InventoryHit(int slot, ItemStack box, Component name, int count) {
 	}
 
 	private static final String[] REDSTONE_WORDS = {"redstone", "repeater", "comparator", "piston", "hopper", "observer",
@@ -68,30 +68,30 @@ public class ShulkerManagerModule extends Module {
 	public ShulkerManagerModule() {
 		super("shulker_manager", ModuleCategory.TOOLS, true);
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-			if (isEnabled() && screen instanceof HandledScreen<?> handled) {
+			if (isEnabled() && screen instanceof AbstractContainerScreen<?> handled) {
 				ScreenEvents.afterRender(screen).register((current, context, mouseX, mouseY, tickDelta) -> decorate(context, handled));
 			}
 		});
 	}
 
 	private static boolean isBox(ItemStack stack) {
-		return !stack.isEmpty() && stack.isIn(ItemTags.SHULKER_BOXES);
+		return !stack.isEmpty() && stack.is(ItemTags.SHULKER_BOXES);
 	}
 
 	/** The stacks inside a shulker box item (empty list for an empty box or anything else). */
 	public static List<ItemStack> contentsOf(ItemStack box) {
 		List<ItemStack> contents = new ArrayList<>();
 		if (isBox(box)) {
-			ContainerComponent container = box.get(DataComponentTypes.CONTAINER);
+			ItemContainerContents container = box.get(DataComponents.CONTAINER);
 			if (container != null) {
-				container.iterateNonEmpty().forEach(contents::add);
+				container.nonEmptyItems().forEach(contents::add);
 			}
 		}
 		return contents;
 	}
 
 	private static BoxCategory kindOf(ItemStack stack) {
-		String id = Registries.ITEM.getId(stack.getItem()).getPath();
+		String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
 		for (String word : REDSTONE_WORDS) {
 			if (id.contains(word)) {
 				return BoxCategory.REDSTONE;
@@ -102,10 +102,10 @@ public class ShulkerManagerModule extends Module {
 				return BoxCategory.MAGIC;
 			}
 		}
-		if (stack.contains(DataComponentTypes.FOOD)) {
+		if (stack.has(DataComponents.FOOD)) {
 			return BoxCategory.FOOD;
 		}
-		if (stack.isDamageable() || stack.isOf(Items.ARROW) || stack.isOf(Items.TOTEM_OF_UNDYING) || stack.isOf(Items.FIREWORK_ROCKET)) {
+		if (stack.isDamageableItem() || stack.is(Items.ARROW) || stack.is(Items.TOTEM_OF_UNDYING) || stack.is(Items.FIREWORK_ROCKET)) {
 			return BoxCategory.GEAR;
 		}
 		for (String word : MATERIAL_WORDS) {
@@ -143,7 +143,7 @@ public class ShulkerManagerModule extends Module {
 		Map<String, Integer> counts = new HashMap<>();
 		Map<String, ItemStack> samples = new HashMap<>();
 		for (ItemStack stack : contentsOf(box)) {
-			String id = Registries.ITEM.getId(stack.getItem()).toString();
+			String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
 			counts.merge(id, stack.getCount(), Integer::sum);
 			samples.putIfAbsent(id, stack);
 		}
@@ -170,20 +170,20 @@ public class ShulkerManagerModule extends Module {
 	}
 
 	/** Boxes carried by the player that hold something matching the search. */
-	public List<InventoryHit> searchInventory(@Nullable ClientPlayerEntity player, String query) {
+	public List<InventoryHit> searchInventory(@Nullable LocalPlayer player, String query) {
 		List<InventoryHit> hits = new ArrayList<>();
 		if (player == null || query.isBlank() || !isEnabled()) {
 			return hits;
 		}
-		for (int slot = 0; slot < player.getInventory().size(); slot++) {
-			ItemStack box = player.getInventory().getStack(slot);
+		for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+			ItemStack box = player.getInventory().getItem(slot);
 			int count = 0;
-			Text name = null;
+			Component name = null;
 			for (ItemStack stack : contentsOf(box)) {
 				if (ItemNames.matches(stack, query, true)) {
 					count += stack.getCount();
 					if (name == null) {
-						name = stack.getName();
+						name = stack.getHoverName();
 					}
 				}
 			}
@@ -194,7 +194,7 @@ public class ShulkerManagerModule extends Module {
 		return hits;
 	}
 
-	private void decorate(DrawContext context, HandledScreen<?> screen) {
+	private void decorate(GuiGraphics context, AbstractContainerScreen<?> screen) {
 		if (!isEnabled()) {
 			return;
 		}
@@ -205,9 +205,9 @@ public class ShulkerManagerModule extends Module {
 		HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 		int left = accessor.qolbundle$getX();
 		int top = accessor.qolbundle$getY();
-		for (Slot slot : screen.getScreenHandler().slots) {
-			ItemStack box = slot.getStack();
-			if (!slot.isEnabled() || !isBox(box)) {
+		for (Slot slot : screen.getMenu().slots) {
+			ItemStack box = slot.getItem();
+			if (!slot.isActive() || !isBox(box)) {
 				continue;
 			}
 			BoxCategory category = categoryOf(box);
@@ -220,7 +220,7 @@ public class ShulkerManagerModule extends Module {
 			if (!match.isEmpty()) {
 				// The searched item is inside this box.
 				context.fill(x, y, x + 16, y + 16, 0x30FFAA00);
-				context.drawStrokedRectangle(x - 1, y - 1, 18, 18, 0xFFFFAA00);
+				context.renderOutline(x - 1, y - 1, 18, 18, 0xFFFFAA00);
 			}
 			if (showTag.get()) {
 				context.fill(x, y, x + 5, y + 5, 0xFF000000);
@@ -229,11 +229,11 @@ public class ShulkerManagerModule extends Module {
 			if (showIcon.get()) {
 				ItemStack shown = match.isEmpty() ? mainItemOf(box) : match;
 				if (!shown.isEmpty()) {
-					context.getMatrices().pushMatrix();
-					context.getMatrices().translate(x + 8, y);
-					context.getMatrices().scale(0.5F, 0.5F);
-					context.drawItem(shown, 0, 0);
-					context.getMatrices().popMatrix();
+					context.pose().pushMatrix();
+					context.pose().translate(x + 8, y);
+					context.pose().scale(0.5F, 0.5F);
+					context.renderItem(shown, 0, 0);
+					context.pose().popMatrix();
 				}
 			}
 		}

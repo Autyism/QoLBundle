@@ -4,7 +4,7 @@ import io.github.autyism.qolbundle.api.QoLBundleAddon;
 import io.github.autyism.qolbundle.module.ModuleRegistry;
 import io.github.autyism.qolbundle.selftest.Scenarios;
 import io.github.autyism.qolbundle.selftest.SelfTest;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 /**
  * The X-ray add-on: a separate mod (own jar, own modid) that adds one module to QoL Bundle.

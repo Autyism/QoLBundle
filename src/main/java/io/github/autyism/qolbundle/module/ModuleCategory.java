@@ -1,8 +1,7 @@
 package io.github.autyism.qolbundle.module;
 
-import net.minecraft.text.Text;
-
 import java.util.Locale;
+import net.minecraft.network.chat.Component;
 
 /** Groups modules in the settings screen. Mirrors the categories in docs/HANDOVER.md section 6.2. */
 public enum ModuleCategory {
@@ -14,7 +13,7 @@ public enum ModuleCategory {
 	/** Automation and information advantages: fine alone or on your own server, risky on public ones. */
 	GREY;
 
-	public Text getDisplayName() {
-		return Text.translatable("qolbundle.category." + name().toLowerCase(Locale.ROOT));
+	public Component getDisplayName() {
+		return Component.translatable("qolbundle.category." + name().toLowerCase(Locale.ROOT));
 	}
 }

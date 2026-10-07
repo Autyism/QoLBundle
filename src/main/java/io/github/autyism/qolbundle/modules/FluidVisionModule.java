@@ -4,7 +4,7 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.render.fog.FogData;
+import net.minecraft.client.renderer.fog.FogData;
 import org.jspecify.annotations.Nullable;
 
 /**

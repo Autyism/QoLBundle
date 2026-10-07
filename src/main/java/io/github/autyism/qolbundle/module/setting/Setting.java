@@ -2,8 +2,8 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import io.github.autyism.qolbundle.module.Module;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.text.Text;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 
 /** One configurable value of a module. Knows how to save itself to / load itself from JSON. */
 public abstract class Setting<T> {
@@ -61,18 +61,18 @@ public abstract class Setting<T> {
 		return owner.getTranslationKey() + ".setting." + id;
 	}
 
-	public Text getName() {
-		return Text.translatable(getTranslationKey());
+	public Component getName() {
+		return Component.translatable(getTranslationKey());
 	}
 
 	/** Optional longer explanation; null when the lang file has no ".desc" entry for this setting. */
-	public Text getDescription() {
+	public Component getDescription() {
 		String key = getTranslationKey() + ".desc";
-		return I18n.hasTranslation(key) ? Text.translatable(key) : null;
+		return I18n.exists(key) ? Component.translatable(key) : null;
 	}
 
 	/** How the current value is shown on a button / slider. */
-	public abstract Text getValueText();
+	public abstract Component getValueText();
 
 	public abstract JsonElement toJson();
 

@@ -5,17 +5,16 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Util;
-
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +45,7 @@ public class DurabilityAlertModule extends Module {
 	 * item (kind, name, enchantments) because the game gives items no id of their own.
 	 */
 	private final Map<String, Integer> announced = new HashMap<>();
-	private final List<Text> warnings = new ArrayList<>();
+	private final List<Component> warnings = new ArrayList<>();
 	private long flashUntilMs;
 	private long textUntilMs;
 	private long lastSoundMs;
@@ -79,7 +78,7 @@ public class DurabilityAlertModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		if (client.player == null) {
 			forget();
 			return;
@@ -96,43 +95,43 @@ public class DurabilityAlertModule extends Module {
 		}
 		if (triggered) {
 			alerts++;
-			long now = Util.getMeasuringTimeMs();
+			long now = Util.getMillis();
 			flashUntilMs = now + FLASH_MS;
 			textUntilMs = now + TEXT_MS;
 			if (sound.get() && now - lastSoundMs > SOUND_COOLDOWN_MS) {
 				lastSoundMs = now;
-				client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 0.6F));
+				client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_PLING, 0.6F));
 			}
 		}
 	}
 
 	/** @return true when this slot should set off the flash and sound right now */
-	private boolean checkSlot(MinecraftClient client, EquipmentSlot slot) {
-		ItemStack stack = client.player.getEquippedStack(slot);
-		if (stack.isEmpty() || !stack.isDamageable()) {
+	private boolean checkSlot(Minecraft client, EquipmentSlot slot) {
+		ItemStack stack = client.player.getItemBySlot(slot);
+		if (stack.isEmpty() || !stack.isDamageableItem()) {
 			return false;
 		}
 		int max = stack.getMaxDamage();
-		int remaining = max - stack.getDamage();
-		String key = Registries.ITEM.getId(stack.getItem()) + "|" + stack.getName().getString() + "|" + stack.getEnchantments();
+		int remaining = max - stack.getDamageValue();
+		String key = BuiltInRegistries.ITEM.getKey(stack.getItem()) + "|" + stack.getHoverName().getString() + "|" + stack.getEnchantments();
 		if (remaining * 100 > threshold.get() * max) {
 			announced.remove(key); // healthy (again): the next time it runs low it is announced anew
 			return false;
 		}
 		Integer before = announced.put(key, remaining);
 		int percent = Math.max(0, Math.round(remaining * 100F / max));
-		warnings.add(Text.translatable(getTranslationKey() + ".warning", stack.getName(), remaining, percent));
+		warnings.add(Component.translatable(getTranslationKey() + ".warning", stack.getHoverName(), remaining, percent));
 		// Once per item. With "remind again" on, also every time it loses more durability.
 		return before == null || remindAgain.get() && remaining < before;
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		long now = Util.getMeasuringTimeMs();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		long now = Util.getMillis();
 		if (warnings.isEmpty() || now >= Math.max(flashUntilMs, textUntilMs)) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 
 		if (flash.get() && now < flashUntilMs) {
 			// Pulse about twice a second, never fully fading out.
@@ -142,18 +141,18 @@ public class DurabilityAlertModule extends Module {
 
 		if (showText.get() && now < textUntilMs) {
 			int y = layout.getScreenHeight() - 72 - warnings.size() * HudLayout.LINE_HEIGHT;
-			for (Text warning : warnings) {
-				int width = client.textRenderer.getWidth(warning);
+			for (Component warning : warnings) {
+				int width = client.font.width(warning);
 				int x = (layout.getScreenWidth() - width) / 2;
 				context.fill(x - 3, y - 2, x + width + 3, y + 9, 0x90000000);
-				context.drawTextWithShadow(client.textRenderer, warning, x, y, 0xFFFF5555);
+				context.drawString(client.font, warning, x, y, 0xFFFF5555);
 				y += HudLayout.LINE_HEIGHT + 1;
 			}
 		}
 	}
 
 	/** Red glow fading from the screen border towards the middle, built from one-pixel frames. */
-	private static void drawRedEdges(DrawContext context, int width, int height, float strength) {
+	private static void drawRedEdges(GuiGraphics context, int width, int height, float strength) {
 		for (int i = 0; i < EDGE_DEPTH; i++) {
 			float fade = 1F - i / (float) EDGE_DEPTH;
 			int alpha = (int) (170 * strength * fade * fade);

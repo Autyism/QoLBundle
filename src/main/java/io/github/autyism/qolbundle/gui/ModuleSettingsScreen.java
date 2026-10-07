@@ -8,17 +8,16 @@ import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.module.setting.Setting;
 import io.github.autyism.qolbundle.module.setting.StringSetting;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-
 import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 /** Settings of one module: its switch on the first row, then one row per setting. */
 public class ModuleSettingsScreen extends ScrollListScreen {
@@ -36,40 +35,40 @@ public class ModuleSettingsScreen extends ScrollListScreen {
 
 	@Override
 	protected void buildRows() {
-		Row enabledRow = addRow(26, Text.translatable("qolbundle.gui.enabled"), module.getDescription());
-		ButtonWidget toggle = enabledRow.add(ButtonWidget.builder(ModuleListScreen.toggleText(module), button -> {
+		Row enabledRow = addRow(26, Component.translatable("qolbundle.gui.enabled"), module.getDescription());
+		Button toggle = enabledRow.add(Button.builder(ModuleListScreen.toggleText(module), button -> {
 			module.setEnabled(!module.isEnabled());
 			button.setMessage(ModuleListScreen.toggleText(module));
 		}).size(WIDGET_WIDTH, 20).build());
-		toggle.setTooltip(Tooltip.of(module.getDescription()));
+		toggle.setTooltip(Tooltip.create(module.getDescription()));
 
 		if (module.hasCustomScreen()) {
-			Row row = addRow(24, Text.translatable(module.getTranslationKey() + ".custom_screen"), null);
-			row.add(ButtonWidget.builder(Text.translatable("qolbundle.gui.custom_screen"),
-					button -> this.client.setScreen(module.createCustomScreen(this))).size(WIDGET_WIDTH, 20).build());
+			Row row = addRow(24, Component.translatable(module.getTranslationKey() + ".custom_screen"), null);
+			row.add(Button.builder(Component.translatable("qolbundle.gui.custom_screen"),
+					button -> this.minecraft.setScreen(module.createCustomScreen(this))).size(WIDGET_WIDTH, 20).build());
 		}
 		for (Setting<?> setting : module.getSettings()) {
 			if (setting.isHidden()) {
 				continue;
 			}
 			Row row = addRow(24, setting.getName(), null);
-			ClickableWidget widget = row.add(createWidget(setting));
-			Text description = setting.getDescription();
+			AbstractWidget widget = row.add(createWidget(setting));
+			Component description = setting.getDescription();
 			if (description != null) {
-				widget.setTooltip(Tooltip.of(description));
+				widget.setTooltip(Tooltip.create(description));
 			}
 		}
 	}
 
-	private ClickableWidget createWidget(Setting<?> setting) {
+	private AbstractWidget createWidget(Setting<?> setting) {
 		if (setting instanceof BoolSetting bool) {
-			return ButtonWidget.builder(bool.getValueText(), button -> {
+			return Button.builder(bool.getValueText(), button -> {
 				bool.toggle();
 				button.setMessage(bool.getValueText());
 			}).size(WIDGET_WIDTH, 20).build();
 		}
 		if (setting instanceof EnumSetting<?> choice) {
-			return ButtonWidget.builder(choice.getValueText(), button -> {
+			return Button.builder(choice.getValueText(), button -> {
 				choice.cycle(false);
 				button.setMessage(choice.getValueText());
 			}).size(WIDGET_WIDTH, 20).build();
@@ -85,10 +84,10 @@ public class ModuleSettingsScreen extends ScrollListScreen {
 					fraction -> number.set(number.getMin() + fraction * span), number::getValueText);
 		}
 		if (setting instanceof StringSetting text) {
-			TextFieldWidget field = new TextFieldWidget(this.textRenderer, 0, 0, WIDGET_WIDTH, 20, text.getName());
+			EditBox field = new EditBox(this.font, 0, 0, WIDGET_WIDTH, 20, text.getName());
 			field.setMaxLength(text.getMaxLength());
-			field.setText(text.get());
-			field.setChangedListener(text::set);
+			field.setValue(text.get());
+			field.setResponder(text::set);
 			return field;
 		}
 		throw new IllegalStateException("No widget for setting type " + setting.getClass().getSimpleName());
@@ -97,31 +96,31 @@ public class ModuleSettingsScreen extends ScrollListScreen {
 	@Override
 	protected void addFooter() {
 		int y = this.height - 27;
-		addDrawableChild(ButtonWidget.builder(Text.translatable("qolbundle.gui.reset"), button -> {
+		addRenderableWidget(Button.builder(Component.translatable("qolbundle.gui.reset"), button -> {
 			for (Setting<?> setting : module.getSettings()) {
 				// Hidden settings hold data (saved layouts and the like), not preferences: leave them.
 				if (!setting.isHidden()) {
 					setting.reset();
 				}
 			}
-			clearAndInit();
-		}).dimensions(this.width / 2 - 154, y, 150, 20).build());
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> close())
-				.dimensions(this.width / 2 + 4, y, 150, 20).build());
+			rebuildWidgets();
+		}).bounds(this.width / 2 - 154, y, 150, 20).build());
+		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
+				.bounds(this.width / 2 + 4, y, 150, 20).build());
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		ConfigManager.save();
-		super.close();
+		super.onClose();
 	}
 
 	/** A slider over 0..1 that reports changes to a setting and shows the setting's own text. */
-	private static class SettingSlider extends SliderWidget {
+	private static class SettingSlider extends AbstractSliderButton {
 		private final DoubleConsumer onChange;
-		private final Supplier<Text> text;
+		private final Supplier<Component> text;
 
-		SettingSlider(int width, double fraction, DoubleConsumer onChange, Supplier<Text> text) {
+		SettingSlider(int width, double fraction, DoubleConsumer onChange, Supplier<Component> text) {
 			super(0, 0, width, 20, text.get(), fraction);
 			this.onChange = onChange;
 			this.text = text;

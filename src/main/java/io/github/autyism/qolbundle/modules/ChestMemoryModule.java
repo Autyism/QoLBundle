@@ -3,6 +3,7 @@ package io.github.autyism.qolbundle.modules;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.data.WorldData;
 import io.github.autyism.qolbundle.gui.ChestMemoryScreen;
@@ -18,40 +19,39 @@ import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.screen.Generic3x3ContainerScreenHandler;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.HopperScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.DispenserMenu;
+import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -109,14 +109,14 @@ public class ChestMemoryModule extends Module {
 	}
 
 	/** A search result: this chest holds count matching items; name is the first one found. */
-	public record Hit(Chest chest, int count, Text name, boolean inShulkerBox) {
+	public record Hit(Chest chest, int count, Component name, boolean inShulkerBox) {
 	}
 
 	private final IntSetting staleDays = add(new IntSetting("stale_days", 7, 1, 60));
 	private final IntSetting pointerSeconds = add(new IntSetting("pointer_seconds", 120, 10, 600));
 	private final BoolSetting inventoryButton = add(new BoolSetting("inventory_button", true));
 
-	private final KeyBinding searchKey;
+	private final KeyMapping searchKey;
 	private final List<Chest> chests = new ArrayList<>();
 	@Nullable
 	private String loadedWorldId;
@@ -126,7 +126,7 @@ public class ChestMemoryModule extends Module {
 	private String lastUsedDimension = "";
 	private long lastUsedMs;
 	@Nullable
-	private ScreenHandler openHandler;
+	private AbstractContainerMenu openHandler;
 	@Nullable
 	private Chest openChest;
 
@@ -137,20 +137,20 @@ public class ChestMemoryModule extends Module {
 
 	public ChestMemoryModule() {
 		super("chest_memory", ModuleCategory.TOOLS, true);
-		searchKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.chest_memory",
-				InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), QoLBundleClient.KEY_CATEGORY));
+		searchKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.chest_memory",
+				InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), QoLBundleClient.KEY_CATEGORY));
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-			if (world.isClient() && isEnabled()) {
-				lastUsedPos = hit.getBlockPos().toImmutable();
-				lastUsedDimension = world.getRegistryKey().getValue().toString();
-				lastUsedMs = Util.getMeasuringTimeMs();
+			if (world.isClientSide() && isEnabled()) {
+				lastUsedPos = hit.getBlockPos().immutable();
+				lastUsedDimension = world.dimension().identifier().toString();
+				lastUsedMs = Util.getMillis();
 			}
-			return ActionResult.PASS; // only watching
+			return InteractionResult.PASS; // only watching
 		});
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof InventoryScreen && isEnabled() && inventoryButton.get()) {
 				Screens.getButtons(screen).add(new MouseOnlyButton(width - 104, height - 48, 100, 20,
-						Text.translatable(getTranslationKey() + ".button"), button -> client.setScreen(new ChestMemoryScreen(null, this))));
+						Component.translatable(getTranslationKey() + ".button"), button -> client.setScreen(new ChestMemoryScreen(null, this))));
 			}
 		});
 	}
@@ -186,7 +186,7 @@ public class ChestMemoryModule extends Module {
 	/** Points the HUD arrow at a chest for a while (null switches it off). */
 	public void setTarget(@Nullable Chest chest) {
 		target = chest != null && !chest.isEnderChest() ? chest : null;
-		targetUntilMs = Util.getMeasuringTimeMs() + pointerSeconds.get() * 1000L;
+		targetUntilMs = Util.getMillis() + pointerSeconds.get() * 1000L;
 	}
 
 	/** Forgets every container of the current world (used by the self-test). */
@@ -199,31 +199,31 @@ public class ChestMemoryModule extends Module {
 
 	// ---- watching containers -------------------------------------------------------------------
 
-	private static boolean isStorage(ScreenHandler handler) {
-		return handler instanceof GenericContainerScreenHandler || handler instanceof ShulkerBoxScreenHandler
-				|| handler instanceof HopperScreenHandler || handler instanceof Generic3x3ContainerScreenHandler;
+	private static boolean isStorage(AbstractContainerMenu handler) {
+		return handler instanceof ChestMenu || handler instanceof ShulkerBoxMenu
+				|| handler instanceof HopperMenu || handler instanceof DispenserMenu;
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		syncWorldData();
-		while (searchKey.wasPressed()) {
-			if (client.currentScreen == null) {
+		while (searchKey.consumeClick()) {
+			if (client.screen == null) {
 				client.setScreen(new ChestMemoryScreen(null, this));
 			}
 		}
-		ClientPlayerEntity player = client.player;
-		if (player == null || client.world == null) {
+		LocalPlayer player = client.player;
+		if (player == null || client.level == null) {
 			openHandler = null;
 			openChest = null;
 			return;
 		}
 		ticks++;
-		ScreenHandler handler = player.currentScreenHandler;
-		if (handler != player.playerScreenHandler && isStorage(handler)) {
+		AbstractContainerMenu handler = player.containerMenu;
+		if (handler != player.inventoryMenu && isStorage(handler)) {
 			if (handler != openHandler) {
 				openHandler = handler;
-				openChest = identify(client.world);
+				openChest = identify(client.level);
 			}
 			if (openChest != null && ticks % SNAPSHOT_TICKS == 0) {
 				snapshot(player, handler, openChest);
@@ -238,22 +238,22 @@ public class ChestMemoryModule extends Module {
 		}
 
 		if (ticks % PRUNE_TICKS == 0) {
-			prune(client.world, player);
+			prune(client.level, player);
 		}
-		if (target != null && Util.getMeasuringTimeMs() > targetUntilMs) {
+		if (target != null && Util.getMillis() > targetUntilMs) {
 			target = null;
 		}
 	}
 
 	/** Which remembered container the screen that just opened belongs to (creating the record if new). */
 	@Nullable
-	private Chest identify(ClientWorld world) {
-		if (lastUsedPos == null || Util.getMeasuringTimeMs() - lastUsedMs > USE_WINDOW_MS) {
+	private Chest identify(ClientLevel world) {
+		if (lastUsedPos == null || Util.getMillis() - lastUsedMs > USE_WINDOW_MS) {
 			return null; // opened some other way (minecart, command): there is no block to remember it by
 		}
 		BlockState state = world.getBlockState(lastUsedPos);
-		String blockId = Registries.BLOCK.getId(state.getBlock()).toString();
-		if (state.isOf(Blocks.ENDER_CHEST)) {
+		String blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+		if (state.is(Blocks.ENDER_CHEST)) {
 			for (Chest chest : chests) {
 				if (chest.isEnderChest()) {
 					return chest;
@@ -265,8 +265,8 @@ public class ChestMemoryModule extends Module {
 		}
 		BlockPos pos = lastUsedPos;
 		// Both halves of a double chest are one container: always file it under the same half.
-		if (state.getBlock() instanceof ChestBlock && state.get(ChestBlock.CHEST_TYPE) != ChestType.SINGLE) {
-			BlockPos other = pos.offset(ChestBlock.getFacing(state));
+		if (state.getBlock() instanceof ChestBlock && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE) {
+			BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
 			if (other.compareTo(pos) < 0) {
 				pos = other;
 			}
@@ -281,20 +281,20 @@ public class ChestMemoryModule extends Module {
 		return created;
 	}
 
-	private void snapshot(ClientPlayerEntity player, ScreenHandler handler, Chest chest) {
+	private void snapshot(LocalPlayer player, AbstractContainerMenu handler, Chest chest) {
 		Map<String, StoredItem> items = new LinkedHashMap<>();
 		List<StoredBox> boxes = new ArrayList<>();
 		for (Slot slot : handler.slots) {
-			ItemStack stack = slot.getStack();
-			if (slot.inventory == player.getInventory() || stack.isEmpty()) {
+			ItemStack stack = slot.getItem();
+			if (slot.container == player.getInventory() || stack.isEmpty()) {
 				continue;
 			}
 			add(items, stack);
-			if (stack.isIn(ItemTags.SHULKER_BOXES)) {
-				ContainerComponent inside = stack.get(DataComponentTypes.CONTAINER);
+			if (stack.is(ItemTags.SHULKER_BOXES)) {
+				ItemContainerContents inside = stack.get(DataComponents.CONTAINER);
 				if (inside != null) {
 					Map<String, StoredItem> boxItems = new LinkedHashMap<>();
-					for (ItemStack inner : inside.iterateNonEmpty()) {
+					for (ItemStack inner : inside.nonEmptyItems()) {
 						add(boxItems, inner);
 					}
 					if (!boxItems.isEmpty()) {
@@ -320,23 +320,23 @@ public class ChestMemoryModule extends Module {
 	}
 
 	private static String idOf(ItemStack stack) {
-		return Registries.ITEM.getId(stack.getItem()).toString();
+		return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
 	}
 
 	/** The shown name when it says more than the plain item name (renamed items, enchanted books, potions). */
 	private static String labelOf(ItemStack stack) {
-		String shown = stack.getName().getString();
+		String shown = stack.getHoverName().getString();
 		return shown.equals(stack.getItem().getName().getString()) ? "" : shown;
 	}
 
 	/** Forgets containers that are plainly gone: the block at their place is something else now. */
-	private void prune(ClientWorld world, ClientPlayerEntity player) {
-		String dimension = world.getRegistryKey().getValue().toString();
+	private void prune(ClientLevel world, LocalPlayer player) {
+		String dimension = world.dimension().identifier().toString();
 		boolean removed = chests.removeIf(chest -> !chest.isEnderChest() && chest != openChest
 				&& chest.dimension.equals(dimension)
-				&& chest.pos.getSquaredDistance(player.getBlockPos()) <= 12 * 12
-				&& world.getChunkManager().isChunkLoaded(chest.pos.getX() >> 4, chest.pos.getZ() >> 4)
-				&& !Registries.BLOCK.getId(world.getBlockState(chest.pos).getBlock()).toString().equals(chest.blockId));
+				&& chest.pos.distSqr(player.blockPosition()) <= 12 * 12
+				&& world.getChunkSource().hasChunk(chest.pos.getX() >> 4, chest.pos.getZ() >> 4)
+				&& !BuiltInRegistries.BLOCK.getKey(world.getBlockState(chest.pos).getBlock()).toString().equals(chest.blockId));
 		if (removed) {
 			if (target != null && !chests.contains(target)) {
 				target = null;
@@ -348,21 +348,21 @@ public class ChestMemoryModule extends Module {
 	// ---- searching -----------------------------------------------------------------------------
 
 	/** Containers holding something that matches, nearest first (other dimensions and the ender chest last). */
-	public List<Hit> search(String query, @Nullable ClientPlayerEntity player, String currentDimension) {
+	public List<Hit> search(String query, @Nullable LocalPlayer player, String currentDimension) {
 		return find(item -> matches(item, query), player, currentDimension);
 	}
 
 	/** Containers holding any of these items (ids like "minecraft:iron_ingot"), in the same order as {@link #search}. */
-	public List<Hit> findItems(Set<String> itemIds, @Nullable ClientPlayerEntity player, String currentDimension) {
+	public List<Hit> findItems(Set<String> itemIds, @Nullable LocalPlayer player, String currentDimension) {
 		return find(item -> itemIds.contains(item.id), player, currentDimension);
 	}
 
-	private List<Hit> find(Predicate<StoredItem> wanted, @Nullable ClientPlayerEntity player, String currentDimension) {
+	private List<Hit> find(Predicate<StoredItem> wanted, @Nullable LocalPlayer player, String currentDimension) {
 		syncWorldData();
 		List<Hit> hits = new ArrayList<>();
 		for (Chest chest : chests) {
 			int count = 0;
-			Text name = null;
+			Component name = null;
 			boolean inBox = false;
 			for (StoredItem item : chest.items) {
 				if (wanted.test(item)) {
@@ -391,29 +391,29 @@ public class ChestMemoryModule extends Module {
 		return hits;
 	}
 
-	private static double sortKey(Chest chest, @Nullable ClientPlayerEntity player, String currentDimension) {
+	private static double sortKey(Chest chest, @Nullable LocalPlayer player, String currentDimension) {
 		if (chest.isEnderChest()) {
 			return Double.MAX_VALUE / 2;
 		}
 		if (player == null || !chest.dimension.equals(currentDimension)) {
 			return Double.MAX_VALUE / 4;
 		}
-		return chest.pos.getSquaredDistance(player.getBlockPos());
+		return chest.pos.distSqr(player.blockPosition());
 	}
 
 	private static boolean matches(StoredItem item, String query) {
 		Item type = itemOf(item.id);
 		String shown = item.label.isEmpty() ? type.getName().getString() : item.label;
-		return ItemNames.matches(ItemNames.searchText(type.getTranslationKey(), shown, true), query);
+		return ItemNames.matches(ItemNames.searchText(type.getDescriptionId(), shown, true), query);
 	}
 
 	public static Item itemOf(String id) {
 		Identifier identifier = Identifier.tryParse(id);
-		return identifier == null ? net.minecraft.item.Items.AIR : Registries.ITEM.get(identifier);
+		return identifier == null ? net.minecraft.world.item.Items.AIR : BuiltInRegistries.ITEM.getValue(identifier);
 	}
 
-	public static Text displayName(StoredItem item) {
-		return item.label.isEmpty() ? itemOf(item.id).getName() : Text.literal(item.label);
+	public static Component displayName(StoredItem item) {
+		return item.label.isEmpty() ? itemOf(item.id).getName() : Component.literal(item.label);
 	}
 
 	// ---- saving / loading ----------------------------------------------------------------------
@@ -517,43 +517,43 @@ public class ChestMemoryModule extends Module {
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
 		Chest chosen = target;
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (chosen == null || client.world == null || !chosen.dimension.equals(client.world.getRegistryKey().getValue().toString())) {
+		Minecraft client = Minecraft.getInstance();
+		if (chosen == null || client.level == null || !chosen.dimension.equals(client.level.dimension().identifier().toString())) {
 			return;
 		}
 		// Your own chest, which you asked to be led to: its frame may show through walls.
-		GizmoDrawing.box(new Box(chosen.pos).expand(0.02), DrawStyle.stroked(0xFF55FF55, 3.0F)).ignoreOcclusion();
+		Gizmos.cuboid(new AABB(chosen.pos).inflate(0.02), GizmoStyle.stroke(0xFF55FF55, 3.0F)).setAlwaysOnTop();
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		Chest chosen = target;
 		if (chosen == null) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
 		int centerX = layout.getScreenWidth() / 2;
 		int centerY = layout.getScreenHeight() / 2;
-		Text text;
-		if (!chosen.dimension.equals(client.world.getRegistryKey().getValue().toString())) {
-			text = Text.translatable(key + "other_dimension", chosen.pos.getX(), chosen.pos.getY(), chosen.pos.getZ());
+		Component text;
+		if (!chosen.dimension.equals(client.level.dimension().identifier().toString())) {
+			text = Component.translatable(key + "other_dimension", chosen.pos.getX(), chosen.pos.getY(), chosen.pos.getZ());
 		} else {
-			Vec3d spot = Vec3d.ofCenter(chosen.pos);
-			float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(client.gameRenderer.getCamera().getCameraPos(),
-					client.gameRenderer.getCamera().getYaw(), spot));
-			context.getMatrices().pushMatrix();
-			context.getMatrices().translate(centerX, centerY);
-			context.getMatrices().rotate(angle);
+			Vec3 spot = Vec3.atCenterOf(chosen.pos);
+			float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(client.gameRenderer.getMainCamera().position(),
+					client.gameRenderer.getMainCamera().yRot(), spot));
+			context.pose().pushMatrix();
+			context.pose().translate(centerX, centerY);
+			context.pose().rotate(angle);
 			for (int row = 0; row < 9; row++) {
 				context.fill(-row, -40 + row, row + 1, -39 + row, 0xFF55FF55);
 			}
-			context.getMatrices().popMatrix();
-			int distance = (int) Math.round(Math.sqrt(chosen.pos.getSquaredDistance(client.player.getBlockPos())));
-			text = Text.translatable(key + "pointer", chosen.pos.getX(), chosen.pos.getY(), chosen.pos.getZ(), distance);
+			context.pose().popMatrix();
+			int distance = (int) Math.round(Math.sqrt(chosen.pos.distSqr(client.player.blockPosition())));
+			text = Component.translatable(key + "pointer", chosen.pos.getX(), chosen.pos.getY(), chosen.pos.getZ(), distance);
 		}
-		int width = client.textRenderer.getWidth(text);
+		int width = client.font.width(text);
 		context.fill(centerX - width / 2 - 3, centerY + 44, centerX + width / 2 + 3, centerY + 56, 0x90000000);
-		context.drawTextWithShadow(client.textRenderer, text, centerX - width / 2, centerY + 46, 0xFF55FF55);
+		context.drawString(client.font, text, centerX - width / 2, centerY + 46, 0xFF55FF55);
 	}
 }

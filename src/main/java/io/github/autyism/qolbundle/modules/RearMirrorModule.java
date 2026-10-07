@@ -1,5 +1,7 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
@@ -11,13 +13,11 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -36,8 +36,8 @@ public class RearMirrorModule extends Module {
 	/** The kept picture, handed to the GUI as a texture. It only points at the buffer below and owns nothing. */
 	private static final class Picture extends AbstractTexture {
 		void point(@Nullable GpuTexture texture, @Nullable GpuTextureView view) {
-			this.glTexture = texture;
-			this.glTextureView = view;
+			this.texture = texture;
+			this.textureView = view;
 		}
 
 		@Override
@@ -56,7 +56,7 @@ public class RearMirrorModule extends Module {
 	private final BoolSetting flip = add(new BoolSetting("flip", true));
 
 	@Nullable
-	private SimpleFramebuffer buffer;
+	private TextureTarget buffer;
 	/**
 	 * Created on first use, not with the module: a texture object picks up its sampler from the
 	 * renderer when it is made, and the renderer does not exist yet while mods are being loaded.
@@ -85,7 +85,7 @@ public class RearMirrorModule extends Module {
 
 	/** The kept picture itself (the self-test saves it to a file to look at). */
 	@Nullable
-	public Framebuffer getPicture() {
+	public RenderTarget getPicture() {
 		return buffer;
 	}
 
@@ -95,8 +95,8 @@ public class RearMirrorModule extends Module {
 
 	/** Whether this frame gets a backwards view at all. */
 	public boolean wantsPicture() {
-		MinecraftClient client = MinecraftClient.getInstance();
-		boolean wanted = client.world != null && client.player != null && !client.options.hudHidden && client.currentScreen == null;
+		Minecraft client = Minecraft.getInstance();
+		boolean wanted = client.level != null && client.player != null && !client.options.hideGui && client.screen == null;
 		if (!wanted) {
 			hasPicture = false;
 		}
@@ -109,25 +109,25 @@ public class RearMirrorModule extends Module {
 
 	/** Keeps what was just drawn (the view backwards) before the normal view overwrites it. */
 	public void keepPicture() {
-		MinecraftClient client = MinecraftClient.getInstance();
-		Framebuffer main = client.getFramebuffer();
-		GpuTexture source = main.getColorAttachment();
+		Minecraft client = Minecraft.getInstance();
+		RenderTarget main = client.getMainRenderTarget();
+		GpuTexture source = main.getColorTexture();
 		if (source == null) {
 			return;
 		}
-		int width = main.textureWidth;
-		int height = main.textureHeight;
+		int width = main.width;
+		int height = main.height;
 		if (buffer == null) {
-			buffer = new SimpleFramebuffer("QoL Bundle rear mirror", width, height, false);
-		} else if (buffer.textureWidth != width || buffer.textureHeight != height) {
+			buffer = new TextureTarget("QoL Bundle rear mirror", width, height, false);
+		} else if (buffer.width != width || buffer.height != height) {
 			buffer.resize(width, height);
 		}
 		if (picture == null) {
 			picture = new Picture();
-			client.getTextureManager().registerTexture(TEXTURE, picture);
+			client.getTextureManager().register(TEXTURE, picture);
 		}
-		picture.point(buffer.getColorAttachment(), buffer.getColorAttachmentView());
-		RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(source, buffer.getColorAttachment(), 0, 0, 0, 0, 0, width, height);
+		picture.point(buffer.getColorTexture(), buffer.getColorTextureView());
+		RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(source, buffer.getColorTexture(), 0, 0, 0, 0, 0, width, height);
 		hasPicture = true;
 		captures++;
 	}
@@ -143,25 +143,25 @@ public class RearMirrorModule extends Module {
 			if (picture != null) {
 				picture.point(null, null);
 			}
-			buffer.delete();
+			buffer.destroyBuffers();
 			buffer = null;
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		HudAnchor anchor = position.get();
 		if (!hasPicture || buffer == null || layout.isBlocked(anchor)) {
 			return;
 		}
 		int width = layout.getScreenWidth() * size.get() / 100;
-		int height = width * buffer.textureHeight / buffer.textureWidth;
+		int height = width * buffer.height / buffer.width;
 		int top = layout.reserve(anchor, height + 6);
 		int left = layout.xFor(anchor, width + 4);
 		context.fill(left, top, left + width + 4, top + height + 4, 0xFF202020);
 		// The picture is stored bottom-up, hence v from 1 to 0. Flipped left-right it reads like a
 		// real mirror: what is behind your left shoulder is on the left.
 		float u1 = flip.get() ? 1F : 0F;
-		context.drawTexturedQuad(TEXTURE, left + 2, top + 2, left + 2 + width, top + 2 + height, u1, 1F - u1, 1F, 0F);
+		context.blit(TEXTURE, left + 2, top + 2, left + 2 + width, top + 2 + height, u1, 1F - u1, 1F, 0F);
 	}
 }

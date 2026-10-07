@@ -1,8 +1,8 @@
 package io.github.autyism.qolbundle.mixin;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -16,5 +16,5 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface BlockItemInvoker {
 	@Invoker("getPlacementState")
 	@Nullable
-	BlockState qolbundle$getPlacementState(ItemPlacementContext context);
+	BlockState qolbundle$getPlacementState(BlockPlaceContext context);
 }

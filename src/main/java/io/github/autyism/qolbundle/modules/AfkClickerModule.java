@@ -1,5 +1,6 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.hud.HudAnchor;
 import io.github.autyism.qolbundle.hud.HudLayout;
@@ -10,16 +11,15 @@ import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -73,7 +73,7 @@ public class AfkClickerModule extends Module {
 	private final BoolSetting stopOnDamage = add(new BoolSetting("stop_on_damage", true));
 	private final EnumSetting<HudAnchor> position = add(new EnumSetting<>("position", HudAnchor.TOP_LEFT));
 
-	private final KeyBinding toggleKey;
+	private final KeyMapping toggleKey;
 	private boolean running;
 	private boolean stoppedByDamage;
 	private float lockedYaw;
@@ -82,12 +82,12 @@ public class AfkClickerModule extends Module {
 	private int ticksUntilClick;
 	private int clicks;
 	/** The key this run is holding down, to release exactly that one when it ends. */
-	private KeyBinding heldKey;
+	private KeyMapping heldKey;
 
 	public AfkClickerModule() {
 		super("afk_clicker", ModuleCategory.GREY, false);
-		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.afk_toggle",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F7, QoLBundleClient.KEY_CATEGORY));
+		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.afk_toggle",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F7, QoLBundleClient.KEY_CATEGORY));
 		ViewHooks.register((deltaX, deltaY) -> running && lockView.get());
 	}
 
@@ -123,51 +123,51 @@ public class AfkClickerModule extends Module {
 		return preset.get() == AfkPreset.CUSTOM ? interval.get() : preset.get().interval;
 	}
 
-	public void start(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
+	public void start(Minecraft client) {
+		LocalPlayer player = client.player;
 		if (player == null || running) {
 			return;
 		}
 		running = true;
 		stoppedByDamage = false;
-		lockedYaw = player.getYaw();
-		lockedPitch = player.getPitch();
+		lockedYaw = player.getYRot();
+		lockedPitch = player.getXRot();
 		lastHealth = player.getHealth();
 		ticksUntilClick = 0;
 		clicks = 0;
-		client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".started"), false);
+		client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".started"), false);
 	}
 
-	public void stop(MinecraftClient client, boolean becauseOfDamage) {
+	public void stop(Minecraft client, boolean becauseOfDamage) {
 		if (!running) {
 			return;
 		}
 		running = false;
 		stoppedByDamage = becauseOfDamage;
 		if (heldKey != null) {
-			heldKey.setPressed(false);
+			heldKey.setDown(false);
 			heldKey = null;
 		}
 		if (becauseOfDamage) {
-			client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_BASS, 0.5F));
-			client.inGameHud.setOverlayMessage(
-					Text.translatable(getTranslationKey() + ".stopped_damage").formatted(Formatting.RED), false);
+			client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BASS, 0.5F));
+			client.gui.setOverlayMessage(
+					Component.translatable(getTranslationKey() + ".stopped_damage").withStyle(ChatFormatting.RED), false);
 		} else {
-			client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".stopped"), false);
+			client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".stopped"), false);
 		}
 	}
 
 	@Override
 	protected void onEnabledChanged(boolean enabled) {
 		if (!enabled) {
-			stop(MinecraftClient.getInstance(), false);
+			stop(Minecraft.getInstance(), false);
 		}
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
-		while (toggleKey.wasPressed()) {
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
+		while (toggleKey.consumeClick()) {
 			if (running) {
 				stop(client, false);
 			} else {
@@ -177,7 +177,7 @@ public class AfkClickerModule extends Module {
 		if (!running) {
 			return;
 		}
-		if (player == null || client.world == null || player.isDead()) {
+		if (player == null || client.level == null || player.isDeadOrDying()) {
 			stop(client, false);
 			return;
 		}
@@ -188,43 +188,43 @@ public class AfkClickerModule extends Module {
 		lastHealth = player.getHealth();
 
 		if (lockView.get()) {
-			player.setYaw(lockedYaw);
-			player.setPitch(lockedPitch);
+			player.setYRot(lockedYaw);
+			player.setXRot(lockedPitch);
 		}
 
 		AfkAction current = currentAction();
-		KeyBinding key = current.useKey ? client.options.useKey : client.options.attackKey;
+		KeyMapping key = current.useKey ? client.options.keyUse : client.options.keyAttack;
 		if (current.hold) {
 			if (heldKey != null && heldKey != key) {
-				heldKey.setPressed(false);
+				heldKey.setDown(false);
 			}
 			heldKey = key;
-			key.setPressed(true);
+			key.setDown(true);
 			return;
 		}
 		if (heldKey != null) {
-			heldKey.setPressed(false);
+			heldKey.setDown(false);
 			heldKey = null;
 		}
 		if (--ticksUntilClick <= 0) {
 			ticksUntilClick = currentInterval();
 			// One press of the bound key, exactly what a click produces; the game acts on it next tick.
-			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(key));
+			KeyMapping.click(KeyBindingHelper.getBoundKeyOf(key));
 			clicks++;
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!running) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		AfkAction current = currentAction();
-		Text what = Text.translatable("qolbundle.option.afkaction." + current.name().toLowerCase(Locale.ROOT));
-		Text line = current.hold
-				? Text.translatable(getTranslationKey() + ".hud.holding", what)
-				: Text.translatable(getTranslationKey() + ".hud.clicking", what, currentInterval(), clicks);
-		layout.drawLines(context, client.textRenderer, position.get(), List.of(line.copy().withColor(0x55FF55)));
+		Component what = Component.translatable("qolbundle.option.afkaction." + current.name().toLowerCase(Locale.ROOT));
+		Component line = current.hold
+				? Component.translatable(getTranslationKey() + ".hud.holding", what)
+				: Component.translatable(getTranslationKey() + ".hud.clicking", what, currentInterval(), clicks);
+		layout.drawLines(context, client.font, position.get(), List.of(line.copy().withColor(0x55FF55)));
 	}
 }

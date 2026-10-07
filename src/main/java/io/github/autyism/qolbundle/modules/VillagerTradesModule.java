@@ -8,23 +8,23 @@ import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.MerchantScreenHandler;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Util;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.village.TradeOffer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.phys.EntityHitResult;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class VillagerTradesModule extends Module {
 	private final IntSetting maxTrades = add(new IntSetting("max_trades", 10, 3, 16));
 	private final BoolSetting showStock = add(new BoolSetting("show_stock", true));
 
-	private final Map<UUID, List<TradeOffer>> known = new HashMap<>();
+	private final Map<UUID, List<MerchantOffer>> known = new HashMap<>();
 	@Nullable
 	private UUID clickedVillager;
 	private long clickedMs;
@@ -59,17 +59,17 @@ public class VillagerTradesModule extends Module {
 	public VillagerTradesModule() {
 		super("villager_trades", ModuleCategory.INFO, true);
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-			if (world.isClient() && isEnabled() && entity instanceof MerchantEntity) {
-				clickedVillager = entity.getUuid();
-				clickedMs = Util.getMeasuringTimeMs();
+			if (world.isClientSide() && isEnabled() && entity instanceof AbstractVillager) {
+				clickedVillager = entity.getUUID();
+				clickedMs = Util.getMillis();
 			}
-			return ActionResult.PASS; // only watching
+			return InteractionResult.PASS; // only watching
 		});
 	}
 
 	/** Trades remembered for a villager, or null (for the self-test). */
 	@Nullable
-	public List<TradeOffer> getKnownTrades(UUID villager) {
+	public List<MerchantOffer> getKnownTrades(UUID villager) {
 		return known.get(villager);
 	}
 
@@ -79,7 +79,7 @@ public class VillagerTradesModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		if (!Objects.equals(WorldData.getWorldId(), worldId)) {
 			worldId = WorldData.getWorldId();
 			known.clear();
@@ -88,91 +88,91 @@ public class VillagerTradesModule extends Module {
 			return;
 		}
 		// While a trading screen is open, keep the remembered copy up to date (stock changes as you trade).
-		if (client.player.currentScreenHandler instanceof MerchantScreenHandler handler) {
-			if (!handler.getRecipes().isEmpty()) {
-				List<TradeOffer> copy = new ArrayList<>();
-				for (TradeOffer offer : handler.getRecipes()) {
+		if (client.player.containerMenu instanceof MerchantMenu handler) {
+			if (!handler.getOffers().isEmpty()) {
+				List<MerchantOffer> copy = new ArrayList<>();
+				for (MerchantOffer offer : handler.getOffers()) {
 					copy.add(offer.copy());
 				}
 				known.put(clickedVillager, copy);
 			}
-		} else if (Util.getMeasuringTimeMs() - clickedMs > CLICK_WINDOW_MS) {
+		} else if (Util.getMillis() - clickedMs > CLICK_WINDOW_MS) {
 			clickedVillager = null; // the click did not lead to a trading screen
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.currentScreen != null || !(client.crosshairTarget instanceof EntityHitResult hit)
-				|| !(hit.getEntity() instanceof MerchantEntity merchant)) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.screen != null || !(client.hitResult instanceof EntityHitResult hit)
+				|| !(hit.getEntity() instanceof AbstractVillager merchant)) {
 			return;
 		}
 		String key = getTranslationKey() + ".hud.";
-		Text title = merchant.getDisplayName();
-		if (merchant instanceof VillagerEntity villager) {
-			title = Text.translatable(key + "title", title, Text.translatable("merchant.level." + villager.getVillagerData().level()));
+		Component title = merchant.getDisplayName();
+		if (merchant instanceof Villager villager) {
+			title = Component.translatable(key + "title", title, Component.translatable("merchant.level." + villager.getVillagerData().level()));
 		}
-		List<TradeOffer> offers = known.get(merchant.getUuid());
+		List<MerchantOffer> offers = known.get(merchant.getUUID());
 
 		int x = layout.getScreenWidth() / 2 + 14;
 		int top;
 		if (offers == null) {
-			Text hint = Text.translatable(key + "unknown");
-			int width = Math.max(client.textRenderer.getWidth(title), client.textRenderer.getWidth(hint));
+			Component hint = Component.translatable(key + "unknown");
+			int width = Math.max(client.font.width(title), client.font.width(hint));
 			top = layout.getScreenHeight() / 2 - 12;
 			context.fill(x - 3, top - 3, x + width + 3, top + 22, 0xA0000000);
-			context.drawTextWithShadow(client.textRenderer, title, x, top, 0xFFFFD75E);
-			context.drawTextWithShadow(client.textRenderer, hint, x, top + 11, 0xFFAAAAAA);
+			context.drawString(client.font, title, x, top, 0xFFFFD75E);
+			context.drawString(client.font, hint, x, top + 11, 0xFFAAAAAA);
 			return;
 		}
 
 		int shown = Math.min(offers.size(), maxTrades.get());
-		List<Text> labels = new ArrayList<>();
-		int width = client.textRenderer.getWidth(title);
+		List<Component> labels = new ArrayList<>();
+		int width = client.font.width(title);
 		for (int i = 0; i < shown; i++) {
-			Text label = describe(offers.get(i));
+			Component label = describe(offers.get(i));
 			labels.add(label);
-			width = Math.max(width, 78 + client.textRenderer.getWidth(label));
+			width = Math.max(width, 78 + client.font.width(label));
 		}
 		int height = 12 + shown * ROW_HEIGHT;
 		top = Math.max(4, layout.getScreenHeight() / 2 - height / 2);
 		x = Math.min(x, layout.getScreenWidth() - width - 6);
 		context.fill(x - 3, top - 3, x + width + 3, top + height + 1, 0xA0000000);
-		context.drawTextWithShadow(client.textRenderer, title, x, top, 0xFFFFD75E);
+		context.drawString(client.font, title, x, top, 0xFFFFD75E);
 		for (int i = 0; i < shown; i++) {
-			TradeOffer offer = offers.get(i);
+			MerchantOffer offer = offers.get(i);
 			int y = top + 12 + i * ROW_HEIGHT;
-			drawStack(context, client, offer.getDisplayedFirstBuyItem(), x, y);
-			drawStack(context, client, offer.getDisplayedSecondBuyItem(), x + 18, y);
-			context.drawTextWithShadow(client.textRenderer, "→", x + 40, y + 4, HudLayout.WHITE);
-			drawStack(context, client, offer.getSellItem(), x + 54, y);
-			context.drawTextWithShadow(client.textRenderer, labels.get(i), x + 76, y + 4,
-					offer.isDisabled() ? 0xFFFF5555 : HudLayout.WHITE);
+			drawStack(context, client, offer.getCostA(), x, y);
+			drawStack(context, client, offer.getCostB(), x + 18, y);
+			context.drawString(client.font, "→", x + 40, y + 4, HudLayout.WHITE);
+			drawStack(context, client, offer.getResult(), x + 54, y);
+			context.drawString(client.font, labels.get(i), x + 76, y + 4,
+					offer.isOutOfStock() ? 0xFFFF5555 : HudLayout.WHITE);
 		}
 	}
 
-	private static void drawStack(DrawContext context, MinecraftClient client, ItemStack stack, int x, int y) {
+	private static void drawStack(GuiGraphics context, Minecraft client, ItemStack stack, int x, int y) {
 		if (!stack.isEmpty()) {
-			context.drawItem(stack, x, y);
-			context.drawStackOverlay(client.textRenderer, stack, x, y);
+			context.renderItem(stack, x, y);
+			context.renderItemDecorations(client.font, stack, x, y);
 		}
 	}
 
 	/** What you get, in words: the item name, for enchanted books the enchantment, and the stock. */
-	private Text describe(TradeOffer offer) {
-		ItemStack sell = offer.getSellItem();
-		MutableText text = Text.empty().append(sell.getName());
-		ItemEnchantmentsComponent stored = sell.get(DataComponentTypes.STORED_ENCHANTMENTS);
+	private Component describe(MerchantOffer offer) {
+		ItemStack sell = offer.getResult();
+		MutableComponent text = Component.empty().append(sell.getHoverName());
+		ItemEnchantments stored = sell.get(DataComponents.STORED_ENCHANTMENTS);
 		if (stored != null && !stored.isEmpty()) {
-			for (Object2IntMap.Entry<RegistryEntry<Enchantment>> entry : stored.getEnchantmentEntries()) {
-				text.append(" ").append(Enchantment.getName(entry.getKey(), entry.getIntValue()));
+			for (Object2IntMap.Entry<Holder<Enchantment>> entry : stored.entrySet()) {
+				text.append(" ").append(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
 			}
 		}
-		if (offer.isDisabled()) {
-			text.append(Text.translatable(getTranslationKey() + ".hud.sold_out"));
+		if (offer.isOutOfStock()) {
+			text.append(Component.translatable(getTranslationKey() + ".hud.sold_out"));
 		} else if (showStock.get()) {
-			text.append(Text.translatable(getTranslationKey() + ".hud.stock", offer.getMaxUses() - offer.getUses()).withColor(0xAAAAAA));
+			text.append(Component.translatable(getTranslationKey() + ".hud.stock", offer.getMaxUses() - offer.getUses()).withColor(0xAAAAAA));
 		}
 		return text;
 	}

@@ -1,5 +1,7 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.hud.HudLayout;
 import io.github.autyism.qolbundle.mixin.BlockItemInvoker;
@@ -11,44 +13,42 @@ import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.enums.BlockHalf;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.BlockModelPart;
-import net.minecraft.client.render.model.BlockStateModel;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.Property;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -76,11 +76,11 @@ public class PlacementMasterModule extends Module {
 	}
 
 	/** What makes two placements "the same way round". Shapes that depend on neighbours are left out. */
-	private static final List<Property<?>> ORIENTATION = List.of(Properties.FACING, Properties.HORIZONTAL_FACING,
-			Properties.HOPPER_FACING, Properties.AXIS, Properties.HORIZONTAL_AXIS, Properties.BLOCK_HALF, Properties.SLAB_TYPE,
-			Properties.BLOCK_FACE, Properties.ROTATION, Properties.ORIENTATION, Properties.DOOR_HINGE,
-			Properties.VERTICAL_DIRECTION, Properties.ATTACHMENT);
-	private static final List<Property<Direction>> FACINGS = List.of(Properties.FACING, Properties.HORIZONTAL_FACING, Properties.HOPPER_FACING);
+	private static final List<Property<?>> ORIENTATION = List.of(BlockStateProperties.FACING, BlockStateProperties.HORIZONTAL_FACING,
+			BlockStateProperties.FACING_HOPPER, BlockStateProperties.AXIS, BlockStateProperties.HORIZONTAL_AXIS, BlockStateProperties.HALF, BlockStateProperties.SLAB_TYPE,
+			BlockStateProperties.ATTACH_FACE, BlockStateProperties.ROTATION_16, BlockStateProperties.ORIENTATION, BlockStateProperties.DOOR_HINGE,
+			BlockStateProperties.VERTICAL_DIRECTION, BlockStateProperties.BELL_ATTACHMENT);
+	private static final List<Property<Direction>> FACINGS = List.of(BlockStateProperties.FACING, BlockStateProperties.HORIZONTAL_FACING, BlockStateProperties.FACING_HOPPER);
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int GREEN = 0xFF55FF55;
 	private static final int RED = 0xFFFF5555;
@@ -96,7 +96,7 @@ public class PlacementMasterModule extends Module {
 	private final BoolSetting showLabel = add(new BoolSetting("show_label", true));
 	private final BoolSetting lock = add(new BoolSetting("lock", true));
 
-	private final KeyBinding lockKey;
+	private final KeyMapping lockKey;
 	@Nullable
 	private Placement current;
 	/** Orientation of the last block that really got placed (property name to value). */
@@ -109,30 +109,30 @@ public class PlacementMasterModule extends Module {
 
 	public PlacementMasterModule() {
 		super("placement_master", ModuleCategory.TOOLS, true);
-		lockKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.placement_lock",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, QoLBundleClient.KEY_CATEGORY));
+		lockKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.placement_lock",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, QoLBundleClient.KEY_CATEGORY));
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-			MinecraftClient client = MinecraftClient.getInstance();
-			if (!world.isClient() || !isEnabled() || player != client.player) {
-				return ActionResult.PASS;
+			Minecraft client = Minecraft.getInstance();
+			if (!world.isClientSide() || !isEnabled() || player != client.player) {
+				return InteractionResult.PASS;
 			}
 			Placement placement = predict(client.player, hand, hit);
 			if (placement == null) {
-				return ActionResult.PASS;
+				return InteractionResult.PASS;
 			}
 			if (isLocking() && conflicts(placement.state)) {
 				// Not the way round you locked: the click is simply not made.
 				stoppedCount++;
-				client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".stopped").formatted(Formatting.RED), false);
-				return ActionResult.FAIL;
+				client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".stopped").withStyle(ChatFormatting.RED), false);
+				return InteractionResult.FAIL;
 			}
 			pending = placement;
 			pendingTicks = 4;
-			return ActionResult.PASS; // untouched, the game goes on as usual
+			return InteractionResult.PASS; // untouched, the game goes on as usual
 		});
 	}
 
-	public KeyBinding getLockKey() {
+	public KeyMapping getLockKey() {
 		return lockKey;
 	}
 
@@ -154,7 +154,7 @@ public class PlacementMasterModule extends Module {
 
 	/** True when the lock key is held and there is something to compare with. */
 	public boolean isLocking() {
-		return lock.get() && lockKey.isPressed() && lastOrientation != null;
+		return lock.get() && lockKey.isDown() && lastOrientation != null;
 	}
 
 	/** True when this state is turned differently from the last block placed. */
@@ -182,27 +182,27 @@ public class PlacementMasterModule extends Module {
 
 	/** The same steps the game takes when a block item is used on a block, without placing anything. */
 	@Nullable
-	private static Placement predict(ClientPlayerEntity player, Hand hand, BlockHitResult hit) {
-		ItemStack stack = player.getStackInHand(hand);
+	private static Placement predict(LocalPlayer player, InteractionHand hand, BlockHitResult hit) {
+		ItemStack stack = player.getItemInHand(hand);
 		if (!(stack.getItem() instanceof BlockItem item) || hit.getType() != HitResult.Type.BLOCK) {
 			return null;
 		}
-		ItemPlacementContext context = new ItemPlacementContext(player, hand, stack, hit);
+		BlockPlaceContext context = new BlockPlaceContext(player, hand, stack, hit);
 		if (!context.canPlace()) {
 			return null;
 		}
-		context = item.getPlacementContext(context);
+		context = item.updatePlacementContext(context);
 		if (context == null) {
 			return null;
 		}
 		BlockState state = ((BlockItemInvoker) item).qolbundle$getPlacementState(context);
-		return state == null ? null : new Placement(context.getBlockPos().toImmutable(), state, hit);
+		return state == null ? null : new Placement(context.getClickedPos().immutable(), state, hit);
 	}
 
 	private static Map<String, String> orientationOf(BlockState state) {
 		Map<String, String> result = new LinkedHashMap<>();
 		for (Property<?> property : ORIENTATION) {
-			if (state.contains(property)) {
+			if (state.hasProperty(property)) {
 				result.put(property.getName(), valueName(state, property));
 			}
 		}
@@ -210,13 +210,13 @@ public class PlacementMasterModule extends Module {
 	}
 
 	private static <T extends Comparable<T>> String valueName(BlockState state, Property<T> property) {
-		return property.name(state.get(property));
+		return property.getName(state.getValue(property));
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
-		ClientWorld world = client.world;
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
+		ClientLevel world = client.level;
 		current = null;
 		if (player == null || world == null) {
 			pending = null;
@@ -225,7 +225,7 @@ public class PlacementMasterModule extends Module {
 		if (pending != null) {
 			// The block is there on the client right after the click when the placement went through.
 			BlockState placed = world.getBlockState(pending.pos);
-			if (placed.isOf(pending.state.getBlock())) {
+			if (placed.is(pending.state.getBlock())) {
 				Map<String, String> orientation = orientationOf(placed);
 				if (!orientation.isEmpty()) {
 					lastOrientation = orientation;
@@ -235,10 +235,10 @@ public class PlacementMasterModule extends Module {
 				pending = null;
 			}
 		}
-		if (client.currentScreen != null || !(client.crosshairTarget instanceof BlockHitResult hit)) {
+		if (client.screen != null || !(client.hitResult instanceof BlockHitResult hit)) {
 			return;
 		}
-		Hand hand = player.getMainHandStack().getItem() instanceof BlockItem ? Hand.MAIN_HAND : Hand.OFF_HAND;
+		InteractionHand hand = player.getMainHandItem().getItem() instanceof BlockItem ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 		current = predict(player, hand, hit);
 	}
 
@@ -254,15 +254,15 @@ public class PlacementMasterModule extends Module {
 	/** For slabs, stairs, trapdoors aimed at the side of a block: +1 upper half, -1 lower half, 0 no such choice. */
 	public int halfZone() {
 		Placement placement = current;
-		if (placement == null || !placement.hit.getSide().getAxis().isHorizontal()) {
+		if (placement == null || !placement.hit.getDirection().getAxis().isHorizontal()) {
 			return 0;
 		}
 		BlockState state = placement.state;
-		if (state.contains(Properties.BLOCK_HALF)) {
-			return state.get(Properties.BLOCK_HALF) == BlockHalf.TOP ? 1 : -1;
+		if (state.hasProperty(BlockStateProperties.HALF)) {
+			return state.getValue(BlockStateProperties.HALF) == Half.TOP ? 1 : -1;
 		}
-		if (state.contains(Properties.SLAB_TYPE) && state.get(Properties.SLAB_TYPE) != SlabType.DOUBLE) {
-			return state.get(Properties.SLAB_TYPE) == SlabType.TOP ? 1 : -1;
+		if (state.hasProperty(BlockStateProperties.SLAB_TYPE) && state.getValue(BlockStateProperties.SLAB_TYPE) != SlabType.DOUBLE) {
+			return state.getValue(BlockStateProperties.SLAB_TYPE) == SlabType.TOP ? 1 : -1;
 		}
 		return 0;
 	}
@@ -277,32 +277,32 @@ public class PlacementMasterModule extends Module {
 	@Override
 	public void onSubmitWorld(WorldRenderContext context) {
 		Placement placement = current;
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (placement == null || !preview.get() || !isShown(placement) || client.world == null) {
+		Minecraft client = Minecraft.getInstance();
+		if (placement == null || !preview.get() || !isShown(placement) || client.level == null) {
 			return;
 		}
 		BlockState state = placement.state;
 		BlockPos pos = placement.pos;
-		BlockStateModel model = client.getBlockRenderManager().getModel(state);
-		ClientWorld world = client.world;
+		BlockStateModel model = client.getBlockRenderer().getBlockModel(state);
+		ClientLevel world = client.level;
 		boolean wrong = isLocking() && conflicts(state);
 		float alpha = opacity.get() / 100F;
-		Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
-		MatrixStack matrices = context.matrices();
-		matrices.push();
+		Vec3 camera = client.gameRenderer.getMainCamera().position();
+		PoseStack matrices = context.matrices();
+		matrices.pushPose();
 		matrices.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
 		// A hair smaller than a real block, so its faces do not flicker against the neighbours.
 		matrices.translate(0.5, 0.5, 0.5);
 		matrices.scale(0.998F, 0.998F, 0.998F);
 		matrices.translate(-0.5, -0.5, -0.5);
-		context.commandQueue().submitCustom(matrices, TexturedRenderLayers.getBlockTranslucentCull(), (entry, consumer) -> {
-			for (BlockModelPart part : model.getParts(Random.create(42L))) {
+		context.commandQueue().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
+			for (BlockModelPart part : model.collectParts(RandomSource.create(42L))) {
 				for (int side = -1; side < 6; side++) {
-					for (BakedQuad quad : part.getQuads(side < 0 ? null : Direction.byIndex(side))) {
+					for (BakedQuad quad : part.getQuads(side < 0 ? null : Direction.from3DDataValue(side))) {
 						float red = 1F;
 						float green = 1F;
 						float blue = 1F;
-						if (quad.hasTint()) {
+						if (quad.isTinted()) {
 							int tint = client.getBlockColors().getColor(state, world, pos, quad.tintIndex());
 							red = (tint >> 16 & 0xFF) / 255F;
 							green = (tint >> 8 & 0xFF) / 255F;
@@ -312,33 +312,33 @@ public class PlacementMasterModule extends Module {
 							green *= 0.35F;
 							blue *= 0.35F;
 						}
-						consumer.quad(entry, quad, red, green, blue, alpha, LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV);
+						consumer.putBulkData(entry, quad, red, green, blue, alpha, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
 					}
 				}
 			}
 		});
-		matrices.pop();
+		matrices.popPose();
 	}
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
 		Placement placement = current;
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (placement == null || client.world == null) {
+		Minecraft client = Minecraft.getInstance();
+		if (placement == null || client.level == null) {
 			return;
 		}
 		int color = accent(placement);
 		if (preview.get() && isShown(placement)) {
 			BlockPos pos = placement.pos;
-			for (Box box : placement.state.getOutlineShape(client.world, pos).getBoundingBoxes()) {
-				GizmoDrawing.box(box.offset(pos), DrawStyle.stroked(color, 2.0F));
+			for (AABB box : placement.state.getShape(client.level, pos).toAabbs()) {
+				Gizmos.cuboid(box.move(pos), GizmoStyle.stroke(color, 2.0F));
 			}
 			// Which way it faces: an arrow out of the middle of the block.
 			for (Property<Direction> property : FACINGS) {
-				if (placement.state.contains(property)) {
-					Vec3d middle = Vec3d.ofCenter(pos);
-					Direction facing = placement.state.get(property);
-					GizmoDrawing.arrow(middle, middle.add(Vec3d.of(facing.getVector()).multiply(0.95)), 0xFFFFFF55, 3.0F).ignoreOcclusion();
+				if (placement.state.hasProperty(property)) {
+					Vec3 middle = Vec3.atCenterOf(pos);
+					Direction facing = placement.state.getValue(property);
+					Gizmos.arrow(middle, middle.add(Vec3.atLowerCornerOf(facing.getUnitVec3i()).scale(0.95)), 0xFFFFFF55, 3.0F).setAlwaysOnTop();
 					break;
 				}
 			}
@@ -347,17 +347,17 @@ public class PlacementMasterModule extends Module {
 		if (halfGuide.get() && zone != 0) {
 			// The face being aimed at, split in two: the half the crosshair is in is the half you get.
 			BlockPos on = placement.hit.getBlockPos();
-			Direction side = placement.hit.getSide();
-			Vec3d out = Vec3d.of(side.getVector()).multiply(0.004);
+			Direction side = placement.hit.getDirection();
+			Vec3 out = Vec3.atLowerCornerOf(side.getUnitVec3i()).scale(0.004);
 			double low = on.getY() + (zone > 0 ? 0.5 : 0.0);
-			Vec3d min = new Vec3d(on.getX(), low, on.getZ()).add(out);
-			Vec3d max = new Vec3d(on.getX() + 1, low + 0.5, on.getZ() + 1).add(out);
-			GizmoDrawing.face(min, max, side, DrawStyle.filledAndStroked(0xFF55FFFF, 2.0F, 0x5055FFFF));
+			Vec3 min = new Vec3(on.getX(), low, on.getZ()).add(out);
+			Vec3 max = new Vec3(on.getX() + 1, low + 0.5, on.getZ() + 1).add(out);
+			Gizmos.rect(min, max, side, GizmoStyle.strokeAndFill(0xFF55FFFF, 2.0F, 0x5055FFFF));
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		Placement placement = current;
 		if (placement == null || !showLabel.get()) {
 			return;
@@ -366,37 +366,37 @@ public class PlacementMasterModule extends Module {
 		if (orientation.isEmpty()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		int centerX = layout.getScreenWidth() / 2;
 		int y = layout.getScreenHeight() / 2 + 14;
 		drawCentered(context, client, describe(orientation), centerX, y, WHITE);
 		if (isLocking()) {
 			boolean wrong = conflicts(placement.state);
-			Text line = Text.translatable(getTranslationKey() + (wrong ? ".hud.lock_wrong" : ".hud.lock_ok"), describe(lastOrientation));
+			Component line = Component.translatable(getTranslationKey() + (wrong ? ".hud.lock_wrong" : ".hud.lock_ok"), describe(lastOrientation));
 			drawCentered(context, client, line, centerX, y + 11, wrong ? RED : GREEN);
 		}
 	}
 
-	private static void drawCentered(DrawContext context, MinecraftClient client, Text text, int centerX, int y, int color) {
-		int width = client.textRenderer.getWidth(text);
+	private static void drawCentered(GuiGraphics context, Minecraft client, Component text, int centerX, int y, int color) {
+		int width = client.font.width(text);
 		context.fill(centerX - width / 2 - 3, y - 1, centerX + width / 2 + 3, y + 9, 0x80000000);
-		context.drawTextWithShadow(client.textRenderer, text, centerX - width / 2, y, color);
+		context.drawString(client.font, text, centerX - width / 2, y, color);
 	}
 
 	/** "facing north · upper half" from the orientation properties, in the player's language. */
-	private Text describe(Map<String, String> orientation) {
+	private Component describe(Map<String, String> orientation) {
 		String key = getTranslationKey() + ".";
-		MutableText text = Text.empty();
+		MutableComponent text = Component.empty();
 		boolean first = true;
 		for (Map.Entry<String, String> entry : orientation.entrySet()) {
 			if (!first) {
-				text.append(Text.literal(" · "));
+				text.append(Component.literal(" · "));
 			}
 			first = false;
 			String valueKey = key + "value." + entry.getValue();
-			Text value = I18n.hasTranslation(valueKey) ? Text.translatable(valueKey) : Text.literal(entry.getValue());
+			Component value = I18n.exists(valueKey) ? Component.translatable(valueKey) : Component.literal(entry.getValue());
 			String propertyKey = key + "property." + entry.getKey();
-			text.append(I18n.hasTranslation(propertyKey) ? Text.translatable(propertyKey, value) : Text.literal(entry.getKey() + " " + entry.getValue()));
+			text.append(I18n.exists(propertyKey) ? Component.translatable(propertyKey, value) : Component.literal(entry.getKey() + " " + entry.getValue()));
 		}
 		return text;
 	}

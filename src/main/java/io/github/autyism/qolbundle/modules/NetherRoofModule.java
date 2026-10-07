@@ -6,17 +6,17 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.ModuleRegistry;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.StringSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 
 /**
  * Helper for travelling on the Nether roof (above the bedrock ceiling, Y 128 and up), where there
@@ -39,7 +39,7 @@ public class NetherRoofModule extends Module {
 	private boolean active;
 	private int overworldX;
 	private int overworldZ;
-	private final List<Text> lines = new ArrayList<>();
+	private final List<Component> lines = new ArrayList<>();
 
 	public NetherRoofModule() {
 		super("nether_roof", ModuleCategory.TECHNICAL, true);
@@ -76,64 +76,64 @@ public class NetherRoofModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		active = client.player != null && client.world != null && client.world.getRegistryKey() == World.NETHER
+	public void onTick(Minecraft client) {
+		active = client.player != null && client.level != null && client.level.dimension() == Level.NETHER
 				&& client.player.getY() >= ROOF_Y;
 		lines.clear();
 		if (!active) {
 			return;
 		}
 		String key = getTranslationKey() + ".hud.";
-		int x = MathHelper.floor(client.player.getX());
-		int z = MathHelper.floor(client.player.getZ());
-		overworldX = MathHelper.floor(client.player.getX() * 8.0);
-		overworldZ = MathHelper.floor(client.player.getZ() * 8.0);
+		int x = Mth.floor(client.player.getX());
+		int z = Mth.floor(client.player.getZ());
+		overworldX = Mth.floor(client.player.getX() * 8.0);
+		overworldZ = Mth.floor(client.player.getZ() * 8.0);
 		if (showCoords.get()) {
-			lines.add(Text.translatable(key + "coords", x, z, overworldX, overworldZ));
+			lines.add(Component.translatable(key + "coords", x, z, overworldX, overworldZ));
 		}
 		if (showPortal.get() && ModuleRegistry.get("portal_calculator") instanceof PortalCalculatorModule portals && portals.isEnabled()) {
 			BlockPos exit = portals.predictOverworldExit(new BlockPos(overworldX, client.player.getBlockY(), overworldZ));
 			lines.add(exit != null
-					? Text.translatable(key + "portal_known", exit.getX(), exit.getY(), exit.getZ()).withColor(0x55FF55)
-					: Text.translatable(key + "portal_new").withColor(0xFFFF55));
+					? Component.translatable(key + "portal_known", exit.getX(), exit.getY(), exit.getZ()).withColor(0x55FF55)
+					: Component.translatable(key + "portal_new").withColor(0xFFFF55));
 		}
 		int[] target = parseDestination();
 		if (target != null) {
 			double dx = target[0] / 8.0 - client.player.getX();
 			double dz = target[1] / 8.0 - client.player.getZ();
-			lines.add(Text.translatable(key + "destination", target[0], target[1], (int) Math.round(Math.hypot(dx, dz))).withColor(0x55FFFF));
+			lines.add(Component.translatable(key + "destination", target[0], target[1], (int) Math.round(Math.hypot(dx, dz))).withColor(0x55FFFF));
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!active) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		int centerX = layout.getScreenWidth() / 2;
 		int y = 6;
 		if (showTape.get() && !layout.isBlocked(io.github.autyism.qolbundle.hud.HudAnchor.TOP_LEFT)) {
 			drawTape(context, client, centerX, y);
 			y += 26;
 		}
-		for (Text line : lines) {
-			int width = client.textRenderer.getWidth(line);
+		for (Component line : lines) {
+			int width = client.font.width(line);
 			context.fill(centerX - width / 2 - 3, y - 1, centerX + width / 2 + 3, y + 9, 0x80000000);
-			context.drawTextWithShadow(client.textRenderer, line, centerX - width / 2, y, HudLayout.WHITE);
+			context.drawString(client.font, line, centerX - width / 2, y, HudLayout.WHITE);
 			y += HudLayout.LINE_HEIGHT;
 		}
 	}
 
 	/** A strip of headings that slides as you turn; the middle is where you are looking. */
-	private void drawTape(DrawContext context, MinecraftClient client, int centerX, int top) {
-		float yaw = MathHelper.wrapDegrees(client.gameRenderer.getCamera().getYaw());
+	private void drawTape(GuiGraphics context, Minecraft client, int centerX, int top) {
+		float yaw = Mth.wrapDegrees(client.gameRenderer.getMainCamera().yRot());
 		float pixelsPerDegree = TAPE_WIDTH / TAPE_SPAN;
 		int left = centerX - TAPE_WIDTH / 2;
 		context.fill(left - 2, top, left + TAPE_WIDTH + 2, top + 22, 0x80000000);
 		// A tick every 15 degrees, a name every 45.
 		for (int heading = 0; heading < 360; heading += 15) {
-			float delta = MathHelper.wrapDegrees(heading - yaw);
+			float delta = Mth.wrapDegrees(heading - yaw);
 			if (Math.abs(delta) > TAPE_SPAN / 2) {
 				continue;
 			}
@@ -142,9 +142,9 @@ public class NetherRoofModule extends Module {
 			context.fill(x, top + (named ? 12 : 16), x + 1, top + 20, named ? 0xFFFFFFFF : 0xFFAAAAAA);
 			if (named) {
 				// Yaw 0 is south, 90 west, 180 north, 270 east.
-				Text name = Text.translatable("qolbundle.compass." + POINTS[heading / 45]);
+				Component name = Component.translatable("qolbundle.compass." + POINTS[heading / 45]);
 				boolean cardinal = heading % 90 == 0;
-				context.drawCenteredTextWithShadow(client.textRenderer, name, x, top + 2, cardinal ? 0xFFFFD75E : 0xFFCCCCCC);
+				context.drawCenteredString(client.font, name, x, top + 2, cardinal ? 0xFFFFD75E : 0xFFCCCCCC);
 			}
 		}
 		context.fill(centerX, top, centerX + 1, top + 22, 0xFFFF5555);
@@ -153,9 +153,9 @@ public class NetherRoofModule extends Module {
 		if (target != null) {
 			double dx = target[0] / 8.0 - client.player.getX();
 			double dz = target[1] / 8.0 - client.player.getZ();
-			float delta = MathHelper.wrapDegrees((float) Math.toDegrees(Math.atan2(-dx, dz)) - yaw);
+			float delta = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-dx, dz)) - yaw);
 			// Off the tape: pin the marker to the edge it lies beyond.
-			int x = centerX + Math.round(MathHelper.clamp(delta, -TAPE_SPAN / 2, TAPE_SPAN / 2) * pixelsPerDegree);
+			int x = centerX + Math.round(Mth.clamp(delta, -TAPE_SPAN / 2, TAPE_SPAN / 2) * pixelsPerDegree);
 			for (int row = 0; row < 5; row++) {
 				context.fill(x - row, top + 21 - row, x + row + 1, top + 22 - row, 0xFF55FFFF);
 			}

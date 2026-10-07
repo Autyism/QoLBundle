@@ -5,13 +5,12 @@ import io.github.autyism.qolbundle.mixin.ClientPlayerInteractionManagerAccessor;
 import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Locale;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
 /** While mining a block: a small bar under the crosshair with the percentage and the time left. */
 public class BreakProgressModule extends Module {
@@ -33,13 +32,13 @@ public class BreakProgressModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
 		lastProgress = 0F;
-		if (client.interactionManager == null || !client.interactionManager.isBreakingBlock()) {
+		if (client.gameMode == null || !client.gameMode.isDestroying()) {
 			return;
 		}
-		ClientPlayerInteractionManagerAccessor accessor = (ClientPlayerInteractionManagerAccessor) client.interactionManager;
+		ClientPlayerInteractionManagerAccessor accessor = (ClientPlayerInteractionManagerAccessor) client.gameMode;
 		float progress = Math.max(0F, Math.min(1F, accessor.qolbundle$getCurrentBreakingProgress()));
 		if (progress <= 0F) {
 			return;
@@ -61,8 +60,8 @@ public class BreakProgressModule extends Module {
 		}
 		if (showTime.get()) {
 			BlockPos pos = accessor.qolbundle$getCurrentBreakingPos();
-			BlockState state = client.world.getBlockState(pos);
-			float perTick = state.calcBlockBreakingDelta(client.player, client.world, pos);
+			BlockState state = client.level.getBlockState(pos);
+			float perTick = state.getDestroyProgress(client.player, client.level, pos);
 			if (perTick > 0F) {
 				float seconds = (1F - progress) / perTick / 20F;
 				if (!text.isEmpty()) {
@@ -72,7 +71,7 @@ public class BreakProgressModule extends Module {
 			}
 		}
 		if (!text.isEmpty()) {
-			context.drawCenteredTextWithShadow(client.textRenderer, text.toString(), centerX, y, HudLayout.WHITE);
+			context.drawCenteredString(client.font, text.toString(), centerX, y, HudLayout.WHITE);
 		}
 	}
 }

@@ -9,23 +9,22 @@ import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.module.setting.StringSetting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
-
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.phys.AABB;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -113,8 +112,8 @@ public class XrayModule extends Module {
 		addGroup(quartz, 0xFFFFFF, Blocks.NETHER_QUARTZ_ORE);
 		for (String name : extraBlocks.get().split(",")) {
 			Identifier id = Identifier.tryParse(name.trim());
-			if (id != null && !name.isBlank() && Registries.BLOCK.containsId(id)) {
-				Block block = Registries.BLOCK.get(id);
+			if (id != null && !name.isBlank() && BuiltInRegistries.BLOCK.containsKey(id)) {
+				Block block = BuiltInRegistries.BLOCK.getValue(id);
 				if (block != Blocks.AIR) {
 					targets.put(block, 0xFF55FF);
 				}
@@ -133,20 +132,20 @@ public class XrayModule extends Module {
 	// ---- scanning ---------------------------------------------------------------------------------
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		if (client.player == null || client.world == null) {
+	public void onTick(Minecraft client) {
+		if (client.player == null || client.level == null) {
 			bySection.clear();
 			visible = List.of();
 			return;
 		}
 		refreshTargets();
-		ClientWorld world = client.world;
-		BlockPos center = client.player.getBlockPos();
+		ClientLevel world = client.level;
+		BlockPos center = client.player.blockPosition();
 		int reach = radius.get();
 		int chunkReach = (reach >> 4) + 1;
 		int side = chunkReach * 2 + 1;
-		int minSection = ChunkSectionPos.getSectionCoord(Math.max(world.getBottomY(), center.getY() - reach));
-		int maxSection = ChunkSectionPos.getSectionCoord(Math.min(world.getTopYInclusive(), center.getY() + reach));
+		int minSection = SectionPos.blockToSectionCoord(Math.max(world.getMinY(), center.getY() - reach));
+		int maxSection = SectionPos.blockToSectionCoord(Math.min(world.getMaxY(), center.getY() + reach));
 		int layers = maxSection - minSection + 1;
 		int total = side * side * layers;
 
@@ -164,21 +163,21 @@ public class XrayModule extends Module {
 		}
 	}
 
-	private void scanSection(ClientWorld world, int chunkX, int sectionY, int chunkZ) {
-		long key = ChunkSectionPos.asLong(chunkX, sectionY, chunkZ);
-		WorldChunk chunk = world.getChunkManager().getWorldChunk(chunkX, chunkZ);
+	private void scanSection(ClientLevel world, int chunkX, int sectionY, int chunkZ) {
+		long key = SectionPos.asLong(chunkX, sectionY, chunkZ);
+		LevelChunk chunk = world.getChunkSource().getChunkNow(chunkX, chunkZ);
 		if (chunk == null) {
 			bySection.remove(key);
 			return;
 		}
-		int index = chunk.sectionCoordToIndex(sectionY);
-		ChunkSection[] sections = chunk.getSectionArray();
+		int index = chunk.getSectionIndexFromSectionY(sectionY);
+		LevelChunkSection[] sections = chunk.getSections();
 		if (index < 0 || index >= sections.length) {
 			return;
 		}
-		ChunkSection section = sections[index];
+		LevelChunkSection section = sections[index];
 		// hasAny checks the section's short list of block kinds first: sections without ore cost next to nothing.
-		if (section == null || section.isEmpty() || !section.hasAny(state -> targets.containsKey(state.getBlock()))) {
+		if (section == null || section.hasOnlyAir() || !section.maybeHas(state -> targets.containsKey(state.getBlock()))) {
 			bySection.remove(key);
 			return;
 		}
@@ -204,21 +203,21 @@ public class XrayModule extends Module {
 		long reachSquared = (long) reach * reach;
 		List<Found> near = new ArrayList<>();
 		bySection.entrySet().removeIf(entry -> {
-			ChunkSectionPos section = ChunkSectionPos.from(entry.getKey());
+			SectionPos section = SectionPos.of(entry.getKey());
 			// Forget sections the player has walked far away from.
-			return Math.abs(section.getMinX() + 8 - center.getX()) > reach + 48
-					|| Math.abs(section.getMinZ() + 8 - center.getZ()) > reach + 48;
+			return Math.abs(section.minBlockX() + 8 - center.getX()) > reach + 48
+					|| Math.abs(section.minBlockZ() + 8 - center.getZ()) > reach + 48;
 		});
 		for (List<Found> list : bySection.values()) {
 			for (Found found : list) {
-				if (found.pos.getSquaredDistance(center) <= reachSquared) {
+				if (found.pos.distSqr(center) <= reachSquared) {
 					near.add(found);
 				}
 			}
 		}
 		int limit = maxBoxes.get();
 		if (near.size() > limit) {
-			near.sort(Comparator.comparingDouble(found -> found.pos.getSquaredDistance(center)));
+			near.sort(Comparator.comparingDouble(found -> found.pos.distSqr(center)));
 			near = new ArrayList<>(near.subList(0, limit));
 		}
 		visible = near;
@@ -229,17 +228,17 @@ public class XrayModule extends Module {
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
 		for (Found found : visible) {
-			GizmoDrawing.box(new Box(found.pos), DrawStyle.stroked(0xFF000000 | found.color, 2.0F)).ignoreOcclusion();
+			Gizmos.cuboid(new AABB(found.pos), GizmoStyle.stroke(0xFF000000 | found.color, 2.0F)).setAlwaysOnTop();
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!showCount.get()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
-		layout.drawLines(context, client.textRenderer, position.get(),
-				List.of(Text.translatable(getTranslationKey() + ".hud", visible.size()).withColor(0xFFAA00)));
+		Minecraft client = Minecraft.getInstance();
+		layout.drawLines(context, client.font, position.get(),
+				List.of(Component.translatable(getTranslationKey() + ".hud", visible.size()).withColor(0xFFAA00)));
 	}
 }

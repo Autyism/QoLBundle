@@ -3,6 +3,7 @@ package io.github.autyism.qolbundle.modules;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.data.WorldData;
 import io.github.autyism.qolbundle.hud.HudLayout;
@@ -14,25 +15,24 @@ import io.github.autyism.qolbundle.module.setting.DoubleSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -78,16 +78,16 @@ public class FreecamModule extends Module {
 	public record Marker(int number, String dimension, BlockPos pos) {
 	}
 
-	private final KeyBinding toggleKey;
-	private final KeyBinding clearKey;
+	private final KeyMapping toggleKey;
+	private final KeyMapping clearKey;
 	private boolean active;
-	private Vec3d pos = Vec3d.ZERO;
-	private Vec3d lastPos = Vec3d.ZERO;
+	private Vec3 pos = Vec3.ZERO;
+	private Vec3 lastPos = Vec3.ZERO;
 	private float yaw;
 	private float pitch;
 	private float lastHealth;
 	@Nullable
-	private ClientWorld world;
+	private ClientLevel world;
 
 	private final List<Marker> markerList = new ArrayList<>();
 	private int nextNumber = 1;
@@ -97,10 +97,10 @@ public class FreecamModule extends Module {
 	public FreecamModule() {
 		super("freecam", ModuleCategory.GREY, false);
 		instance = this;
-		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.freecam_toggle",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F6, QoLBundleClient.KEY_CATEGORY));
-		clearKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.freecam_clear_markers",
-				InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), QoLBundleClient.KEY_CATEGORY));
+		toggleKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.freecam_toggle",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F6, QoLBundleClient.KEY_CATEGORY));
+		clearKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.freecam_clear_markers",
+				InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), QoLBundleClient.KEY_CATEGORY));
 		ViewHooks.register(this::turnCamera);
 	}
 
@@ -120,7 +120,7 @@ public class FreecamModule extends Module {
 	}
 
 	/** Camera position for this frame, smoothed between two ticks. */
-	public Vec3d getCameraPos(float tickProgress) {
+	public Vec3 getCameraPos(float tickProgress) {
 		return lastPos.lerp(pos, tickProgress);
 	}
 
@@ -133,7 +133,7 @@ public class FreecamModule extends Module {
 	}
 
 	/** Puts the free camera somewhere directly (for the self-test). */
-	public void placeCamera(Vec3d where, float newYaw, float newPitch) {
+	public void placeCamera(Vec3 where, float newYaw, float newPitch) {
 		pos = where;
 		lastPos = where;
 		yaw = newYaw;
@@ -151,25 +151,25 @@ public class FreecamModule extends Module {
 		store();
 	}
 
-	public void setActive(MinecraftClient client, boolean on) {
-		ClientPlayerEntity player = client.player;
-		if (on == active || (on && (player == null || client.world == null))) {
+	public void setActive(Minecraft client, boolean on) {
+		LocalPlayer player = client.player;
+		if (on == active || (on && (player == null || client.level == null))) {
 			return;
 		}
 		active = on;
 		if (on) {
-			pos = player.getEyePos();
+			pos = player.getEyePosition();
 			lastPos = pos;
-			yaw = player.getYaw();
-			pitch = player.getPitch();
+			yaw = player.getYRot();
+			pitch = player.getXRot();
 			lastHealth = player.getHealth();
-			world = client.world;
+			world = client.level;
 		} else {
 			world = null;
 		}
 		// Which chunks are drawn depends on whether the camera is free; have it worked out afresh.
-		client.worldRenderer.scheduleTerrainUpdate();
-		client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + (on ? ".on" : ".off")), false);
+		client.levelRenderer.needsUpdate();
+		client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + (on ? ".on" : ".off")), false);
 	}
 
 	private boolean turnCamera(double deltaX, double deltaY) {
@@ -178,40 +178,40 @@ public class FreecamModule extends Module {
 		}
 		// Same sensitivity scaling as the game uses for the player.
 		yaw += (float) deltaX * 0.15F;
-		pitch = MathHelper.clamp(pitch + (float) deltaY * 0.15F, -90F, 90F);
+		pitch = Mth.clamp(pitch + (float) deltaY * 0.15F, -90F, 90F);
 		return true;
 	}
 
 	@Override
 	protected void onEnabledChanged(boolean enabled) {
 		if (!enabled) {
-			setActive(MinecraftClient.getInstance(), false);
+			setActive(Minecraft.getInstance(), false);
 		}
 	}
 
 	@Override
-	public void onStartTick(MinecraftClient client) {
+	public void onStartTick(Minecraft client) {
 		if (!active) {
 			return;
 		}
 		// Out of body: clicks must not hit, place or pick anything where the body happens to look.
 		// They are used for the markers instead.
-		GameOptions options = client.options;
+		Options options = client.options;
 		boolean rightClick = false;
 		boolean leftClick = false;
-		while (options.useKey.wasPressed()) {
+		while (options.keyUse.consumeClick()) {
 			rightClick = true;
 		}
-		while (options.attackKey.wasPressed()) {
+		while (options.keyAttack.consumeClick()) {
 			leftClick = true;
 		}
-		while (options.pickItemKey.wasPressed()) {
+		while (options.keyPickItem.consumeClick()) {
 			// discard
 		}
-		options.useKey.setPressed(false);
-		options.attackKey.setPressed(false);
-		options.pickItemKey.setPressed(false);
-		if (markers.get() && client.world != null && client.currentScreen == null) {
+		options.keyUse.setDown(false);
+		options.keyAttack.setDown(false);
+		options.keyPickItem.setDown(false);
+		if (markers.get() && client.level != null && client.screen == null) {
 			if (rightClick) {
 				addMarkerAtCrosshair(client);
 			} else if (leftClick) {
@@ -221,107 +221,107 @@ public class FreecamModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		syncWorldData();
-		while (toggleKey.wasPressed()) {
+		while (toggleKey.consumeClick()) {
 			setActive(client, !active);
 		}
-		while (clearKey.wasPressed()) {
+		while (clearKey.consumeClick()) {
 			clearMarkers();
-			client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".markers_cleared"), false);
+			client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".markers_cleared"), false);
 		}
-		ClientPlayerEntity player = client.player;
-		if (player != null && client.world != null && removeOnArrival.get() && !markerList.isEmpty()) {
-			String here = client.world.getRegistryKey().getValue().toString();
+		LocalPlayer player = client.player;
+		if (player != null && client.level != null && removeOnArrival.get() && !markerList.isEmpty()) {
+			String here = client.level.dimension().identifier().toString();
 			if (markerList.removeIf(marker -> marker.dimension.equals(here)
-					&& marker.pos.getSquaredDistance(player.getBlockPos()) <= 3 * 3)) {
+					&& marker.pos.distSqr(player.blockPosition()) <= 3 * 3)) {
 				store();
 			}
 		}
 		if (!active) {
 			return;
 		}
-		if (player == null || client.world != world || player.isDead()) {
+		if (player == null || client.level != world || player.isDeadOrDying()) {
 			setActive(client, false);
 			return;
 		}
 		if (exitOnDamage.get() && player.getHealth() < lastHealth - 0.001F) {
 			setActive(client, false);
-			client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".off_damage").formatted(Formatting.RED), false);
+			client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".off_damage").withStyle(ChatFormatting.RED), false);
 			return;
 		}
 		lastHealth = player.getHealth();
 
 		lastPos = pos;
-		if (client.currentScreen != null) {
+		if (client.screen != null) {
 			return; // typing in chat or a menu: keys are not movement
 		}
-		GameOptions options = client.options;
-		double forward = (options.forwardKey.isPressed() ? 1 : 0) - (options.backKey.isPressed() ? 1 : 0);
-		double sideways = (options.rightKey.isPressed() ? 1 : 0) - (options.leftKey.isPressed() ? 1 : 0);
-		double up = (options.jumpKey.isPressed() ? 1 : 0) - (options.sneakKey.isPressed() ? 1 : 0);
+		Options options = client.options;
+		double forward = (options.keyUp.isDown() ? 1 : 0) - (options.keyDown.isDown() ? 1 : 0);
+		double sideways = (options.keyRight.isDown() ? 1 : 0) - (options.keyLeft.isDown() ? 1 : 0);
+		double up = (options.keyJump.isDown() ? 1 : 0) - (options.keyShift.isDown() ? 1 : 0);
 		if (forward == 0 && sideways == 0 && up == 0) {
 			return;
 		}
 		// Yaw 0 looks towards +Z; "right" of that is -X.
 		double yawRadians = Math.toRadians(yaw);
-		Vec3d move = new Vec3d(-Math.sin(yawRadians) * forward - Math.cos(yawRadians) * sideways,
+		Vec3 move = new Vec3(-Math.sin(yawRadians) * forward - Math.cos(yawRadians) * sideways,
 				up,
 				Math.cos(yawRadians) * forward - Math.sin(yawRadians) * sideways);
-		if (move.lengthSquared() > 1.0) {
+		if (move.lengthSqr() > 1.0) {
 			move = move.normalize();
 		}
-		double pace = speed.get() * (options.sprintKey.isPressed() ? SPRINT_FACTOR : 1.0);
-		pos = pos.add(move.multiply(pace));
+		double pace = speed.get() * (options.keySprint.isDown() ? SPRINT_FACTOR : 1.0);
+		pos = pos.add(move.scale(pace));
 	}
 
 	// ---- markers -------------------------------------------------------------------------------
 
-	private Vec3d lookDirection() {
-		return Vec3d.fromPolar(pitch, yaw);
+	private Vec3 lookDirection() {
+		return Vec3.directionFromRotation(pitch, yaw);
 	}
 
 	/** Marks the block the free camera looks at; with nothing in sight, the camera's own position. */
-	public void addMarkerAtCrosshair(MinecraftClient client) {
-		if (client.world == null || client.player == null) {
+	public void addMarkerAtCrosshair(Minecraft client) {
+		if (client.level == null || client.player == null) {
 			return;
 		}
 		syncWorldData();
-		Vec3d end = pos.add(lookDirection().multiply(MARK_REACH));
-		BlockHitResult hit = client.world.raycast(new RaycastContext(pos, end, RaycastContext.ShapeType.OUTLINE,
-				RaycastContext.FluidHandling.NONE, client.player));
-		BlockPos where = hit.getType() == HitResult.Type.BLOCK ? hit.getBlockPos() : BlockPos.ofFloored(pos);
-		String dimension = client.world.getRegistryKey().getValue().toString();
+		Vec3 end = pos.add(lookDirection().scale(MARK_REACH));
+		BlockHitResult hit = client.level.clip(new ClipContext(pos, end, ClipContext.Block.OUTLINE,
+				ClipContext.Fluid.NONE, client.player));
+		BlockPos where = hit.getType() == HitResult.Type.BLOCK ? hit.getBlockPos() : BlockPos.containing(pos);
+		String dimension = client.level.dimension().identifier().toString();
 		markerList.removeIf(marker -> marker.dimension.equals(dimension) && marker.pos.equals(where));
 		while (markerList.size() >= maxMarkers.get()) {
 			markerList.remove(0); // the oldest makes room
 		}
-		Marker marker = new Marker(nextNumber++, dimension, where.toImmutable());
+		Marker marker = new Marker(nextNumber++, dimension, where.immutable());
 		markerList.add(marker);
 		store();
-		client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".marker_added",
+		client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".marker_added",
 				marker.number, where.getX(), where.getY(), where.getZ()), false);
 	}
 
 	/** Removes the marker closest to the middle of the view, if one is close to it. */
-	public void removeMarkerAtCrosshair(MinecraftClient client) {
-		if (client.world == null) {
+	public void removeMarkerAtCrosshair(Minecraft client) {
+		if (client.level == null) {
 			return;
 		}
 		syncWorldData();
-		String dimension = client.world.getRegistryKey().getValue().toString();
-		Vec3d look = lookDirection();
+		String dimension = client.level.dimension().identifier().toString();
+		Vec3 look = lookDirection();
 		Marker best = null;
 		double bestAngle = PICK_DEGREES;
 		for (Marker marker : markerList) {
 			if (!marker.dimension.equals(dimension)) {
 				continue;
 			}
-			Vec3d to = Vec3d.ofCenter(marker.pos).subtract(pos);
-			if (to.lengthSquared() < 1.0E-4) {
+			Vec3 to = Vec3.atCenterOf(marker.pos).subtract(pos);
+			if (to.lengthSqr() < 1.0E-4) {
 				continue;
 			}
-			double angle = Math.toDegrees(Math.acos(MathHelper.clamp(to.normalize().dotProduct(look), -1.0, 1.0)));
+			double angle = Math.toDegrees(Math.acos(Mth.clamp(to.normalize().dot(look), -1.0, 1.0)));
 			if (angle < bestAngle) {
 				bestAngle = angle;
 				best = marker;
@@ -330,7 +330,7 @@ public class FreecamModule extends Module {
 		if (best != null) {
 			markerList.remove(best);
 			store();
-			client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".marker_removed", best.number), false);
+			client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".marker_removed", best.number), false);
 		}
 	}
 
@@ -382,78 +382,78 @@ public class FreecamModule extends Module {
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world == null || markerList.isEmpty() || !markers.get()) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.level == null || markerList.isEmpty() || !markers.get()) {
 			return;
 		}
-		String here = client.world.getRegistryKey().getValue().toString();
+		String here = client.level.dimension().identifier().toString();
 		for (Marker marker : markerList) {
 			if (!marker.dimension.equals(here)) {
 				continue;
 			}
 			// Your own markers: they are meant to be seen from anywhere, through walls too.
-			GizmoDrawing.box(new Box(marker.pos).expand(0.03), DrawStyle.stroked(0xFFFF55FF, 3.0F)).ignoreOcclusion();
-			Vec3d base = Vec3d.ofCenter(marker.pos);
-			GizmoDrawing.line(base, base.add(0, 24, 0), 0xB0FF55FF, 3.0F).ignoreOcclusion();
+			Gizmos.cuboid(new AABB(marker.pos).inflate(0.03), GizmoStyle.stroke(0xFFFF55FF, 3.0F)).setAlwaysOnTop();
+			Vec3 base = Vec3.atCenterOf(marker.pos);
+			Gizmos.line(base, base.add(0, 24, 0), 0xB0FF55FF, 3.0F).setAlwaysOnTop();
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
 		if (markers.get() && !markerList.isEmpty()) {
 			drawMarkerArrows(context, client, layout);
 		}
 		if (!active || !showHud.get()) {
 			return;
 		}
-		int distance = (int) Math.round(pos.distanceTo(client.player.getEyePos()));
-		Text text = Text.translatable(getTranslationKey() + ".hud", toggleKey.getBoundKeyLocalizedText(), distance);
-		int width = client.textRenderer.getWidth(text);
+		int distance = (int) Math.round(pos.distanceTo(client.player.getEyePosition()));
+		Component text = Component.translatable(getTranslationKey() + ".hud", toggleKey.getTranslatedKeyMessage(), distance);
+		int width = client.font.width(text);
 		int x = (layout.getScreenWidth() - width) / 2;
 		context.fill(x - 3, 4, x + width + 3, 16, 0x90000000);
-		context.drawTextWithShadow(client.textRenderer, text, x, 6, 0xFFFFAA00);
+		context.drawString(client.font, text, x, 6, 0xFFFFAA00);
 		if (markers.get()) {
-			Text hint = Text.translatable(getTranslationKey() + ".hud_markers");
-			int hintWidth = client.textRenderer.getWidth(hint);
+			Component hint = Component.translatable(getTranslationKey() + ".hud_markers");
+			int hintWidth = client.font.width(hint);
 			int hintX = (layout.getScreenWidth() - hintWidth) / 2;
 			context.fill(hintX - 3, 16, hintX + hintWidth + 3, 27, 0x90000000);
-			context.drawTextWithShadow(client.textRenderer, hint, hintX, 17, 0xFFFF55FF);
+			context.drawString(client.font, hint, hintX, 17, 0xFFFF55FF);
 		}
 	}
 
 	/** One arrow per marker on a ring around the crosshair, with its number and distance. */
-	private void drawMarkerArrows(DrawContext context, MinecraftClient client, HudLayout layout) {
-		String here = client.world.getRegistryKey().getValue().toString();
-		Vec3d eye = client.gameRenderer.getCamera().getCameraPos();
-		float cameraYaw = client.gameRenderer.getCamera().getYaw();
+	private void drawMarkerArrows(GuiGraphics context, Minecraft client, HudLayout layout) {
+		String here = client.level.dimension().identifier().toString();
+		Vec3 eye = client.gameRenderer.getMainCamera().position();
+		float cameraYaw = client.gameRenderer.getMainCamera().yRot();
 		int centerX = layout.getScreenWidth() / 2;
 		int centerY = layout.getScreenHeight() / 2;
 		for (Marker marker : markerList) {
 			if (!marker.dimension.equals(here)) {
 				continue;
 			}
-			Vec3d spot = Vec3d.ofCenter(marker.pos);
+			Vec3 spot = Vec3.atCenterOf(marker.pos);
 			float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(eye, cameraYaw, spot));
-			context.getMatrices().pushMatrix();
-			context.getMatrices().translate(centerX, centerY);
-			context.getMatrices().rotate(angle);
+			context.pose().pushMatrix();
+			context.pose().translate(centerX, centerY);
+			context.pose().rotate(angle);
 			for (int row = 0; row < 6; row++) {
 				context.fill(-row, -RING + row, row + 1, -RING + row + 1, 0xFFFF55FF);
 			}
-			context.getMatrices().popMatrix();
+			context.pose().popMatrix();
 
 			int distance = (int) Math.round(spot.distanceTo(eye));
 			double height = spot.y - eye.y;
 			String key = getTranslationKey() + (height > 3 ? ".marker_label_up" : height < -3 ? ".marker_label_down" : ".marker_label");
-			Text label = Text.translatable(key, marker.number, distance);
-			int width = client.textRenderer.getWidth(label);
+			Component label = Component.translatable(key, marker.number, distance);
+			int width = client.font.width(label);
 			int labelRadius = RING + 12;
-			int x = centerX + Math.round(MathHelper.sin(angle) * (labelRadius + width / 2F)) - width / 2;
-			int y = centerY - Math.round(MathHelper.cos(angle) * labelRadius) - 4;
-			x = MathHelper.clamp(x, 2, layout.getScreenWidth() - width - 2);
+			int x = centerX + Math.round(Mth.sin(angle) * (labelRadius + width / 2F)) - width / 2;
+			int y = centerY - Math.round(Mth.cos(angle) * labelRadius) - 4;
+			x = Mth.clamp(x, 2, layout.getScreenWidth() - width - 2);
 			context.fill(x - 2, y - 1, x + width + 2, y + 9, 0x80000000);
-			context.drawTextWithShadow(client.textRenderer, label, x, y, 0xFFFF55FF);
+			context.drawString(client.font, label, x, y, 0xFFFF55FF);
 		}
 	}
 }

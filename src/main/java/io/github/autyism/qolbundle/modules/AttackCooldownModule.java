@@ -5,12 +5,12 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * Attack cooldown, to the tick: a bar under the crosshair that fills while the weapon recharges,
@@ -45,9 +45,9 @@ public class AttackCooldownModule extends Module {
 	}
 
 	/** Whole ticks until the next hit does full damage; 0 when ready. */
-	public int ticksLeft(ClientPlayerEntity player) {
-		float progress = player.getAttackCooldownProgress(0F);
-		return progress >= 1F ? 0 : (int) Math.ceil((1F - progress) * player.getAttackCooldownProgressPerTick());
+	public int ticksLeft(LocalPlayer player) {
+		float progress = player.getAttackStrengthScale(0F);
+		return progress >= 1F ? 0 : (int) Math.ceil((1F - progress) * player.getCurrentItemAttackStrengthDelay());
 	}
 
 	@Override
@@ -57,18 +57,18 @@ public class AttackCooldownModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
 		if (player == null) {
 			charging = false;
 			return;
 		}
-		boolean now = player.getAttackCooldownProgress(0F) < 1F;
+		boolean now = player.getAttackStrengthScale(0F) < 1F;
 		if (charging && !now) {
 			readyCount++;
 			flash = FLASH_TICKS;
 			if (sound.get()) {
-				client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_HAT.value(), 1.6F, volume.get() / 100F));
+				client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_HAT.value(), 1.6F, volume.get() / 100F));
 			}
 		} else if (flash > 0) {
 			flash--;
@@ -77,12 +77,12 @@ public class AttackCooldownModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		LocalPlayer player = Minecraft.getInstance().player;
 		if (player == null || !charging && flash == 0) {
 			return;
 		}
-		float progress = player.getAttackCooldownProgress(tickCounter.getTickProgress(false));
+		float progress = player.getAttackStrengthScale(tickCounter.getGameTimeDeltaPartialTick(false));
 		int left = layout.getScreenWidth() / 2 - WIDTH / 2;
 		int top = layout.getScreenHeight() / 2 + 26;
 		context.fill(left - 1, top - 1, left + WIDTH + 1, top + 4, 0xA0000000);
@@ -93,7 +93,7 @@ public class AttackCooldownModule extends Module {
 			context.fill(left, top, left + filled, top + 3, color);
 			if (showTicks.get()) {
 				String text = ticksLeft(player) + "t";
-				context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, text, left + WIDTH + 4, top - 3, 0xFFFFFFFF);
+				context.drawString(Minecraft.getInstance().font, text, left + WIDTH + 4, top - 3, 0xFFFFFFFF);
 			}
 		} else {
 			context.fill(left, top, left + WIDTH, top + 3, 0xFF55FF55); // full: a short green flash

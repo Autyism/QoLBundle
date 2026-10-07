@@ -7,11 +7,11 @@ import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.render.HighlightColor;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Direction;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Draws the border of the chunk you are standing in as four see-through coloured walls, with a
@@ -45,28 +45,28 @@ public class ChunkBordersModule extends Module {
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.player == null || client.world == null) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.player == null || client.level == null) {
 			return;
 		}
-		double bottom = client.world.getBottomY();
-		double top = client.world.getTopYInclusive() + 1;
+		double bottom = client.level.getMinY();
+		double top = client.level.getMaxY() + 1;
 		double x0 = (client.player.getBlockX() >> 4) * 16.0;
 		double z0 = (client.player.getBlockZ() >> 4) * 16.0;
 		double x1 = x0 + 16.0;
 		double z1 = z0 + 16.0;
 
-		DrawStyle fill = DrawStyle.filled(color.get().withOpacity(opacity.get()));
+		GizmoStyle fill = GizmoStyle.fill(color.get().withOpacity(opacity.get()));
 		wallsDrawn = 0;
-		wall(new Vec3d(x0, bottom, z0), new Vec3d(x1, top, z0), Direction.NORTH, fill);
-		wall(new Vec3d(x0, bottom, z1), new Vec3d(x1, top, z1), Direction.NORTH, fill);
-		wall(new Vec3d(x0, bottom, z0), new Vec3d(x0, top, z1), Direction.WEST, fill);
-		wall(new Vec3d(x1, bottom, z0), new Vec3d(x1, top, z1), Direction.WEST, fill);
+		wall(new Vec3(x0, bottom, z0), new Vec3(x1, top, z0), Direction.NORTH, fill);
+		wall(new Vec3(x0, bottom, z1), new Vec3(x1, top, z1), Direction.NORTH, fill);
+		wall(new Vec3(x0, bottom, z0), new Vec3(x0, top, z1), Direction.WEST, fill);
+		wall(new Vec3(x1, bottom, z0), new Vec3(x1, top, z1), Direction.WEST, fill);
 
 		int solid = color.get().withOpacity(100);
 		for (int i = 0; i <= 1; i++) {
 			for (int j = 0; j <= 1; j++) {
-				GizmoDrawing.line(new Vec3d(x0 + i * 16, bottom, z0 + j * 16), new Vec3d(x0 + i * 16, top, z0 + j * 16), solid, 3.0F);
+				Gizmos.line(new Vec3(x0 + i * 16, bottom, z0 + j * 16), new Vec3(x0 + i * 16, top, z0 + j * 16), solid, 3.0F);
 			}
 		}
 		if (rings.get()) {
@@ -78,14 +78,14 @@ public class ChunkBordersModule extends Module {
 				if (y < bottom || y > top) {
 					continue;
 				}
-				Vec3d a = new Vec3d(x0, y, z0);
-				Vec3d b = new Vec3d(x1, y, z0);
-				Vec3d c = new Vec3d(x1, y, z1);
-				Vec3d d = new Vec3d(x0, y, z1);
-				GizmoDrawing.line(a, b, ringColor, 1.5F);
-				GizmoDrawing.line(b, c, ringColor, 1.5F);
-				GizmoDrawing.line(c, d, ringColor, 1.5F);
-				GizmoDrawing.line(d, a, ringColor, 1.5F);
+				Vec3 a = new Vec3(x0, y, z0);
+				Vec3 b = new Vec3(x1, y, z0);
+				Vec3 c = new Vec3(x1, y, z1);
+				Vec3 d = new Vec3(x0, y, z1);
+				Gizmos.line(a, b, ringColor, 1.5F);
+				Gizmos.line(b, c, ringColor, 1.5F);
+				Gizmos.line(c, d, ringColor, 1.5F);
+				Gizmos.line(d, a, ringColor, 1.5F);
 			}
 		}
 		if (neighbors.get()) {
@@ -94,7 +94,7 @@ public class ChunkBordersModule extends Module {
 				for (int j = -1; j <= 2; j++) {
 					boolean ownCorner = (i == 0 || i == 1) && (j == 0 || j == 1);
 					if (!ownCorner) {
-						GizmoDrawing.line(new Vec3d(x0 + i * 16, bottom, z0 + j * 16), new Vec3d(x0 + i * 16, top, z0 + j * 16), faint, 1.5F);
+						Gizmos.line(new Vec3(x0 + i * 16, bottom, z0 + j * 16), new Vec3(x0 + i * 16, top, z0 + j * 16), faint, 1.5F);
 					}
 				}
 			}
@@ -102,9 +102,9 @@ public class ChunkBordersModule extends Module {
 	}
 
 	/** A flat rectangle, drawn twice so it is visible from both sides. */
-	private void wall(Vec3d min, Vec3d max, Direction facing, DrawStyle style) {
-		GizmoDrawing.face(min, max, facing, style);
-		GizmoDrawing.face(min, max, facing.getOpposite(), style);
+	private void wall(Vec3 min, Vec3 max, Direction facing, GizmoStyle style) {
+		Gizmos.rect(min, max, facing, style);
+		Gizmos.rect(min, max, facing.getOpposite(), style);
 		wallsDrawn++;
 	}
 }

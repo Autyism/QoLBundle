@@ -6,20 +6,19 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.util.Sight;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.PlayerLikeEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * "Somebody is watching you": a player in front of you who keeps their crosshair on you for more
@@ -36,7 +35,7 @@ public class StareAlertModule extends Module {
 
 	/** For how many ticks each player has had their crosshair on me. */
 	private final Map<UUID, Integer> staring = new HashMap<>();
-	private final List<Text> starers = new ArrayList<>();
+	private final List<Component> starers = new ArrayList<>();
 	private long tick;
 
 	public StareAlertModule() {
@@ -48,7 +47,7 @@ public class StareAlertModule extends Module {
 	}
 
 	/** Names of the players who have been looking at me for long enough. */
-	public List<Text> getStarers() {
+	public List<Component> getStarers() {
 		return starers;
 	}
 
@@ -59,9 +58,9 @@ public class StareAlertModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		if (client.player == null || client.world == null) {
+		if (client.player == null || client.level == null) {
 			staring.clear();
 			starers.clear();
 			return;
@@ -71,29 +70,29 @@ public class StareAlertModule extends Module {
 		}
 		Map<UUID, Integer> now = new HashMap<>();
 		starers.clear();
-		Vec3d myEyes = client.player.getEyePos();
-		Vec3d myChest = client.player.getBoundingBox().getCenter();
+		Vec3 myEyes = client.player.getEyePosition();
+		Vec3 myChest = client.player.getBoundingBox().getCenter();
 		double limit = Math.cos(Math.toRadians(angle.get()));
 		int needed = seconds.get() * 20;
-		for (PlayerLikeEntity other : Sight.visiblePlayers(client, range.get())) {
+		for (Avatar other : Sight.visiblePlayers(client, range.get())) {
 			if (!Sight.inFieldOfView(client, other)) {
 				continue;
 			}
-			Vec3d look = other.getRotationVec(1.0F);
-			Vec3d eyes = other.getEyePos();
-			boolean onMe = look.dotProduct(myEyes.subtract(eyes).normalize()) >= limit
-					|| look.dotProduct(myChest.subtract(eyes).normalize()) >= limit;
+			Vec3 look = other.getViewVector(1.0F);
+			Vec3 eyes = other.getEyePosition();
+			boolean onMe = look.dot(myEyes.subtract(eyes).normalize()) >= limit
+					|| look.dot(myChest.subtract(eyes).normalize()) >= limit;
 			if (!onMe) {
 				continue;
 			}
-			UUID id = other.getUuid();
+			UUID id = other.getUUID();
 			int before = staring.getOrDefault(id, 0);
 			int ticks = before + 2;
 			now.put(id, ticks);
 			if (ticks >= needed) {
 				starers.add(other.getName());
 				if (before < needed && sound.get()) {
-					client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_BIT.value(), 0.8F, 0.6F));
+					client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BIT.value(), 0.8F, 0.6F));
 				}
 			}
 		}
@@ -102,18 +101,18 @@ public class StareAlertModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (starers.isEmpty()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		int y = 34;
-		for (Text name : starers) {
-			Text line = Text.translatable(getTranslationKey() + ".hud", name);
-			int width = client.textRenderer.getWidth(line);
+		for (Component name : starers) {
+			Component line = Component.translatable(getTranslationKey() + ".hud", name);
+			int width = client.font.width(line);
 			int x = (layout.getScreenWidth() - width) / 2;
 			context.fill(x - 3, y - 2, x + width + 3, y + 10, 0x90000000);
-			context.drawTextWithShadow(client.textRenderer, line, x, y, 0xFFFF5555);
+			context.drawString(client.font, line, x, y, 0xFFFF5555);
 			y += 13;
 		}
 	}

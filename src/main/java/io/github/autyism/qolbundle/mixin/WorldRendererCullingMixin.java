@@ -2,7 +2,7 @@ package io.github.autyism.qolbundle.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import io.github.autyism.qolbundle.modules.FreecamModule;
-import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.injection.At;
  * therefore skips this mixin when Sodium is installed; Sodium gets the spectator flag from
  * {@link WorldRendererMixin} instead.
  */
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public class WorldRendererCullingMixin {
-	@ModifyExpressionValue(method = "updateCamera", require = 0, at = @At(value = "FIELD",
-			target = "Lnet/minecraft/client/MinecraftClient;chunkCullingEnabled:Z"))
+	@ModifyExpressionValue(method = "cullTerrain", require = 0, at = @At(value = "FIELD",
+			target = "Lnet/minecraft/client/Minecraft;smartCull:Z"))
 	private boolean qolbundle$noHiddenChunkSkippingInFreecam(boolean cullingEnabled) {
 		return cullingEnabled && FreecamModule.current() == null;
 	}

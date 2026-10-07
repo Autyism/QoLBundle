@@ -8,26 +8,26 @@ import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class ElytraDashboardModule extends Module {
 	private int rockets;
 	private int elytraSeconds;
 	@Nullable
-	private Vec3d landing;
+	private Vec3 landing;
 	private int landingTicks;
 	private boolean landingOutOfRange;
 	private int ticks;
@@ -94,7 +94,7 @@ public class ElytraDashboardModule extends Module {
 	}
 
 	@Nullable
-	public Vec3d getLanding() {
+	public Vec3 getLanding() {
 		return landing;
 	}
 
@@ -104,31 +104,31 @@ public class ElytraDashboardModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
-		active = player != null && client.world != null && player.isGliding();
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
+		active = player != null && client.level != null && player.isFallFlying();
 		if (!active) {
 			landing = null;
 			return;
 		}
-		Vec3d velocity = player.getVelocity();
+		Vec3 velocity = player.getDeltaMovement();
 		speed = velocity.length() * 20.0;
 		verticalSpeed = velocity.y * 20.0;
-		pitch = player.getPitch();
-		int ground = client.world.getTopY(Heightmap.Type.MOTION_BLOCKING, player.getBlockX(), player.getBlockZ());
-		heightAboveGround = Math.max(0, MathHelper.floor(player.getY()) - ground);
+		pitch = player.getXRot();
+		int ground = client.level.getHeight(Heightmap.Types.MOTION_BLOCKING, player.getBlockX(), player.getBlockZ());
+		heightAboveGround = Math.max(0, Mth.floor(player.getY()) - ground);
 		rockets = countRockets(player.getInventory());
-		elytraSeconds = elytraSecondsLeft(player.getEquippedStack(EquipmentSlot.CHEST));
+		elytraSeconds = elytraSecondsLeft(player.getItemBySlot(EquipmentSlot.CHEST));
 		if (ticks++ % PREDICT_EVERY_TICKS == 0) {
-			predictLanding(client.world, player);
+			predictLanding(client.level, player);
 		}
 	}
 
-	private static int countRockets(PlayerInventory inventory) {
+	private static int countRockets(Inventory inventory) {
 		int count = 0;
-		for (int slot = 0; slot < inventory.size(); slot++) {
-			ItemStack stack = inventory.getStack(slot);
-			if (stack.isOf(Items.FIREWORK_ROCKET)) {
+		for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+			ItemStack stack = inventory.getItem(slot);
+			if (stack.is(Items.FIREWORK_ROCKET)) {
 				count += stack.getCount();
 			}
 		}
@@ -137,30 +137,30 @@ public class ElytraDashboardModule extends Module {
 
 	/** An elytra loses one durability point per second of flight and stops working at 1 left. */
 	private static int elytraSecondsLeft(ItemStack chest) {
-		if (!chest.isOf(Items.ELYTRA) || !chest.isDamageable()) {
+		if (!chest.is(Items.ELYTRA) || !chest.isDamageableItem()) {
 			return -1;
 		}
-		return Math.max(0, chest.getMaxDamage() - chest.getDamage() - 1);
+		return Math.max(0, chest.getMaxDamage() - chest.getDamageValue() - 1);
 	}
 
 	/**
 	 * Flies an imaginary copy of the player forward with the game's own gliding formula
 	 * (LivingEntity.calcGlidingVelocity), keeping the current look direction, until it hits something.
 	 */
-	private void predictLanding(ClientWorld world, ClientPlayerEntity player) {
+	private void predictLanding(ClientLevel world, LocalPlayer player) {
 		landing = null;
 		landingOutOfRange = false;
-		Vec3d look = player.getRotationVector();
-		float pitchRadians = player.getPitch() * (float) (Math.PI / 180.0);
+		Vec3 look = player.getLookAngle();
+		float pitchRadians = player.getXRot() * (float) (Math.PI / 180.0);
 		double lookHorizontal = Math.sqrt(look.x * look.x + look.z * look.z);
-		double cosSquared = MathHelper.square(Math.cos(pitchRadians));
-		boolean slowFalling = player.hasStatusEffect(StatusEffects.SLOW_FALLING);
-		double fullGravity = player.getFinalGravity();
+		double cosSquared = Mth.square(Math.cos(pitchRadians));
+		boolean slowFalling = player.hasEffect(MobEffects.SLOW_FALLING);
+		double fullGravity = player.getGravity();
 
-		Vec3d pos = player.getEntityPos();
-		Vec3d velocity = player.getVelocity();
+		Vec3 pos = player.position();
+		Vec3 velocity = player.getDeltaMovement();
 		for (int tick = 1; tick <= MAX_SIMULATED_TICKS; tick++) {
-			double horizontal = velocity.horizontalLength();
+			double horizontal = velocity.horizontalDistance();
 			double gravity = slowFalling && velocity.y <= 0.0 ? Math.min(fullGravity, 0.01) : fullGravity;
 			velocity = velocity.add(0.0, gravity * (-1.0 + cosSquared * 0.75), 0.0);
 			if (velocity.y < 0.0 && lookHorizontal > 0.0) {
@@ -168,7 +168,7 @@ public class ElytraDashboardModule extends Module {
 				velocity = velocity.add(look.x * lift / lookHorizontal, lift, look.z * lift / lookHorizontal);
 			}
 			if (pitchRadians < 0.0F && lookHorizontal > 0.0) {
-				double climb = horizontal * -MathHelper.sin(pitchRadians) * 0.04;
+				double climb = horizontal * -Mth.sin(pitchRadians) * 0.04;
 				velocity = velocity.add(-look.x * climb / lookHorizontal, climb * 3.2, -look.z * climb / lookHorizontal);
 			}
 			if (lookHorizontal > 0.0) {
@@ -177,19 +177,19 @@ public class ElytraDashboardModule extends Module {
 			}
 			velocity = velocity.multiply(0.99F, 0.98F, 0.99F);
 
-			Vec3d next = pos.add(velocity);
-			if (next.y < world.getBottomY() - 8
-					|| !world.getChunkManager().isChunkLoaded(MathHelper.floor(next.x) >> 4, MathHelper.floor(next.z) >> 4)) {
+			Vec3 next = pos.add(velocity);
+			if (next.y < world.getMinY() - 8
+					|| !world.getChunkSource().hasChunk(Mth.floor(next.x) >> 4, Mth.floor(next.z) >> 4)) {
 				// Past what the client has loaded: all that can be said is "further than this".
 				landing = pos;
 				landingTicks = tick;
 				landingOutOfRange = true;
 				return;
 			}
-			BlockHitResult hit = world.raycast(new RaycastContext(pos, next, RaycastContext.ShapeType.COLLIDER,
-					RaycastContext.FluidHandling.ANY, player));
+			BlockHitResult hit = world.clip(new ClipContext(pos, next, ClipContext.Block.COLLIDER,
+					ClipContext.Fluid.ANY, player));
 			if (hit.getType() == HitResult.Type.BLOCK) {
-				landing = hit.getPos();
+				landing = hit.getLocation();
 				landingTicks = tick;
 				return;
 			}
@@ -199,42 +199,42 @@ public class ElytraDashboardModule extends Module {
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
-		Vec3d target = landing;
+		Vec3 target = landing;
 		if (!active || target == null || landingOutOfRange || !showLanding.get() || !landingMarker.get()) {
 			return;
 		}
 		// A ring on the ground with a short post, so the spot is easy to pick out from the air.
 		int color = 0xFFFF5555;
-		GizmoDrawing.circle(target.add(0, 0.1, 0), 1.5F, DrawStyle.stroked(color, 3.0F));
-		GizmoDrawing.line(target, target.add(0, 4, 0), color, 3.0F);
+		Gizmos.circle(target.add(0, 0.1, 0), 1.5F, GizmoStyle.stroke(color, 3.0F));
+		Gizmos.line(target, target.add(0, 4, 0), color, 3.0F);
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!active) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		List<Text> lines = new ArrayList<>();
+		List<Component> lines = new ArrayList<>();
 
-		List<Text> flight = new ArrayList<>();
+		List<Component> flight = new ArrayList<>();
 		if (showSpeed.get()) {
-			flight.add(Text.translatable(key + "speed", String.format(Locale.ROOT, "%.1f", speed),
+			flight.add(Component.translatable(key + "speed", String.format(Locale.ROOT, "%.1f", speed),
 					String.format(Locale.ROOT, "%+.1f", verticalSpeed)));
 		}
 		if (showPitch.get()) {
 			// The game counts looking down as positive pitch; pilots expect "up" to be positive.
-			flight.add(Text.translatable(key + "pitch", String.format(Locale.ROOT, "%+.0f", -pitch)));
+			flight.add(Component.translatable(key + "pitch", String.format(Locale.ROOT, "%+.0f", -pitch)));
 		}
 		if (showHeight.get()) {
-			flight.add(Text.translatable(key + "height", heightAboveGround));
+			flight.add(Component.translatable(key + "height", heightAboveGround));
 		}
 		addJoined(lines, flight);
 
-		List<Text> supplies = new ArrayList<>();
+		List<Component> supplies = new ArrayList<>();
 		if (showRockets.get()) {
-			MutableText text = Text.translatable(key + "rockets", rockets);
+			MutableComponent text = Component.translatable(key + "rockets", rockets);
 			if (rockets == 0) {
 				text = text.withColor(0xFF5555);
 			} else if (rockets <= rocketWarning.get()) {
@@ -243,7 +243,7 @@ public class ElytraDashboardModule extends Module {
 			supplies.add(text);
 		}
 		if (showElytra.get() && elytraSeconds >= 0) {
-			MutableText text = Text.translatable(key + "elytra", String.format(Locale.ROOT, "%d:%02d", elytraSeconds / 60, elytraSeconds % 60));
+			MutableComponent text = Component.translatable(key + "elytra", String.format(Locale.ROOT, "%d:%02d", elytraSeconds / 60, elytraSeconds % 60));
 			if (elytraSeconds <= 30) {
 				text = text.withColor(0xFF5555);
 			} else if (elytraSeconds <= 90) {
@@ -253,15 +253,15 @@ public class ElytraDashboardModule extends Module {
 		}
 		addJoined(lines, supplies);
 
-		Vec3d target = landing;
+		Vec3 target = landing;
 		if (showLanding.get() && target != null) {
 			int distance = (int) Math.round(Math.hypot(target.x - client.player.getX(), target.z - client.player.getZ()));
 			String seconds = String.format(Locale.ROOT, "%.0f", landingTicks / 20.0);
 			if (landingOutOfRange) {
-				lines.add(Text.translatable(key + "landing_far", distance).withColor(0xAAAAAA));
+				lines.add(Component.translatable(key + "landing_far", distance).withColor(0xAAAAAA));
 			} else {
-				lines.add(Text.translatable(key + "landing", MathHelper.floor(target.x), MathHelper.floor(target.y),
-						MathHelper.floor(target.z), distance, seconds));
+				lines.add(Component.translatable(key + "landing", Mth.floor(target.x), Mth.floor(target.y),
+						Mth.floor(target.z), distance, seconds));
 			}
 		}
 		if (lines.isEmpty()) {
@@ -270,25 +270,25 @@ public class ElytraDashboardModule extends Module {
 
 		DashboardPosition where = position.get();
 		if (where != DashboardPosition.BELOW_CROSSHAIR) {
-			layout.drawLines(context, client.textRenderer, HudAnchor.valueOf(where.name()), lines);
+			layout.drawLines(context, client.font, HudAnchor.valueOf(where.name()), lines);
 			return;
 		}
 		int y = layout.getScreenHeight() / 2 + 44;
-		for (Text line : lines) {
-			int width = client.textRenderer.getWidth(line);
+		for (Component line : lines) {
+			int width = client.font.width(line);
 			int x = (layout.getScreenWidth() - width) / 2;
 			context.fill(x - 3, y - 1, x + width + 3, y + 9, 0x80000000);
-			context.drawTextWithShadow(client.textRenderer, line, x, y, HudLayout.WHITE);
+			context.drawString(client.font, line, x, y, HudLayout.WHITE);
 			y += HudLayout.LINE_HEIGHT;
 		}
 	}
 
 	/** Puts several short readings on one line, separated by spaces. */
-	private static void addJoined(List<Text> lines, List<Text> parts) {
+	private static void addJoined(List<Component> lines, List<Component> parts) {
 		if (parts.isEmpty()) {
 			return;
 		}
-		MutableText joined = Text.empty();
+		MutableComponent joined = Component.empty();
 		for (int i = 0; i < parts.size(); i++) {
 			if (i > 0) {
 				joined.append("   ");

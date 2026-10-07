@@ -1,5 +1,6 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.hud.HudAnchor;
 import io.github.autyism.qolbundle.hud.HudLayout;
@@ -10,22 +11,21 @@ import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -66,11 +66,11 @@ public class CombatStatsModule extends Module {
 	private final IntSetting combatSeconds = add(new IntSetting("combat_seconds", 15, 5, 120, " s"));
 	private final BoolSetting killSound = add(new BoolSetting("kill_sound", true));
 
-	private final KeyBinding resetKey;
+	private final KeyMapping resetKey;
 	private final Map<Integer, Track> tracks = new HashMap<>();
-	private final Map<Integer, Vec3d> myProjectiles = new HashMap<>();
+	private final Map<Integer, Vec3> myProjectiles = new HashMap<>();
 	@Nullable
-	private ClientWorld world;
+	private ClientLevel world;
 	private long tick;
 	private long lastCombatTick = Long.MIN_VALUE / 2;
 	private float lastHealth = -1;
@@ -82,13 +82,13 @@ public class CombatStatsModule extends Module {
 
 	public CombatStatsModule() {
 		super("combat_stats", ModuleCategory.PVP, true);
-		resetKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.combat_stats_reset",
-				InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), QoLBundleClient.KEY_CATEGORY));
+		resetKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.combat_stats_reset",
+				InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), QoLBundleClient.KEY_CATEGORY));
 		AttackEntityCallback.EVENT.register((player, attackedWorld, hand, entity, hit) -> {
-			if (attackedWorld.isClient() && isEnabled() && player == MinecraftClient.getInstance().player && entity instanceof LivingEntity living) {
+			if (attackedWorld.isClientSide() && isEnabled() && player == Minecraft.getInstance().player && entity instanceof LivingEntity living) {
 				markHit(living);
 			}
-			return ActionResult.PASS; // only watching
+			return InteractionResult.PASS; // only watching
 		});
 	}
 
@@ -135,27 +135,27 @@ public class CombatStatsModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		ClientPlayerEntity player = client.player;
-		if (player == null || client.world == null) {
+		LocalPlayer player = client.player;
+		if (player == null || client.level == null) {
 			tracks.clear();
 			myProjectiles.clear();
 			lastHealth = -1;
 			return;
 		}
-		while (resetKey.wasPressed()) {
+		while (resetKey.consumeClick()) {
 			reset();
 		}
-		if (client.world != world) {
-			world = client.world;
+		if (client.level != world) {
+			world = client.level;
 			tracks.clear();
 			myProjectiles.clear();
 			lastHealth = -1; // a different world: the health there is not "damage taken"
 		}
 
 		// Myself.
-		boolean dead = player.isDead();
+		boolean dead = player.isDeadOrDying();
 		if (dead && !wasDead) {
 			deaths++;
 			lastCombatTick = tick;
@@ -169,18 +169,18 @@ public class CombatStatsModule extends Module {
 		lastHealth = health;
 
 		// My own arrows and the like: what stands where one of them stopped has been hit by me.
-		Map<Integer, Vec3d> flying = new HashMap<>();
-		for (ProjectileEntity projectile : client.world.getEntitiesByClass(ProjectileEntity.class, player.getBoundingBox().expand(96.0),
+		Map<Integer, Vec3> flying = new HashMap<>();
+		for (Projectile projectile : client.level.getEntitiesOfClass(Projectile.class, player.getBoundingBox().inflate(96.0),
 				entity -> entity.getOwner() == player)) {
-			if (projectile.getVelocity().lengthSquared() > 0.01) {
-				flying.put(projectile.getId(), projectile.getEntityPos());
+			if (projectile.getDeltaMovement().lengthSqr() > 0.01) {
+				flying.put(projectile.getId(), projectile.position());
 			}
 		}
-		for (Map.Entry<Integer, Vec3d> entry : myProjectiles.entrySet()) {
+		for (Map.Entry<Integer, Vec3> entry : myProjectiles.entrySet()) {
 			if (!flying.containsKey(entry.getKey())) {
-				Vec3d end = entry.getValue();
-				List<LivingEntity> struck = client.world.getEntitiesByClass(LivingEntity.class, Box.of(end, 1.0, 1.0, 1.0).expand(1.2),
-						entity -> entity != player && entity.getBoundingBox().expand(0.8).contains(end));
+				Vec3 end = entry.getValue();
+				List<LivingEntity> struck = client.level.getEntitiesOfClass(LivingEntity.class, AABB.ofSize(end, 1.0, 1.0, 1.0).inflate(1.2),
+						entity -> entity != player && entity.getBoundingBox().inflate(0.8).contains(end));
 				if (!struck.isEmpty()) {
 					markHit(struck.get(0));
 				}
@@ -200,14 +200,14 @@ public class CombatStatsModule extends Module {
 				lastCombatTick = tick;
 			}
 			track.health = now;
-			if (entity.isDead()) {
+			if (entity.isDeadOrDying()) {
 				if (tick - track.lastHit <= KILL_WINDOW) {
 					kills++;
 					lastCombatTick = tick;
-					client.inGameHud.setOverlayMessage(Text.translatable(getTranslationKey() + ".kill", entity.getName())
-							.formatted(Formatting.GREEN), false);
+					client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + ".kill", entity.getName())
+							.withStyle(ChatFormatting.GREEN), false);
 					if (killSound.get()) {
-						client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.ENTITY_ARROW_HIT_PLAYER, 0.6F, 0.7F));
+						client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.ARROW_HIT_PLAYER, 0.6F, 0.7F));
 					}
 				}
 				iterator.remove();
@@ -218,13 +218,13 @@ public class CombatStatsModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!alwaysShow.get() && tick - lastCombatTick > combatSeconds.get() * 20L) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
-		Text line = Text.translatable(getTranslationKey() + ".hud", kills, String.format(Locale.ROOT, "%.1f", dealt),
+		Minecraft client = Minecraft.getInstance();
+		Component line = Component.translatable(getTranslationKey() + ".hud", kills, String.format(Locale.ROOT, "%.1f", dealt),
 				String.format(Locale.ROOT, "%.1f", taken), deaths);
-		layout.drawLines(context, client.textRenderer, position.get(), List.of(line));
+		layout.drawLines(context, client.font, position.get(), List.of(line));
 	}
 }

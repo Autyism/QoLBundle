@@ -2,7 +2,7 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 /** Free text, e.g. a world seed. Shown as a text box. */
 public class StringSetting extends Setting<String> {
@@ -26,8 +26,8 @@ public class StringSetting extends Setting<String> {
 	}
 
 	@Override
-	public Text getValueText() {
-		return Text.literal(get());
+	public Component getValueText() {
+		return Component.literal(get());
 	}
 
 	@Override

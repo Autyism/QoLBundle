@@ -12,23 +12,23 @@ import io.github.autyism.qolbundle.module.ModuleRegistry;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.RecipeBookScreen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Util;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ public class RecipeHelperModule extends Module {
 	public RecipeHelperModule() {
 		super("recipe_helper", ModuleCategory.TOOLS, true);
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-			if (isEnabled() && screen instanceof RecipeBookScreen<?> book) {
+			if (isEnabled() && screen instanceof AbstractRecipeBookScreen<?> book) {
 				reset();
 				ScreenEvents.afterRender(screen).register((current, context, mouseX, mouseY, tickDelta) -> render(context, book, mouseX, mouseY));
 				ScreenMouseEvents.allowMouseClick(screen).register((current, click) ->
@@ -117,7 +117,7 @@ public class RecipeHelperModule extends Module {
 		pinnedDetails = -1;
 	}
 
-	private static Map<Slot, ?> previewOf(RecipeBookScreen<?> screen) {
+	private static Map<Slot, ?> previewOf(AbstractRecipeBookScreen<?> screen) {
 		Object widget = ((RecipeBookScreenAccessor) screen).qolbundle$getRecipeBook();
 		Object ghost = ((RecipeBookWidgetAccessor) widget).qolbundle$getGhostRecipe();
 		return ((GhostRecipeAccessor) ghost).qolbundle$getItems();
@@ -125,22 +125,22 @@ public class RecipeHelperModule extends Module {
 
 	// ---- working out what is missing -----------------------------------------------------------
 
-	private void analyse(MinecraftClient client, Map<Slot, ?> preview) {
+	private void analyse(Minecraft client, Map<Slot, ?> preview) {
 		missing.clear();
 		slotOk.clear();
-		ClientPlayerEntity player = client.player;
+		LocalPlayer player = client.player;
 
 		// What the player has to craft with: hotbar + backpack, plus anything already lying in the grid.
 		Map<Item, Integer> have = new HashMap<>();
-		PlayerInventory inventory = player.getInventory();
+		Inventory inventory = player.getInventory();
 		for (int slot = 0; slot < 36; slot++) {
-			count(have, inventory.getStack(slot));
+			count(have, inventory.getItem(slot));
 		}
 		List<Map.Entry<Slot, List<ItemStack>>> needs = new ArrayList<>();
 		for (Map.Entry<Slot, ?> entry : preview.entrySet()) {
 			CyclingItemAccessor item = (CyclingItemAccessor) entry.getValue();
 			if (!item.qolbundle$isResultSlot() && !item.qolbundle$getItems().isEmpty()) {
-				count(have, entry.getKey().getStack());
+				count(have, entry.getKey().getItem());
 				needs.add(Map.entry(entry.getKey(), item.qolbundle$getItems()));
 			}
 		}
@@ -165,23 +165,23 @@ public class RecipeHelperModule extends Module {
 			slotOk.put(need.getKey(), false);
 			StringBuilder key = new StringBuilder();
 			for (ItemStack option : need.getValue()) {
-				key.append(Registries.ITEM.getId(option.getItem())).append(';');
+				key.append(BuiltInRegistries.ITEM.getKey(option.getItem())).append(';');
 			}
 			groups.computeIfAbsent(key.toString(), unused -> new Missing(need.getValue())).count++;
 		}
 
-		String dimension = client.world.getRegistryKey().getValue().toString();
+		String dimension = client.level.dimension().identifier().toString();
 		ChestMemoryModule chests = ModuleRegistry.get("chest_memory") instanceof ChestMemoryModule module && module.isEnabled() ? module : null;
 		for (Missing entry : groups.values()) {
 			Set<Item> wanted = new HashSet<>();
 			Set<String> wantedIds = new HashSet<>();
 			for (ItemStack option : entry.accepts) {
 				wanted.add(option.getItem());
-				wantedIds.add(Registries.ITEM.getId(option.getItem()).toString());
+				wantedIds.add(BuiltInRegistries.ITEM.getKey(option.getItem()).toString());
 			}
 			List<Source> sources = new ArrayList<>();
-			for (int slot = 0; slot < inventory.size(); slot++) {
-				int inside = countInBox(inventory.getStack(slot), wanted);
+			for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+				int inside = countInBox(inventory.getItem(slot), wanted);
 				if (inside > 0) {
 					sources.add(new Source(null, slot, inside));
 				}
@@ -203,13 +203,13 @@ public class RecipeHelperModule extends Module {
 	}
 
 	private static int countInBox(ItemStack box, Set<Item> wanted) {
-		if (box.isEmpty() || !box.isIn(ItemTags.SHULKER_BOXES)) {
+		if (box.isEmpty() || !box.is(ItemTags.SHULKER_BOXES)) {
 			return 0;
 		}
-		ContainerComponent inside = box.get(DataComponentTypes.CONTAINER);
+		ItemContainerContents inside = box.get(DataComponents.CONTAINER);
 		int total = 0;
 		if (inside != null) {
-			for (ItemStack stack : inside.iterateNonEmpty()) {
+			for (ItemStack stack : inside.nonEmptyItems()) {
 				if (wanted.contains(stack.getItem())) {
 					total += stack.getCount();
 				}
@@ -220,9 +220,9 @@ public class RecipeHelperModule extends Module {
 
 	// ---- drawing -------------------------------------------------------------------------------
 
-	private void render(DrawContext context, RecipeBookScreen<?> screen, int mouseX, int mouseY) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (!isEnabled() || client.player == null || client.world == null) {
+	private void render(GuiGraphics context, AbstractRecipeBookScreen<?> screen, int mouseX, int mouseY) {
+		Minecraft client = Minecraft.getInstance();
+		if (!isEnabled() || client.player == null || client.level == null) {
 			return;
 		}
 		Map<Slot, ?> preview = previewOf(screen);
@@ -234,7 +234,7 @@ public class RecipeHelperModule extends Module {
 			}
 			return;
 		}
-		long now = Util.getMeasuringTimeMs();
+		long now = Util.getMillis();
 		if (preview.size() != analysedSize || now - analysedMs > REFRESH_MS) {
 			analyse(client, preview);
 			analysedSize = preview.size();
@@ -247,7 +247,7 @@ public class RecipeHelperModule extends Module {
 			// Green: you have this one. Red: this is what is missing.
 			for (Map.Entry<Slot, Boolean> entry : slotOk.entrySet()) {
 				Slot slot = entry.getKey();
-				context.drawStrokedRectangle(left + slot.x - 1, top + slot.y - 1, 18, 18, entry.getValue() ? GREEN : RED);
+				context.renderOutline(left + slot.x - 1, top + slot.y - 1, 18, 18, entry.getValue() ? GREEN : RED);
 			}
 		}
 		if (missing.isEmpty()) {
@@ -255,24 +255,24 @@ public class RecipeHelperModule extends Module {
 		}
 
 		// One small box per missing ingredient, in a row above the window.
-		TextRenderer textRenderer = client.textRenderer;
-		Text label = Text.translatable(getTranslationKey() + ".label");
-		int labelWidth = textRenderer.getWidth(label);
+		Font textRenderer = client.font;
+		Component label = Component.translatable(getTranslationKey() + ".label");
+		int labelWidth = textRenderer.width(label);
 		int y = Math.max(2, top - CHIP_HEIGHT - 3);
 		int x = left;
 		context.fill(x, y, x + labelWidth + 6, y + CHIP_HEIGHT, 0xC0000000);
-		context.drawTextWithShadow(textRenderer, label, x + 3, y + 6, RED);
+		context.drawString(textRenderer, label, x + 3, y + 6, RED);
 		x += labelWidth + 8;
 		int icon = (int) (now / 1000L);
 		for (Missing entry : missing) {
 			String amount = "×" + entry.count;
-			entry.width = 2 + 16 + 2 + textRenderer.getWidth(amount) + 3;
+			entry.width = 2 + 16 + 2 + textRenderer.width(amount) + 3;
 			entry.x = x;
 			entry.y = y;
 			context.fill(x, y, x + entry.width, y + CHIP_HEIGHT, 0xC0000000);
-			context.drawStrokedRectangle(x, y, entry.width, CHIP_HEIGHT, colorOf(entry));
-			context.drawItem(entry.accepts.get(icon % entry.accepts.size()), x + 2, y + 2);
-			context.drawTextWithShadow(textRenderer, amount, x + 20, y + 6, 0xFFFFFFFF);
+			context.renderOutline(x, y, entry.width, CHIP_HEIGHT, colorOf(entry));
+			context.renderItem(entry.accepts.get(icon % entry.accepts.size()), x + 2, y + 2);
+			context.drawString(textRenderer, amount, x + 20, y + 6, 0xFFFFFFFF);
 			x += entry.width + 2;
 		}
 
@@ -303,78 +303,78 @@ public class RecipeHelperModule extends Module {
 		return null;
 	}
 
-	private List<Text> detailsOf(MinecraftClient client, Missing entry, int icon) {
+	private List<Component> detailsOf(Minecraft client, Missing entry, int icon) {
 		String key = getTranslationKey() + ".";
-		List<Text> lines = new ArrayList<>();
-		lines.add(Text.translatable(key + "missing", entry.count, entry.accepts.get(icon % entry.accepts.size()).getName()));
+		List<Component> lines = new ArrayList<>();
+		lines.add(Component.translatable(key + "missing", entry.count, entry.accepts.get(icon % entry.accepts.size()).getHoverName()));
 		if (entry.accepts.size() > 1) {
-			lines.add(Text.translatable(key + "alternatives", entry.accepts.size()).formatted(Formatting.GRAY));
+			lines.add(Component.translatable(key + "alternatives", entry.accepts.size()).withStyle(ChatFormatting.GRAY));
 		}
 		if (entry.sources.isEmpty()) {
-			lines.add(Text.translatable(key + "nowhere").formatted(Formatting.RED));
+			lines.add(Component.translatable(key + "nowhere").withStyle(ChatFormatting.RED));
 			if (!(ModuleRegistry.get("chest_memory") instanceof ChestMemoryModule chests && chests.isEnabled())) {
-				lines.add(Text.translatable(key + "no_memory").formatted(Formatting.GRAY));
+				lines.add(Component.translatable(key + "no_memory").withStyle(ChatFormatting.GRAY));
 			}
 			return lines;
 		}
-		String here = client.world.getRegistryKey().getValue().toString();
+		String here = client.level.dimension().identifier().toString();
 		for (int i = 0; i < entry.sources.size() && i < MAX_SOURCE_LINES; i++) {
 			lines.add(describe(client, entry.sources.get(i), here));
 		}
 		if (entry.sources.size() > MAX_SOURCE_LINES) {
-			lines.add(Text.translatable(key + "more", entry.sources.size() - MAX_SOURCE_LINES).formatted(Formatting.GRAY));
+			lines.add(Component.translatable(key + "more", entry.sources.size() - MAX_SOURCE_LINES).withStyle(ChatFormatting.GRAY));
 		}
 		if (pointable(client, entry) != null) {
-			lines.add(Text.translatable(key + "click").formatted(Formatting.YELLOW));
+			lines.add(Component.translatable(key + "click").withStyle(ChatFormatting.YELLOW));
 		}
 		return lines;
 	}
 
-	private Text describe(MinecraftClient client, Source source, String here) {
+	private Component describe(Minecraft client, Source source, String here) {
 		String key = getTranslationKey() + ".";
 		if (source.isCarried()) {
-			return Text.translatable(key + "in_carried_box", ChestMemoryScreen.slotPlace(source.slot), source.count).formatted(Formatting.AQUA);
+			return Component.translatable(key + "in_carried_box", ChestMemoryScreen.slotPlace(source.slot), source.count).withStyle(ChatFormatting.AQUA);
 		}
 		ChestMemoryModule.Chest chest = source.chest;
-		MutableText text;
+		MutableComponent text;
 		if (chest.isEnderChest()) {
-			text = Text.translatable(key + "in_ender_chest", source.count);
+			text = Component.translatable(key + "in_ender_chest", source.count);
 		} else {
-			Text block = ChestMemoryModule.itemOf(chest.blockId).getName();
+			Component block = ChestMemoryModule.itemOf(chest.blockId).getName();
 			String position = chest.pos.getX() + ", " + chest.pos.getY() + ", " + chest.pos.getZ();
 			if (chest.dimension.equals(here)) {
-				int distance = (int) Math.round(Math.sqrt(chest.pos.getSquaredDistance(client.player.getBlockPos())));
-				text = Text.translatable(key + "in_chest", block, position, distance, source.count);
+				int distance = (int) Math.round(Math.sqrt(chest.pos.distSqr(client.player.blockPosition())));
+				text = Component.translatable(key + "in_chest", block, position, distance, source.count);
 			} else {
-				text = Text.translatable(key + "in_chest_other", block, ChestMemoryScreen.dimensionName(chest.dimension), position, source.count);
+				text = Component.translatable(key + "in_chest_other", block, ChestMemoryScreen.dimensionName(chest.dimension), position, source.count);
 			}
 		}
 		if (ModuleRegistry.get("chest_memory") instanceof ChestMemoryModule chests && chests.isStale(chest)) {
-			return text.append(Text.literal(" ")).append(Text.translatable("qolbundle.module.chest_memory.screen.stale")).formatted(Formatting.GOLD);
+			return text.append(Component.literal(" ")).append(Component.translatable("qolbundle.module.chest_memory.screen.stale")).withStyle(ChatFormatting.GOLD);
 		}
-		return text.formatted(Formatting.GREEN);
+		return text.withStyle(ChatFormatting.GREEN);
 	}
 
-	private static void drawDetails(DrawContext context, TextRenderer textRenderer, List<Text> lines, int x, int y) {
+	private static void drawDetails(GuiGraphics context, Font textRenderer, List<Component> lines, int x, int y) {
 		int width = 0;
-		for (Text line : lines) {
-			width = Math.max(width, textRenderer.getWidth(line));
+		for (Component line : lines) {
+			width = Math.max(width, textRenderer.width(line));
 		}
 		int height = lines.size() * 10 + 5;
-		x = Math.max(2, Math.min(x, context.getScaledWindowWidth() - width - 8));
-		y = Math.max(2, Math.min(y, context.getScaledWindowHeight() - height - 2));
+		x = Math.max(2, Math.min(x, context.guiWidth() - width - 8));
+		y = Math.max(2, Math.min(y, context.guiHeight() - height - 2));
 		context.fill(x, y, x + width + 6, y + height, 0xF0100010);
-		context.drawStrokedRectangle(x, y, width + 6, height, 0xFF5000A0);
+		context.renderOutline(x, y, width + 6, height, 0xFF5000A0);
 		for (int i = 0; i < lines.size(); i++) {
-			context.drawTextWithShadow(textRenderer, lines.get(i), x + 3, y + 3 + i * 10, 0xFFFFFFFF);
+			context.drawString(textRenderer, lines.get(i), x + 3, y + 3 + i * 10, 0xFFFFFFFF);
 		}
 	}
 
 	// ---- pointing the way ----------------------------------------------------------------------
 
 	/** The nearest known chest in this dimension that holds the ingredient, if any. */
-	private static ChestMemoryModule.@Nullable Chest pointable(MinecraftClient client, Missing entry) {
-		String here = client.world.getRegistryKey().getValue().toString();
+	private static ChestMemoryModule.@Nullable Chest pointable(Minecraft client, Missing entry) {
+		String here = client.level.dimension().identifier().toString();
 		for (Source source : entry.sources) {
 			if (!source.isCarried() && !source.chest.isEnderChest() && source.chest.dimension.equals(here)) {
 				return source.chest;
@@ -385,14 +385,14 @@ public class RecipeHelperModule extends Module {
 
 	/** Closes the crafting screen and lets Chest Memory point at the chest holding this ingredient. */
 	public boolean activate(@Nullable Missing entry) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (entry == null || client.player == null || client.world == null) {
+		Minecraft client = Minecraft.getInstance();
+		if (entry == null || client.player == null || client.level == null) {
 			return false;
 		}
 		ChestMemoryModule.Chest chest = pointable(client, entry);
 		if (chest != null && ModuleRegistry.get("chest_memory") instanceof ChestMemoryModule chests) {
 			chests.setTarget(chest);
-			client.player.closeHandledScreen();
+			client.player.closeContainer();
 		}
 		return true; // a click on the box never falls through to whatever lies under it
 	}

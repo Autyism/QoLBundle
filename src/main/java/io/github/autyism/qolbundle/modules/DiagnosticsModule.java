@@ -1,5 +1,6 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.hud.HudAnchor;
 import io.github.autyism.qolbundle.hud.HudLayout;
@@ -11,64 +12,63 @@ import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.block.AbstractFurnaceBlock;
-import net.minecraft.block.AbstractPressurePlateBlock;
-import net.minecraft.block.AbstractRailBlock;
-import net.minecraft.block.BarrelBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.BulbBlock;
-import net.minecraft.block.ButtonBlock;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.ComparatorBlock;
-import net.minecraft.block.CrafterBlock;
-import net.minecraft.block.DaylightDetectorBlock;
-import net.minecraft.block.DetectorRailBlock;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.HopperBlock;
-import net.minecraft.block.LecternBlock;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.block.NoteBlock;
-import net.minecraft.block.ObserverBlock;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.block.RedstoneLampBlock;
-import net.minecraft.block.RedstoneTorchBlock;
-import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.block.RepeaterBlock;
-import net.minecraft.block.SculkSensorBlock;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.block.TargetBlock;
-import net.minecraft.block.TntBlock;
-import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.block.TripwireHookBlock;
-import net.minecraft.block.enums.ComparatorMode;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
-import net.minecraft.world.debug.gizmo.TextGizmo;
-import net.minecraft.world.debug.gizmo.VisibilityConfigurable;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gizmos.GizmoProperties;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.gizmos.TextGizmo;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.AbstractFurnaceBlock;
+import net.minecraft.world.level.block.BarrelBlock;
+import net.minecraft.world.level.block.BasePressurePlateBlock;
+import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.ComparatorBlock;
+import net.minecraft.world.level.block.CopperBulbBlock;
+import net.minecraft.world.level.block.CrafterBlock;
+import net.minecraft.world.level.block.DaylightDetectorBlock;
+import net.minecraft.world.level.block.DetectorRailBlock;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.LecternBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.NoteBlock;
+import net.minecraft.world.level.block.ObserverBlock;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneLampBlock;
+import net.minecraft.world.level.block.RedstoneTorchBlock;
+import net.minecraft.world.level.block.RepeaterBlock;
+import net.minecraft.world.level.block.SculkSensorBlock;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.TargetBlock;
+import net.minecraft.world.level.block.TntBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.TripWireHookBlock;
+import net.minecraft.world.level.block.piston.PistonBaseBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.ComparatorMode;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -162,16 +162,16 @@ public class DiagnosticsModule extends Module {
 	private final EnumSetting<SliceAxis> sliceAxis = add(new EnumSetting<>("slice_axis", SliceAxis.Y));
 	private final IntSetting scanRadius = add(new IntSetting("scan_radius", 24, 8, 48));
 
-	private final KeyBinding scanKey;
-	private final KeyBinding sliceUpKey;
-	private final KeyBinding sliceDownKey;
+	private final KeyMapping scanKey;
+	private final KeyMapping sliceUpKey;
+	private final KeyMapping sliceDownKey;
 
 	private final List<Part> parts = new ArrayList<>();
 	private final Map<BlockPos, Part> byPos = new HashMap<>();
 	@Nullable
-	private ClientWorld scannedWorld;
-	private BlockPos min = BlockPos.ORIGIN;
-	private BlockPos max = BlockPos.ORIGIN;
+	private ClientLevel scannedWorld;
+	private BlockPos min = BlockPos.ZERO;
+	private BlockPos max = BlockPos.ZERO;
 	private long tick;
 	private long scanTick;
 	private long scanWallMs;
@@ -195,12 +195,12 @@ public class DiagnosticsModule extends Module {
 
 	public DiagnosticsModule() {
 		super("diagnostics", ModuleCategory.TECHNICAL, true);
-		scanKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.diagnostics_scan",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_F8, QoLBundleClient.KEY_CATEGORY));
-		sliceUpKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.diagnostics_slice_next",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET, QoLBundleClient.KEY_CATEGORY));
-		sliceDownKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.diagnostics_slice_previous",
-				InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, QoLBundleClient.KEY_CATEGORY));
+		scanKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.diagnostics_scan",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F8, QoLBundleClient.KEY_CATEGORY));
+		sliceUpKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.diagnostics_slice_next",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET, QoLBundleClient.KEY_CATEGORY));
+		sliceDownKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.diagnostics_slice_previous",
+				InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, QoLBundleClient.KEY_CATEGORY));
 	}
 
 	// ---- what the self-test (and nothing else) asks ----------------------------------------------
@@ -262,7 +262,7 @@ public class DiagnosticsModule extends Module {
 	@Nullable
 	private static Kind kindOf(BlockState state) {
 		Block block = state.getBlock();
-		if (block instanceof RedstoneWireBlock) {
+		if (block instanceof RedStoneWireBlock) {
 			return Kind.WIRE;
 		} else if (block instanceof RepeaterBlock) {
 			return Kind.REPEATER;
@@ -272,7 +272,7 @@ public class DiagnosticsModule extends Module {
 			return Kind.TORCH;
 		} else if (block instanceof ObserverBlock) {
 			return Kind.OBSERVER;
-		} else if (block instanceof PistonBlock) {
+		} else if (block instanceof PistonBaseBlock) {
 			return Kind.PISTON;
 		} else if (block instanceof HopperBlock) {
 			return Kind.HOPPER;
@@ -280,19 +280,19 @@ public class DiagnosticsModule extends Module {
 			return Kind.CRAFTER;
 		} else if (block instanceof DispenserBlock) {
 			return Kind.DROPPER;
-		} else if (block instanceof RedstoneLampBlock || block instanceof BulbBlock) {
+		} else if (block instanceof RedstoneLampBlock || block instanceof CopperBulbBlock) {
 			return Kind.LAMP;
 		} else if (block instanceof DetectorRailBlock || block instanceof LeverBlock || block instanceof ButtonBlock
-				|| block instanceof AbstractPressurePlateBlock || block instanceof TripwireHookBlock || block instanceof TargetBlock
+				|| block instanceof BasePressurePlateBlock || block instanceof TripWireHookBlock || block instanceof TargetBlock
 				|| block instanceof DaylightDetectorBlock || block instanceof SculkSensorBlock || block instanceof LecternBlock) {
 			return Kind.INPUT;
-		} else if (state.isOf(Blocks.REDSTONE_BLOCK)) {
+		} else if (state.is(Blocks.REDSTONE_BLOCK)) {
 			return Kind.SOURCE;
-		} else if (block instanceof AbstractRailBlock) {
-			return state.contains(Properties.POWERED) ? Kind.RAIL : null; // plain rails are not redstone
+		} else if (block instanceof BaseRailBlock) {
+			return state.hasProperty(BlockStateProperties.POWERED) ? Kind.RAIL : null; // plain rails are not redstone
 		} else if (block instanceof NoteBlock) {
 			return Kind.NOTE_BLOCK;
-		} else if (block instanceof DoorBlock || block instanceof TrapdoorBlock || block instanceof FenceGateBlock) {
+		} else if (block instanceof DoorBlock || block instanceof TrapDoorBlock || block instanceof FenceGateBlock) {
 			return Kind.DOOR;
 		} else if (block instanceof TntBlock) {
 			return Kind.TNT;
@@ -304,21 +304,21 @@ public class DiagnosticsModule extends Module {
 	}
 
 	private static boolean flag(BlockState state, BooleanProperty property) {
-		return state.contains(property) && state.get(property);
+		return state.hasProperty(property) && state.getValue(property);
 	}
 
 	/** "On" in whatever sense fits the component; for a hopper it means locked. */
 	private static boolean isActive(Kind kind, BlockState state) {
 		return switch (kind) {
-			case WIRE -> state.get(Properties.POWER) > 0;
-			case HOPPER -> state.contains(Properties.ENABLED) && !state.get(Properties.ENABLED);
-			case PISTON -> flag(state, Properties.EXTENDED);
-			case DROPPER, CRAFTER -> flag(state, Properties.TRIGGERED);
-			case TORCH, LAMP -> flag(state, Properties.LIT);
-			case DOOR -> flag(state, Properties.OPEN);
+			case WIRE -> state.getValue(BlockStateProperties.POWER) > 0;
+			case HOPPER -> state.hasProperty(BlockStateProperties.ENABLED) && !state.getValue(BlockStateProperties.ENABLED);
+			case PISTON -> flag(state, BlockStateProperties.EXTENDED);
+			case DROPPER, CRAFTER -> flag(state, BlockStateProperties.TRIGGERED);
+			case TORCH, LAMP -> flag(state, BlockStateProperties.LIT);
+			case DOOR -> flag(state, BlockStateProperties.OPEN);
 			case SOURCE -> true;
 			case TNT, CONTAINER -> false;
-			default -> flag(state, Properties.POWERED) || state.contains(Properties.POWER) && state.get(Properties.POWER) > 0;
+			default -> flag(state, BlockStateProperties.POWERED) || state.hasProperty(BlockStateProperties.POWER) && state.getValue(BlockStateProperties.POWER) > 0;
 		};
 	}
 
@@ -328,14 +328,14 @@ public class DiagnosticsModule extends Module {
 	 *
 	 * @return false when there is no redstone component at or right next to start
 	 */
-	public boolean scan(ClientWorld world, BlockPos start) {
+	public boolean scan(ClientLevel world, BlockPos start) {
 		BlockPos origin = null;
 		if (kindOf(world.getBlockState(start)) != null) {
 			origin = start;
 		} else {
 			for (Direction direction : Direction.values()) {
-				if (kindOf(world.getBlockState(start.offset(direction))) != null) {
-					origin = start.offset(direction);
+				if (kindOf(world.getBlockState(start.relative(direction))) != null) {
+					origin = start.relative(direction);
 					break;
 				}
 			}
@@ -353,18 +353,18 @@ public class DiagnosticsModule extends Module {
 			BlockPos pos = queue.poll();
 			Part part = byPos.get(pos);
 			for (Direction direction : Direction.values()) {
-				BlockPos next = pos.offset(direction);
-				if (!visit(world, next, origin, radius, queue, visited) && world.getBlockState(next).isSolidBlock(world, next)) {
+				BlockPos next = pos.relative(direction);
+				if (!visit(world, next, origin, radius, queue, visited) && world.getBlockState(next).isRedstoneConductor(world, next)) {
 					for (Direction beyond : Direction.values()) {
-						visit(world, next.offset(beyond), origin, radius, queue, visited);
+						visit(world, next.relative(beyond), origin, radius, queue, visited);
 					}
 				}
 			}
 			if (part.kind == Kind.WIRE) {
 				// Redstone dust also runs up and down one block along a slope.
-				for (Direction direction : Direction.Type.HORIZONTAL) {
-					visit(world, pos.offset(direction).up(), origin, radius, queue, visited);
-					visit(world, pos.offset(direction).down(), origin, radius, queue, visited);
+				for (Direction direction : Direction.Plane.HORIZONTAL) {
+					visit(world, pos.relative(direction).above(), origin, radius, queue, visited);
+					visit(world, pos.relative(direction).below(), origin, radius, queue, visited);
 				}
 			}
 		}
@@ -387,7 +387,7 @@ public class DiagnosticsModule extends Module {
 	}
 
 	/** Adds the block as a part if it is a component not seen yet. Returns whether it is a component at all. */
-	private boolean visit(ClientWorld world, BlockPos pos, BlockPos origin, int radius, ArrayDeque<BlockPos> queue, Set<BlockPos> visited) {
+	private boolean visit(ClientLevel world, BlockPos pos, BlockPos origin, int radius, ArrayDeque<BlockPos> queue, Set<BlockPos> visited) {
 		if (Math.abs(pos.getX() - origin.getX()) > radius || Math.abs(pos.getY() - origin.getY()) > radius
 				|| Math.abs(pos.getZ() - origin.getZ()) > radius) {
 			return false;
@@ -397,7 +397,7 @@ public class DiagnosticsModule extends Module {
 		if (kind == null) {
 			return false;
 		}
-		BlockPos fixed = pos.toImmutable();
+		BlockPos fixed = pos.immutable();
 		if (visited.add(fixed) && parts.size() < MAX_PARTS) {
 			Part part = new Part(fixed, kind, state);
 			part.active = isActive(kind, state);
@@ -464,21 +464,21 @@ public class DiagnosticsModule extends Module {
 	// ---- keeping it up to date -----------------------------------------------------------------
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		while (scanKey.wasPressed()) {
+		while (scanKey.consumeClick()) {
 			pressScan(client);
 		}
-		while (sliceUpKey.wasPressed()) {
+		while (sliceUpKey.consumeClick()) {
 			stepSlice(1);
 		}
-		while (sliceDownKey.wasPressed()) {
+		while (sliceDownKey.consumeClick()) {
 			stepSlice(-1);
 		}
 		if (parts.isEmpty()) {
 			return;
 		}
-		ClientWorld world = client.world;
+		ClientLevel world = client.level;
 		if (world == null || world != scannedWorld) {
 			clear();
 			return;
@@ -486,7 +486,7 @@ public class DiagnosticsModule extends Module {
 		for (Part part : parts) {
 			BlockState state = world.getBlockState(part.pos);
 			if (kindOf(state) != part.kind) {
-				if (!part.gone && world.getChunkManager().isChunkLoaded(part.pos.getX() >> 4, part.pos.getZ() >> 4)) {
+				if (!part.gone && world.getChunkSource().hasChunk(part.pos.getX() >> 4, part.pos.getZ() >> 4)) {
 					part.gone = true;
 					changed = true; // somebody broke or replaced a component: the scan is out of date
 				}
@@ -515,24 +515,24 @@ public class DiagnosticsModule extends Module {
 		}
 	}
 
-	private void pressScan(MinecraftClient client) {
+	private void pressScan(Minecraft client) {
 		String key = getTranslationKey() + ".";
-		boolean lookingAtBlock = client.crosshairTarget instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
-		if (client.world == null || client.player == null) {
+		boolean lookingAtBlock = client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK;
+		if (client.level == null || client.player == null) {
 			return;
 		}
-		if (!lookingAtBlock || client.player.isSneaking()) {
+		if (!lookingAtBlock || client.player.isShiftKeyDown()) {
 			if (!parts.isEmpty()) {
 				clear();
-				client.inGameHud.setOverlayMessage(Text.translatable(key + "cleared"), false);
+				client.gui.setOverlayMessage(Component.translatable(key + "cleared"), false);
 			}
 			return;
 		}
-		BlockPos target = ((BlockHitResult) client.crosshairTarget).getBlockPos();
-		if (scan(client.world, target)) {
-			client.inGameHud.setOverlayMessage(Text.translatable(key + "scanned", parts.size()), false);
+		BlockPos target = ((BlockHitResult) client.hitResult).getBlockPos();
+		if (scan(client.level, target)) {
+			client.gui.setOverlayMessage(Component.translatable(key + "scanned", parts.size()), false);
 		} else {
-			client.inGameHud.setOverlayMessage(Text.translatable(key + "nothing").formatted(Formatting.RED), false);
+			client.gui.setOverlayMessage(Component.translatable(key + "nothing").withStyle(ChatFormatting.RED), false);
 		}
 	}
 
@@ -561,10 +561,10 @@ public class DiagnosticsModule extends Module {
 					}
 				}
 				case REPEATER -> {
-					int delay = part.state.get(Properties.DELAY);
+					int delay = part.state.getValue(BlockStateProperties.DELAY);
 					repeaterDelayTotal += delay * 2;
 					repeaterDelayMax = Math.max(repeaterDelayMax, delay);
-					if (flag(part.state, Properties.LOCKED)) {
+					if (flag(part.state, BlockStateProperties.LOCKED)) {
 						breakPoints.add(part);
 					}
 				}
@@ -585,10 +585,10 @@ public class DiagnosticsModule extends Module {
 	/** Dust positions a piece of dust at pos can be joined to. */
 	private List<Part> wireNeighbors(BlockPos pos) {
 		List<Part> result = new ArrayList<>(4);
-		for (Direction direction : Direction.Type.HORIZONTAL) {
-			BlockPos side = pos.offset(direction);
+		for (Direction direction : Direction.Plane.HORIZONTAL) {
+			BlockPos side = pos.relative(direction);
 			for (int dy = -1; dy <= 1; dy++) {
-				Part other = byPos.get(side.up(dy));
+				Part other = byPos.get(side.above(dy));
 				if (other != null && other.kind == Kind.WIRE && !other.gone) {
 					result.add(other);
 				}
@@ -606,28 +606,28 @@ public class DiagnosticsModule extends Module {
 		return false;
 	}
 
-	private Box area() {
-		return new Box(min.getX(), min.getY(), min.getZ(), max.getX() + 1, max.getY() + 1, max.getZ() + 1);
+	private AABB area() {
+		return new AABB(min.getX(), min.getY(), min.getZ(), max.getX() + 1, max.getY() + 1, max.getZ() + 1);
 	}
 
 	/** Dropped items that show up at the machine count once, with the size of the stack when first seen. */
-	private void countDrops(ClientWorld world) {
-		for (ItemEntity item : world.getEntitiesByClass(ItemEntity.class, area().expand(3.0), entity -> true)) {
+	private void countDrops(ClientLevel world) {
+		for (ItemEntity item : world.getEntitiesOfClass(ItemEntity.class, area().inflate(3.0), entity -> true)) {
 			if (seenItems.add(item.getId())) {
-				itemTotals.merge(Registries.ITEM.getId(item.getStack().getItem()).toString(), item.getStack().getCount(), Integer::sum);
+				itemTotals.merge(BuiltInRegistries.ITEM.getKey(item.getItem().getItem()).toString(), item.getItem().getCount(), Integer::sum);
 			}
 		}
 	}
 
 	/** Chests of the machine that the player opens: the first look is the baseline, later looks show what was added. */
-	private void watchChests(ClientWorld world) {
+	private void watchChests(ClientLevel world) {
 		if (!(ModuleRegistry.get("chest_memory") instanceof ChestMemoryModule memory) || !memory.isEnabled()) {
 			return;
 		}
-		String dimension = world.getRegistryKey().getValue().toString();
-		Box area = area().expand(1.0);
+		String dimension = world.dimension().identifier().toString();
+		AABB area = area().inflate(1.0);
 		for (ChestMemoryModule.Chest chest : memory.getChests()) {
-			if (chest.isEnderChest() || !chest.dimension.equals(dimension) || !area.contains(Vec3d.ofCenter(chest.pos))
+			if (chest.isEnderChest() || !chest.dimension.equals(dimension) || !area.contains(Vec3.atCenterOf(chest.pos))
 					|| chest.seenMs < scanWallMs) {
 				continue;
 			}
@@ -656,58 +656,58 @@ public class DiagnosticsModule extends Module {
 
 	// ---- drawing in the world ------------------------------------------------------------------
 
-	private static Vec3d dustPoint(BlockPos pos) {
-		return new Vec3d(pos.getX() + 0.5, pos.getY() + 0.12, pos.getZ() + 0.5);
+	private static Vec3 dustPoint(BlockPos pos) {
+		return new Vec3(pos.getX() + 0.5, pos.getY() + 0.12, pos.getZ() + 0.5);
 	}
 
 	private static int powerColor(int power) {
 		return 0xFF000000 | (0x69 + power * 10) << 16 | 0x1010;
 	}
 
-	private static void through(VisibilityConfigurable gizmo, boolean seeThrough) {
+	private static void through(GizmoProperties gizmo, boolean seeThrough) {
 		if (seeThrough) {
-			gizmo.ignoreOcclusion();
+			gizmo.setAlwaysOnTop();
 		}
 	}
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (parts.isEmpty() || client.world != scannedWorld) {
+		Minecraft client = Minecraft.getInstance();
+		if (parts.isEmpty() || client.level != scannedWorld) {
 			return;
 		}
-		Vec3d camera = client.gameRenderer.getCamera().getCameraPos();
+		Vec3 camera = client.gameRenderer.getMainCamera().position();
 		boolean sliced = slice >= 0;
 		String key = getTranslationKey() + ".world.";
 		if (sliced) {
 			// The layer being looked at, as a frame around the machine at that height.
-			Box layer = area();
+			AABB layer = area();
 			int at = coordinate(min) + slice;
 			layer = switch (sliceAxis.get()) {
-				case X -> new Box(at, layer.minY, layer.minZ, at + 1, layer.maxY, layer.maxZ);
-				case Y -> new Box(layer.minX, at, layer.minZ, layer.maxX, at + 1, layer.maxZ);
-				case Z -> new Box(layer.minX, layer.minY, at, layer.maxX, layer.maxY, at + 1);
+				case X -> new AABB(at, layer.minY, layer.minZ, at + 1, layer.maxY, layer.maxZ);
+				case Y -> new AABB(layer.minX, at, layer.minZ, layer.maxX, at + 1, layer.maxZ);
+				case Z -> new AABB(layer.minX, layer.minY, at, layer.maxX, layer.maxY, at + 1);
 			};
-			GizmoDrawing.box(layer.expand(0.05), DrawStyle.stroked(0xFF55FFFF, 2.0F)).ignoreOcclusion();
+			Gizmos.cuboid(layer.inflate(0.05), GizmoStyle.stroke(0xFF55FFFF, 2.0F)).setAlwaysOnTop();
 		}
 		for (Part part : parts) {
-			if (part.gone || !inSlice(part.pos) || part.pos.getSquaredDistance(camera.x, camera.y, camera.z) > DRAW_RANGE * DRAW_RANGE) {
+			if (part.gone || !inSlice(part.pos) || part.pos.distToLowCornerSqr(camera.x, camera.y, camera.z) > DRAW_RANGE * DRAW_RANGE) {
 				continue;
 			}
 			BlockPos pos = part.pos;
-			Vec3d middle = Vec3d.ofCenter(pos);
+			Vec3 middle = Vec3.atCenterOf(pos);
 			if (sliced) {
 				// Your own machine, one layer of it: every component of the layer shows through the rest.
-				GizmoDrawing.box(new Box(pos).contract(0.1), DrawStyle.stroked(part.active ? 0xFFFF5555 : 0xFF9090FF, 1.5F)).ignoreOcclusion();
+				Gizmos.cuboid(new AABB(pos).deflate(0.1), GizmoStyle.stroke(part.active ? 0xFFFF5555 : 0xFF9090FF, 1.5F)).setAlwaysOnTop();
 			}
 			if (signalFlow.get()) {
 				switch (part.kind) {
 					case WIRE -> drawDust(part, sliced);
 					case REPEATER, COMPARATOR, OBSERVER -> {
 						// The signal leaves on the side opposite to the one the component "faces".
-						Direction out = part.state.get(part.kind == Kind.OBSERVER ? Properties.FACING : Properties.HORIZONTAL_FACING).getOpposite();
-						Vec3d step = Vec3d.of(out.getVector());
-						through(GizmoDrawing.arrow(middle.subtract(step.multiply(0.45)), middle.add(step.multiply(0.75)),
+						Direction out = part.state.getValue(part.kind == Kind.OBSERVER ? BlockStateProperties.FACING : BlockStateProperties.HORIZONTAL_FACING).getOpposite();
+						Vec3 step = Vec3.atLowerCornerOf(out.getUnitVec3i());
+						through(Gizmos.arrow(middle.subtract(step.scale(0.45)), middle.add(step.scale(0.75)),
 								part.active ? powerColor(15) : GRAY, 3.0F), sliced);
 					}
 					default -> {
@@ -716,19 +716,19 @@ public class DiagnosticsModule extends Module {
 			}
 			if (signalFlow.get() && breakPoints.contains(part)) {
 				boolean lockedRepeater = part.kind == Kind.REPEATER;
-				through(GizmoDrawing.box(new Box(pos).contract(0.05), DrawStyle.stroked(lockedRepeater ? ORANGE : RED, 3.0F)), sliced);
-				through(GizmoDrawing.text(I18n.translate(key + (lockedRepeater ? "locked" : "signal_ends")), middle.add(0, 0.7, 0),
-						TextGizmo.Style.centered(lockedRepeater ? ORANGE : RED).scaled(0.9F)), true);
+				through(Gizmos.cuboid(new AABB(pos).deflate(0.05), GizmoStyle.stroke(lockedRepeater ? ORANGE : RED, 3.0F)), sliced);
+				through(Gizmos.billboardText(I18n.get(key + (lockedRepeater ? "locked" : "signal_ends")), middle.add(0, 0.7, 0),
+						TextGizmo.Style.forColor(lockedRepeater ? ORANGE : RED).withScale(0.9F)), true);
 			}
 			if (bottlenecks.get()) {
 				if (part.kind == Kind.HOPPER && part.active) {
-					through(GizmoDrawing.box(new Box(pos).expand(0.02), DrawStyle.stroked(ORANGE, 3.0F)), sliced);
-					through(GizmoDrawing.text(I18n.translate(key + "locked"), middle.add(0, 0.8, 0), TextGizmo.Style.centered(ORANGE).scaled(0.9F)), true);
+					through(Gizmos.cuboid(new AABB(pos).inflate(0.02), GizmoStyle.stroke(ORANGE, 3.0F)), sliced);
+					through(Gizmos.billboardText(I18n.get(key + "locked"), middle.add(0, 0.8, 0), TextGizmo.Style.forColor(ORANGE).withScale(0.9F)), true);
 				}
 				if (part == slowest) {
-					through(GizmoDrawing.box(new Box(pos).expand(0.04), DrawStyle.stroked(YELLOW, 3.0F)), sliced);
-					through(GizmoDrawing.text(I18n.translate(key + "slowest", part.period), middle.add(0, 1.1, 0),
-							TextGizmo.Style.centered(YELLOW).scaled(0.9F)), true);
+					through(Gizmos.cuboid(new AABB(pos).inflate(0.04), GizmoStyle.stroke(YELLOW, 3.0F)), sliced);
+					through(Gizmos.billboardText(I18n.get(key + "slowest", part.period), middle.add(0, 1.1, 0),
+							TextGizmo.Style.forColor(YELLOW).withScale(0.9F)), true);
 				}
 			}
 		}
@@ -736,16 +736,16 @@ public class DiagnosticsModule extends Module {
 
 	/** Arrows from this dust to every neighbouring dust with a weaker signal: that is the way the signal runs. */
 	private void drawDust(Part part, boolean seeThrough) {
-		int power = part.state.get(Properties.POWER);
+		int power = part.state.getValue(BlockStateProperties.POWER);
 		for (Part other : wireNeighbors(part.pos)) {
 			if (!inSlice(other.pos)) {
 				continue;
 			}
-			int otherPower = other.state.get(Properties.POWER);
+			int otherPower = other.state.getValue(BlockStateProperties.POWER);
 			if (power > otherPower) {
-				through(GizmoDrawing.arrow(dustPoint(part.pos), dustPoint(other.pos), powerColor(power), 2.5F), seeThrough);
+				through(Gizmos.arrow(dustPoint(part.pos), dustPoint(other.pos), powerColor(power), 2.5F), seeThrough);
 			} else if (power == 0 && otherPower == 0 && part.pos.compareTo(other.pos) < 0) {
-				through(GizmoDrawing.line(dustPoint(part.pos), dustPoint(other.pos), GRAY, 1.5F), seeThrough);
+				through(Gizmos.line(dustPoint(part.pos), dustPoint(other.pos), GRAY, 1.5F), seeThrough);
 			}
 		}
 	}
@@ -753,66 +753,66 @@ public class DiagnosticsModule extends Module {
 	// ---- the panel -----------------------------------------------------------------------------
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (parts.isEmpty()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
-		layout.drawLines(context, client.textRenderer, position.get(), buildLines());
+		Minecraft client = Minecraft.getInstance();
+		layout.drawLines(context, client.font, position.get(), buildLines());
 	}
 
 	/** The lines of the panel (also read by the self-test). */
-	public List<Text> buildLines() {
+	public List<Component> buildLines() {
 		String key = getTranslationKey() + ".hud.";
-		List<Text> lines = new ArrayList<>();
-		MutableText title = Text.translatable(key + "title", shownParts).formatted(Formatting.GOLD);
+		List<Component> lines = new ArrayList<>();
+		MutableComponent title = Component.translatable(key + "title", shownParts).withStyle(ChatFormatting.GOLD);
 		if (slice >= 0) {
-			title.append(Text.literal("  ")).append(Text.translatable(key + "slice", sliceAxis.get().name(),
-					coordinate(min) + slice, slice + 1, layers()).formatted(Formatting.AQUA));
+			title.append(Component.literal("  ")).append(Component.translatable(key + "slice", sliceAxis.get().name(),
+					coordinate(min) + slice, slice + 1, layers()).withStyle(ChatFormatting.AQUA));
 		}
 		lines.add(title);
 		if (changed) {
-			lines.add(Text.translatable(key + "changed", scanKey.getBoundKeyLocalizedText()).formatted(Formatting.RED));
+			lines.add(Component.translatable(key + "changed", scanKey.getTranslatedKeyMessage()).withStyle(ChatFormatting.RED));
 		}
 		if (overview.get()) {
 			for (Map.Entry<Kind, int[]> entry : counts.entrySet()) {
 				Kind kind = entry.getKey();
 				String name = kind.name().toLowerCase(Locale.ROOT);
-				Text kindName = Text.translatable(getTranslationKey() + ".kind." + name);
+				Component kindName = Component.translatable(getTranslationKey() + ".kind." + name);
 				int[] pair = entry.getValue();
 				if (kind == Kind.SOURCE || kind == Kind.TNT || kind == Kind.CONTAINER) {
-					lines.add(Text.translatable(key + "count", kindName, pair[0]));
+					lines.add(Component.translatable(key + "count", kindName, pair[0]));
 				} else {
-					lines.add(Text.translatable(key + "count_active", kindName, pair[0],
-							Text.translatable(getTranslationKey() + ".active." + name), pair[1])
-							.formatted(kind == Kind.HOPPER && pair[1] > 0 ? Formatting.GOLD : Formatting.WHITE));
+					lines.add(Component.translatable(key + "count_active", kindName, pair[0],
+							Component.translatable(getTranslationKey() + ".active." + name), pair[1])
+							.withStyle(kind == Kind.HOPPER && pair[1] > 0 ? ChatFormatting.GOLD : ChatFormatting.WHITE));
 				}
 			}
 			int subtract = 0;
 			for (Part part : parts) {
 				if (part.kind == Kind.COMPARATOR && !part.gone && inSlice(part.pos)
-						&& part.state.get(Properties.COMPARATOR_MODE) == ComparatorMode.SUBTRACT) {
+						&& part.state.getValue(BlockStateProperties.MODE_COMPARATOR) == ComparatorMode.SUBTRACT) {
 					subtract++;
 				}
 			}
 			if (subtract > 0) {
-				lines.add(Text.translatable(key + "subtract", subtract).formatted(Formatting.GRAY));
+				lines.add(Component.translatable(key + "subtract", subtract).withStyle(ChatFormatting.GRAY));
 			}
 		}
 		if (bottlenecks.get()) {
 			if (!lockedHoppers.isEmpty()) {
-				lines.add(Text.translatable(key + "locked_hoppers", lockedHoppers.size()).formatted(Formatting.GOLD));
+				lines.add(Component.translatable(key + "locked_hoppers", lockedHoppers.size()).withStyle(ChatFormatting.GOLD));
 			}
 			if (!breakPoints.isEmpty()) {
-				lines.add(Text.translatable(key + "break_points", breakPoints.size()).formatted(Formatting.RED));
+				lines.add(Component.translatable(key + "break_points", breakPoints.size()).withStyle(ChatFormatting.RED));
 			}
 			if (repeaterDelayTotal > 0) {
-				lines.add(Text.translatable(key + "repeater_delay", repeaterDelayTotal, repeaterDelayMax));
+				lines.add(Component.translatable(key + "repeater_delay", repeaterDelayTotal, repeaterDelayMax));
 			}
 			if (slowest != null) {
-				lines.add(Text.translatable(key + "slowest", Text.translatable(getTranslationKey() + ".kind."
+				lines.add(Component.translatable(key + "slowest", Component.translatable(getTranslationKey() + ".kind."
 						+ slowest.kind.name().toLowerCase(Locale.ROOT)), slowest.period, String.format(Locale.ROOT, "%.1f", slowest.period / 20.0))
-						.formatted(Formatting.YELLOW));
+						.withStyle(ChatFormatting.YELLOW));
 			}
 		}
 		if (rates.get()) {
@@ -821,29 +821,29 @@ public class DiagnosticsModule extends Module {
 		return lines;
 	}
 
-	private void addRateLines(List<Text> lines, String key) {
+	private void addRateLines(List<Component> lines, String key) {
 		double seconds = (tick - scanTick) / 20.0;
 		int total = 0;
 		for (int count : itemTotals.values()) {
 			total += count;
 		}
 		if (total > 0 && seconds >= 5) {
-			lines.add(Text.translatable(key + "drops_title", duration(seconds)).formatted(Formatting.GREEN));
+			lines.add(Component.translatable(key + "drops_title", duration(seconds)).withStyle(ChatFormatting.GREEN));
 			List<Map.Entry<String, Integer>> sorted = new ArrayList<>(itemTotals.entrySet());
 			sorted.sort(Comparator.comparingInt((Map.Entry<String, Integer> entry) -> entry.getValue()).reversed());
 			for (int i = 0; i < sorted.size() && i < 3; i++) {
 				int count = sorted.get(i).getValue();
-				lines.add(Text.translatable(key + "rate", ChestMemoryModule.itemOf(sorted.get(i).getKey()).getName(), count,
+				lines.add(Component.translatable(key + "rate", ChestMemoryModule.itemOf(sorted.get(i).getKey()).getName(), count,
 						perMinute(count, seconds), perHour(count, seconds)));
 			}
 			if (bottlenecks.get() && total / seconds > HOPPER_ITEMS_PER_SECOND) {
-				lines.add(Text.translatable(key + "hopper_limit", String.format(Locale.ROOT, "%.1f", total / seconds)).formatted(Formatting.GOLD));
+				lines.add(Component.translatable(key + "hopper_limit", String.format(Locale.ROOT, "%.1f", total / seconds)).withStyle(ChatFormatting.GOLD));
 			}
 		}
 		for (ChestWatch watch : chestWatches.values()) {
 			long elapsedMs = watch.latestMs - watch.baseMs;
 			if (elapsedMs < MIN_CHEST_INTERVAL_MS) {
-				lines.add(Text.translatable(key + "chest_wait").formatted(Formatting.GRAY));
+				lines.add(Component.translatable(key + "chest_wait").withStyle(ChatFormatting.GRAY));
 				continue;
 			}
 			double chestSeconds = elapsedMs / 1000.0;
@@ -855,13 +855,13 @@ public class DiagnosticsModule extends Module {
 				}
 			}
 			gains.sort(Comparator.comparingInt((Map.Entry<String, Integer> entry) -> entry.getValue()).reversed());
-			lines.add(Text.translatable(key + "chest_title", duration(chestSeconds)).formatted(Formatting.GREEN));
+			lines.add(Component.translatable(key + "chest_title", duration(chestSeconds)).withStyle(ChatFormatting.GREEN));
 			if (gains.isEmpty()) {
-				lines.add(Text.translatable(key + "chest_nothing").formatted(Formatting.GRAY));
+				lines.add(Component.translatable(key + "chest_nothing").withStyle(ChatFormatting.GRAY));
 			}
 			for (int i = 0; i < gains.size() && i < 3; i++) {
 				int count = gains.get(i).getValue();
-				lines.add(Text.translatable(key + "rate", ChestMemoryModule.itemOf(gains.get(i).getKey()).getName(), count,
+				lines.add(Component.translatable(key + "rate", ChestMemoryModule.itemOf(gains.get(i).getKey()).getName(), count,
 						perMinute(count, chestSeconds), perHour(count, chestSeconds)));
 			}
 		}
@@ -875,8 +875,8 @@ public class DiagnosticsModule extends Module {
 		return String.format(Locale.ROOT, "%.0f", count / seconds * 3600.0);
 	}
 
-	private Text duration(double seconds) {
+	private Component duration(double seconds) {
 		String key = getTranslationKey() + ".hud.";
-		return seconds < 90 ? Text.translatable(key + "seconds", (int) seconds) : Text.translatable(key + "minutes", (int) Math.round(seconds / 60.0));
+		return seconds < 90 ? Component.translatable(key + "seconds", (int) seconds) : Component.translatable(key + "minutes", (int) Math.round(seconds / 60.0));
 	}
 }

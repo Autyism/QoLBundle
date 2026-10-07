@@ -1,15 +1,15 @@
 package io.github.autyism.qolbundle.gui;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 /**
  * A plain screen with a title, a vertically scrolling list of rows and a footer.
@@ -28,7 +28,7 @@ public abstract class ScrollListScreen extends Screen {
 	private final List<Row> rows = new ArrayList<>();
 	private int scroll;
 
-	protected ScrollListScreen(Text title, @Nullable Screen parent) {
+	protected ScrollListScreen(Component title, @Nullable Screen parent) {
 		super(title);
 		this.parent = parent;
 	}
@@ -38,8 +38,8 @@ public abstract class ScrollListScreen extends Screen {
 
 	/** Buttons below the list. The default is a single "Done" button. */
 	protected void addFooter() {
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> close())
-				.dimensions(this.width / 2 - 75, this.height - 27, 150, 20).build());
+		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
+				.bounds(this.width / 2 - 75, this.height - 27, 150, 20).build());
 	}
 
 	protected int listBottom() {
@@ -54,13 +54,13 @@ public abstract class ScrollListScreen extends Screen {
 		return (this.width - rowWidth()) / 2;
 	}
 
-	protected Row addRow(int height, Text label, @Nullable Text subLabel) {
+	protected Row addRow(int height, Component label, @Nullable Component subLabel) {
 		Row row = new Row(height, label, subLabel, false);
 		rows.add(row);
 		return row;
 	}
 
-	protected Row addHeader(Text label) {
+	protected Row addHeader(Component label) {
 		Row row = new Row(18, label, null, true);
 		rows.add(row);
 		return row;
@@ -75,8 +75,8 @@ public abstract class ScrollListScreen extends Screen {
 	}
 
 	@Override
-	public void close() {
-		this.client.setScreen(parent);
+	public void onClose() {
+		this.minecraft.setScreen(parent);
 	}
 
 	private int maxScroll() {
@@ -114,9 +114,9 @@ public abstract class ScrollListScreen extends Screen {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
 		super.render(context, mouseX, mouseY, deltaTicks);
-		context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 11, WHITE);
+		context.drawCenteredString(this.font, this.title, this.width / 2, 11, WHITE);
 
 		int left = rowLeft();
 		int width = rowWidth();
@@ -126,17 +126,17 @@ public abstract class ScrollListScreen extends Screen {
 				continue;
 			}
 			if (row.header) {
-				context.drawCenteredTextWithShadow(this.textRenderer, row.label, this.width / 2, row.y + 6, GOLD);
+				context.drawCenteredString(this.font, row.label, this.width / 2, row.y + 6, GOLD);
 				int lineY = row.y + row.height - 2;
 				context.fill(left, lineY, left + width, lineY + 1, 0x40FFFFFF);
 				continue;
 			}
 			int labelWidth = width - row.widgetsWidth() - 8;
 			if (row.subLabel == null) {
-				context.drawTextWithShadow(this.textRenderer, trim(row.label, labelWidth), left, row.y + (row.height - 8) / 2, WHITE);
+				context.drawString(this.font, trim(row.label, labelWidth), left, row.y + (row.height - 8) / 2, WHITE);
 			} else {
-				context.drawTextWithShadow(this.textRenderer, trim(row.label, labelWidth), left, row.y + 3, WHITE);
-				context.drawTextWithShadow(this.textRenderer, trim(row.subLabel, labelWidth), left, row.y + 14, GRAY);
+				context.drawString(this.font, trim(row.label, labelWidth), left, row.y + 3, WHITE);
+				context.drawString(this.font, trim(row.subLabel, labelWidth), left, row.y + 14, GRAY);
 			}
 		}
 		context.disableScissor();
@@ -152,27 +152,27 @@ public abstract class ScrollListScreen extends Screen {
 		}
 	}
 
-	private String trim(Text text, int maxWidth) {
+	private String trim(Component text, int maxWidth) {
 		String full = text.getString();
-		if (this.textRenderer.getWidth(full) <= maxWidth) {
+		if (this.font.width(full) <= maxWidth) {
 			return full;
 		}
-		return this.textRenderer.trimToWidth(full, Math.max(0, maxWidth - this.textRenderer.getWidth("..."))) + "...";
+		return this.font.plainSubstrByWidth(full, Math.max(0, maxWidth - this.font.width("..."))) + "...";
 	}
 
-	private record Placed(ClickableWidget widget, int fromRight) {
+	private record Placed(AbstractWidget widget, int fromRight) {
 	}
 
 	protected final class Row {
 		private final int height;
-		private final Text label;
+		private final Component label;
 		@Nullable
-		private final Text subLabel;
+		private final Component subLabel;
 		private final boolean header;
 		private final List<Placed> widgets = new ArrayList<>();
 		private int y;
 
-		private Row(int height, Text label, @Nullable Text subLabel, boolean header) {
+		private Row(int height, Component label, @Nullable Component subLabel, boolean header) {
 			this.height = height;
 			this.label = label;
 			this.subLabel = subLabel;
@@ -180,10 +180,10 @@ public abstract class ScrollListScreen extends Screen {
 		}
 
 		/** Adds a widget; widgets are placed right to left in the order they are added. */
-		public <W extends ClickableWidget> W add(W widget) {
+		public <W extends AbstractWidget> W add(W widget) {
 			int fromRight = widgetsWidth() + (widgets.isEmpty() ? 0 : 4) + widget.getWidth();
 			widgets.add(new Placed(widget, fromRight));
-			ScrollListScreen.this.addDrawableChild(widget);
+			ScrollListScreen.this.addRenderableWidget(widget);
 			return widget;
 		}
 

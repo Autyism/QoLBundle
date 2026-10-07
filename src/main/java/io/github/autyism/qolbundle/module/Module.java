@@ -3,12 +3,11 @@ package io.github.autyism.qolbundle.module;
 import io.github.autyism.qolbundle.hud.HudLayout;
 import io.github.autyism.qolbundle.module.setting.Setting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.text.Text;
-
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,12 +71,12 @@ public abstract class Module {
 		return "qolbundle.module." + id;
 	}
 
-	public Text getName() {
-		return Text.translatable(getTranslationKey() + ".name");
+	public Component getName() {
+		return Component.translatable(getTranslationKey() + ".name");
 	}
 
-	public Text getDescription() {
-		return Text.translatable(getTranslationKey() + ".desc");
+	public Component getDescription() {
+		return Component.translatable(getTranslationKey() + ".desc");
 	}
 
 	/** Registers a setting on this module. Call from the subclass field initializers / constructor. */
@@ -118,11 +117,11 @@ public abstract class Module {
 	}
 
 	/** Called at the very start of each client tick, before the game looks at the keys. */
-	public void onStartTick(MinecraftClient client) {
+	public void onStartTick(Minecraft client) {
 	}
 
 	/** Called once per client tick. {@code client.player} and {@code client.world} may be null. */
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 	}
 
 	/**
@@ -141,6 +140,6 @@ public abstract class Module {
 	}
 
 	/** Called every frame while the HUD is visible and the player is in a world. */
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 	}
 }

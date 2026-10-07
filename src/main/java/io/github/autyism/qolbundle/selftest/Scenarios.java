@@ -1,7 +1,5 @@
 package io.github.autyism.qolbundle.selftest;
 
-import net.minecraft.util.math.Box;
-import net.minecraft.entity.passive.PigEntity;
 import io.github.autyism.qolbundle.modules.StareAlertModule;
 import io.github.autyism.qolbundle.modules.ApproachAlertModule;
 import io.github.autyism.qolbundle.modules.EnemyGearModule;
@@ -9,15 +7,7 @@ import io.github.autyism.qolbundle.modules.CombatStatsModule;
 import io.github.autyism.qolbundle.modules.ProjectileDirectionModule;
 import io.github.autyism.qolbundle.modules.LootTimerModule;
 import io.github.autyism.qolbundle.modules.AttackCooldownModule;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
 import io.github.autyism.qolbundle.modules.PlacementMasterModule;
-import net.minecraft.util.math.Direction;
-import net.minecraft.state.property.Properties;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.block.enums.BlockHalf;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.api.QoLBundleAddon;
 import io.github.autyism.qolbundle.config.ConfigManager;
@@ -60,40 +50,50 @@ import io.github.autyism.qolbundle.modules.ShulkerManagerModule;
 import io.github.autyism.qolbundle.modules.SlimeChunksModule;
 import io.github.autyism.qolbundle.modules.SoundCompassModule;
 import io.github.autyism.qolbundle.modules.VillagerTradesModule;
-import net.minecraft.client.MinecraftClient;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.MerchantScreen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.tutorial.TutorialStep;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.SlotDisplayContexts;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.resource.DataConfiguration;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.MerchantScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.tutorial.TutorialSteps;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
-import net.minecraft.world.gen.GeneratorOptions;
-import net.minecraft.world.gen.WorldPresets;
-import net.minecraft.world.level.LevelInfo;
-import net.minecraft.world.rule.GameRules;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.animal.pig.Pig;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.SlotDisplayContext;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.Half;
+import net.minecraft.world.level.block.state.properties.SlabType;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -171,41 +171,41 @@ public final class Scenarios {
 			if (client.getOverlay() != null) {
 				return false;
 			}
-			if (client.currentScreen instanceof AccessibilityOnboardingScreen) {
+			if (client.screen instanceof AccessibilityOnboardingScreen) {
 				// First start of a fresh run/ folder shows this instead of the title screen. Skip it for
 				// this run only; the option itself is not touched, so the player still gets to see it.
 				client.setScreen(new TitleScreen());
 				return false;
 			}
-			return client.currentScreen instanceof TitleScreen;
+			return client.screen instanceof TitleScreen;
 		}, 20 * 120);
 		s.run("test-friendly options", client -> {
 			boolean pauseOnLostFocus = client.options.pauseOnLostFocus;
-			TutorialStep tutorialStep = client.options.tutorialStep;
+			TutorialSteps tutorialStep = client.options.tutorialStep;
 			// The window is usually in the background while the test runs; do not pause because of that.
 			client.options.pauseOnLostFocus = false;
 			// No tutorial pop-ups in the screenshots.
-			client.options.tutorialStep = TutorialStep.NONE;
-			client.getTutorialManager().setStep(TutorialStep.NONE);
+			client.options.tutorialStep = TutorialSteps.NONE;
+			client.getTutorial().setStep(TutorialSteps.NONE);
 			// The game saves its options on exit: hand back what the player had, so a test run
 			// leaves options.txt as it found it.
 			test.onFinish(c -> {
 				c.options.pauseOnLostFocus = pauseOnLostFocus;
 				c.options.tutorialStep = tutorialStep;
-				c.options.write();
+				c.options.save();
 			});
 		});
 	}
 
 	private static void settingsScreen(SelfTest.Script s) {
 		s.check("Mod Menu's configure button leads to our settings screen", Scenarios::modMenuOpensSettings);
-		s.run("open module list", client -> client.setScreen(new ModuleListScreen(client.currentScreen)));
+		s.run("open module list", client -> client.setScreen(new ModuleListScreen(client.screen)));
 		s.waitTicks(10);
-		s.check("module list screen is open", client -> client.currentScreen instanceof ModuleListScreen);
+		s.check("module list screen is open", client -> client.screen instanceof ModuleListScreen);
 		s.screenshot("00_settings_list");
 		s.run("scroll the module list to the bottom", client -> {
-			if (client.currentScreen != null) {
-				client.currentScreen.mouseScrolled(client.currentScreen.width / 2.0, client.currentScreen.height / 2.0, 0, -100);
+			if (client.screen != null) {
+				client.screen.mouseScrolled(client.screen.width / 2.0, client.screen.height / 2.0, 0, -100);
 			}
 		});
 		s.screenshot("00_settings_list_bottom");
@@ -219,9 +219,9 @@ public final class Scenarios {
 			}
 			Module shown = richest;
 			s.run("open settings of " + shown.getId(),
-					client -> client.setScreen(new ModuleSettingsScreen(client.currentScreen, shown)));
+					client -> client.setScreen(new ModuleSettingsScreen(client.screen, shown)));
 			s.waitTicks(10);
-			s.check("module settings screen is open", client -> client.currentScreen instanceof ModuleSettingsScreen);
+			s.check("module settings screen is open", client -> client.screen instanceof ModuleSettingsScreen);
 			s.screenshot("00_settings_module");
 		}
 		s.run("back to title", client -> client.setScreen(new TitleScreen()));
@@ -232,11 +232,11 @@ public final class Scenarios {
 	 * Asks Mod Menu which screen its "configure" button would open for this mod. Done by name
 	 * (reflection) so the self-test also works in a client without Mod Menu.
 	 */
-	private static boolean modMenuOpensSettings(MinecraftClient client) {
+	private static boolean modMenuOpensSettings(Minecraft client) {
 		try {
 			Class<?> modMenu = Class.forName("com.terraformersmc.modmenu.ModMenu");
 			Object screen = modMenu.getMethod("getConfigScreen", String.class, Screen.class)
-					.invoke(null, "qolbundle", client.currentScreen);
+					.invoke(null, "qolbundle", client.screen);
 			return screen instanceof ModuleListScreen;
 		} catch (ClassNotFoundException e) {
 			return true; // Mod Menu is not installed in this client: nothing to check
@@ -277,15 +277,15 @@ public final class Scenarios {
 	}
 
 	private static void enterWorld(SelfTest.Script s) {
-		s.run("create or load world '" + WORLD_NAME + "'", client -> client.send(() -> {
-			if (client.getLevelStorage().levelExists(WORLD_NAME)) {
-				client.createIntegratedServerLoader().start(WORLD_NAME, () -> client.setScreen(new TitleScreen()));
+		s.run("create or load world '" + WORLD_NAME + "'", client -> client.schedule(() -> {
+			if (client.getLevelSource().levelExists(WORLD_NAME)) {
+				client.createWorldOpenFlows().openWorld(WORLD_NAME, () -> client.setScreen(new TitleScreen()));
 			} else {
-				LevelInfo info = new LevelInfo(WORLD_NAME, GameMode.CREATIVE, false, Difficulty.PEACEFUL, true,
-						new GameRules(FeatureFlags.DEFAULT_ENABLED_FEATURES), DataConfiguration.SAFE_MODE);
+				LevelSettings info = new LevelSettings(WORLD_NAME, GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
+						new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
 				// Superflat, no structures, fixed seed: the same world every time.
-				client.createIntegratedServerLoader().createAndStart(WORLD_NAME, info,
-						new GeneratorOptions(0L, false, false), WorldPresets::createTestOptions, client.currentScreen);
+				client.createWorldOpenFlows().createFreshLevel(WORLD_NAME, info,
+						new WorldOptions(0L, false, false), WorldPresets::createFlatWorldDimensions, client.screen);
 			}
 		}));
 		s.waitUntil("player is in the world", Scenarios::inWorld, 20 * 150);
@@ -376,21 +376,21 @@ public final class Scenarios {
 		s.run("grab the mouse as a focused window would", client -> {
 			// The game only mines while the mouse is grabbed, and only grabs it when the window has
 			// focus. The test window is usually in the background, so tell the game it is focused.
-			client.onWindowFocusChanged(true);
-			client.mouse.lockCursor();
+			client.setWindowActive(true);
+			client.mouseHandler.grabMouse();
 		});
 		s.waitTicks(3);
-		s.run("hold the attack key", client -> client.options.attackKey.setPressed(true));
+		s.run("hold the attack key", client -> client.options.keyAttack.setDown(true));
 		s.waitTicks(40);
 		s.clearChat();
 		s.info("break progress", client -> module.getLastProgress());
 		s.check("break progress is above 5 %", client -> module.getLastProgress() > 0.05F);
 		s.screenshot("06_break_progress");
 		s.run("release the attack key and the mouse", client -> {
-			client.options.attackKey.setPressed(false);
+			client.options.keyAttack.setDown(false);
 			// Give the mouse back, and tell the game the truth about window focus again.
-			client.mouse.unlockCursor();
-			client.onWindowFocusChanged(GLFW.glfwGetWindowAttrib(client.getWindow().getHandle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
+			client.mouseHandler.releaseMouse();
+			client.setWindowActive(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
 		});
 		s.command("gamemode creative @a");
 	}
@@ -422,7 +422,7 @@ public final class Scenarios {
 		s.command("gamemode creative @a");
 		s.waitTicks(70);
 		s.check("player is back on the ground and alive",
-				client -> client.player != null && client.player.isOnGround() && client.player.isAlive());
+				client -> client.player != null && client.player.onGround() && client.player.isAlive());
 	}
 
 	private static void portalCalculator(SelfTest.Script s) {
@@ -443,14 +443,14 @@ public final class Scenarios {
 
 		// Walk through it for real: the game creates the nether-side portal, the module should spot it.
 		s.command("tp @a 3.5 -59 -4.5 180 0");
-		s.waitUntil("arrived in the nether", client -> client.world != null
-				&& client.world.getRegistryKey() == World.NETHER && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitUntil("arrived in the nether", client -> client.level != null
+				&& client.level.dimension() == Level.NETHER && client.player != null && client.screen == null, 20 * 30);
 		s.waitTicks(60);
 		s.info("nether portals known", client -> module.getKnownCount("minecraft:the_nether"));
 		s.check("nether-side portal was remembered", client -> module.getKnownCount("minecraft:the_nether") >= 1);
 		s.command("execute in minecraft:overworld run tp @a 3.5 -60 -1.5 180 0");
-		s.waitUntil("back in the overworld", client -> client.world != null
-				&& client.world.getRegistryKey() == World.OVERWORLD && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitUntil("back in the overworld", client -> client.level != null
+				&& client.level.dimension() == Level.OVERWORLD && client.player != null && client.screen == null, 20 * 30);
 		s.waitTicks(40);
 		s.clearChat();
 		s.check("link to the nether portal is now known", client -> module.getInfo() != null && module.getInfo().link() != null);
@@ -579,9 +579,9 @@ public final class Scenarios {
 		// loaded chunks); then press jump once to open the elytra.
 		s.command("tp @a 0.5 " + (GROUND_Y + 90) + " 0.5 180 40");
 		s.waitTicks(8);
-		s.run("press jump", client -> client.options.jumpKey.setPressed(true));
+		s.run("press jump", client -> client.options.keyJump.setDown(true));
 		s.waitTicks(3);
-		s.run("release jump", client -> client.options.jumpKey.setPressed(false));
+		s.run("release jump", client -> client.options.keyJump.setDown(false));
 		s.waitTicks(22);
 		s.clearChat();
 		s.info("elytra readings", client -> "active=" + module.isActive() + " speed=" + module.getSpeed()
@@ -595,11 +595,11 @@ public final class Scenarios {
 		s.screenshot("13_elytra_dashboard");
 
 		// Now fly it out and compare the real touchdown with what was predicted in mid-air.
-		Vec3d[] predicted = new Vec3d[1];
+		Vec3[] predicted = new Vec3[1];
 		s.run("remember the prediction", client -> predicted[0] = module.getLanding());
 		s.command("gamemode creative @a");
-		s.waitUntil("touchdown", client -> client.player != null && (client.player.isOnGround() || !client.player.isGliding()), 20 * 30);
-		s.info("touchdown", client -> "actual=" + client.player.getEntityPos() + " predicted=" + predicted[0]);
+		s.waitUntil("touchdown", client -> client.player != null && (client.player.onGround() || !client.player.isFallFlying()), 20 * 30);
+		s.info("touchdown", client -> "actual=" + client.player.position() + " predicted=" + predicted[0]);
 		s.check("real touchdown is within 10 blocks of the prediction", client -> predicted[0] != null
 				&& Math.hypot(client.player.getX() - predicted[0].x, client.player.getZ() - predicted[0].z) < 10.0);
 	}
@@ -631,9 +631,9 @@ public final class Scenarios {
 		s.screenshot("14_sound_compass");
 	}
 
-	private static float soundAngle(MinecraftClient client, SoundCompassModule.Entry entry) {
-		return SoundCompassModule.relativeAngle(client.gameRenderer.getCamera().getCameraPos(),
-				client.gameRenderer.getCamera().getYaw(), entry.pos());
+	private static float soundAngle(Minecraft client, SoundCompassModule.Entry entry) {
+		return SoundCompassModule.relativeAngle(client.gameRenderer.getMainCamera().position(),
+				client.gameRenderer.getMainCamera().yRot(), entry.pos());
 	}
 
 	private static void chatEnhancements(SelfTest.Script s) {
@@ -646,11 +646,11 @@ public final class Scenarios {
 		// the player's own line (contains the own name but is not a mention), and the same two
 		// cases again in a "[rank] name: text" format.
 		s.command(client -> "tellraw @a {\"text\":\"<Bob> hello everyone\"}");
-		s.command(client -> "tellraw @a {\"text\":\"<Bob> hey " + client.getSession().getUsername() + " are you there?\"}");
-		s.command(client -> "tellraw @a {\"text\":\"<" + client.getSession().getUsername() + "> yes, "
-				+ client.getSession().getUsername() + " is here\"}");
-		s.command(client -> "tellraw @a {\"text\":\"[Admin] " + client.getSession().getUsername() + ": my own line with a rank tag\"}");
-		s.command(client -> "tellraw @a {\"text\":\"[Admin] Carol: " + client.getSession().getUsername() + ", come to spawn\"}");
+		s.command(client -> "tellraw @a {\"text\":\"<Bob> hey " + client.getUser().getName() + " are you there?\"}");
+		s.command(client -> "tellraw @a {\"text\":\"<" + client.getUser().getName() + "> yes, "
+				+ client.getUser().getName() + " is here\"}");
+		s.command(client -> "tellraw @a {\"text\":\"[Admin] " + client.getUser().getName() + ": my own line with a rank tag\"}");
+		s.command(client -> "tellraw @a {\"text\":\"[Admin] Carol: " + client.getUser().getName() + ", come to spawn\"}");
 		s.waitTicks(10);
 		s.check("five lines were recorded", client -> module.getHistory().size() == 5);
 		s.check("exactly two of them count as a mention", client -> module.getMentionCount() == 2);
@@ -663,16 +663,16 @@ public final class Scenarios {
 			screen.setQuery("hey");
 		});
 		s.waitTicks(5);
-		s.check("search finds exactly the one line containing 'hey'", client -> client.currentScreen instanceof ChatSearchScreen screen
+		s.check("search finds exactly the one line containing 'hey'", client -> client.screen instanceof ChatSearchScreen screen
 				&& screen.getResultCount() == 1);
 		s.screenshot("15_chat_search");
 		s.run("close the search screen", client -> client.setScreen(null));
 
 		// Leave the world and come back: the chat must still be there.
-		s.run("leave the world", client -> client.send(() -> client.disconnect(Text.literal("self-test reconnect"))));
-		s.waitUntil("back at the title screen", client -> client.world == null && client.currentScreen instanceof TitleScreen, 20 * 60);
-		s.run("load the world again", client -> client.send(() ->
-				client.createIntegratedServerLoader().start(WORLD_NAME, () -> client.setScreen(new TitleScreen()))));
+		s.run("leave the world", client -> client.schedule(() -> client.disconnectFromWorld(Component.literal("self-test reconnect"))));
+		s.waitUntil("back at the title screen", client -> client.level == null && client.screen instanceof TitleScreen, 20 * 60);
+		s.run("load the world again", client -> client.schedule(() ->
+				client.createWorldOpenFlows().openWorld(WORLD_NAME, () -> client.setScreen(new TitleScreen()))));
 		s.waitUntil("player is in the world again", Scenarios::inWorld, 20 * 120);
 		s.waitTicks(40);
 		s.info("chat lines restored", client -> module.getRestoredLines());
@@ -686,22 +686,22 @@ public final class Scenarios {
 		// The search button must not take the arrow keys away from the chat box: in the chat,
 		// "up" recalls the last thing you typed. (Found while playing, 2026-10-01.)
 		s.run("remember a typed message, open the chat", client -> {
-			client.inGameHud.getChatHud().addToMessageHistory("remembered line");
+			client.gui.getChat().addRecentChat("remembered line");
 			client.setScreen(new ChatScreen("", false));
 		});
 		s.waitTicks(5);
-		s.run("press the up arrow", client -> client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_UP, 0, 0)));
+		s.run("press the up arrow", client -> client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_UP, 0, 0)));
 		s.waitTicks(2);
 		s.check("up arrow recalls the last typed message, the chat box keeps the keyboard", client ->
-				client.currentScreen instanceof ChatScreen screen && screen.getFocused() instanceof TextFieldWidget field
-						&& field.getText().equals("remembered line"));
+				client.screen instanceof ChatScreen screen && screen.getFocused() instanceof EditBox field
+						&& field.getValue().equals("remembered line"));
 		s.run("press down and tab", client -> {
-			client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_DOWN, 0, 0));
-			client.currentScreen.keyPressed(new KeyInput(GLFW.GLFW_KEY_TAB, 0, 0));
+			client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_DOWN, 0, 0));
+			client.screen.keyPressed(new KeyEvent(GLFW.GLFW_KEY_TAB, 0, 0));
 		});
 		s.waitTicks(2);
 		s.check("down arrow and tab leave the keyboard in the chat box too", client ->
-				client.currentScreen instanceof ChatScreen screen && screen.getFocused() instanceof TextFieldWidget);
+				client.screen instanceof ChatScreen screen && screen.getFocused() instanceof EditBox);
 		s.run("close the chat", client -> client.setScreen(null));
 	}
 
@@ -709,9 +709,9 @@ public final class Scenarios {
 	private static void chineseUi(SelfTest.Script s) {
 		CompletableFuture<?>[] reload = new CompletableFuture<?>[1];
 		s.run("switch the game language to Simplified Chinese", client -> {
-			client.getLanguageManager().setLanguage("zh_cn");
+			client.getLanguageManager().setSelected("zh_cn");
 			// options.language is left alone on purpose, so the dev client starts in English next time.
-			reload[0] = client.reloadResources();
+			reload[0] = client.reloadResourcePacks();
 		});
 		s.waitUntil("resources are reloaded", client -> reload[0] != null && reload[0].isDone() && client.getOverlay() == null, 20 * 90);
 		resetPlayer(s);
@@ -729,27 +729,27 @@ public final class Scenarios {
 		s.waitTicks(5);
 		s.screenshot("16_zh_settings_list");
 		s.run("scroll the module list to the bottom", client -> {
-			if (client.currentScreen != null) {
-				client.currentScreen.mouseScrolled(client.currentScreen.width / 2.0, client.currentScreen.height / 2.0, 0, -100);
+			if (client.screen != null) {
+				client.screen.mouseScrolled(client.screen.width / 2.0, client.screen.height / 2.0, 0, -100);
 			}
 		});
 		s.screenshot("16_zh_settings_list_bottom");
 		s.run("open the settings of the chat module",
-				client -> client.setScreen(new ModuleSettingsScreen(client.currentScreen, module("chat_enhancements"))));
+				client -> client.setScreen(new ModuleSettingsScreen(client.screen, module("chat_enhancements"))));
 		s.waitTicks(5);
 		s.screenshot("16_zh_settings_module");
 		s.run("close the screens", client -> client.setScreen(null));
 	}
 
-	private static List<String> chatLines(MinecraftClient client) {
+	private static List<String> chatLines(Minecraft client) {
 		List<String> lines = new ArrayList<>();
-		for (ChatHudLine line : ((ChatHudAccessor) client.inGameHud.getChatHud()).qolbundle$getMessages()) {
+		for (GuiMessage line : ((ChatHudAccessor) client.gui.getChat()).qolbundle$getMessages()) {
 			lines.add(line.content().getString());
 		}
 		return lines;
 	}
 
-	private static String newestChatLine(MinecraftClient client) {
+	private static String newestChatLine(Minecraft client) {
 		List<String> lines = chatLines(client);
 		return lines.isEmpty() ? "" : lines.get(0);
 	}
@@ -768,23 +768,23 @@ public final class Scenarios {
 		s.waitTicks(20);
 		s.check("the crosshair is on the villager", client -> lookedAtVillager(client) != null);
 		s.check("nothing is known about it before trading", client -> lookedAtVillager(client) != null
-				&& module.getKnownTrades(lookedAtVillager(client).getUuid()) == null);
+				&& module.getKnownTrades(lookedAtVillager(client).getUUID()) == null);
 		s.screenshot("21_villager_unknown");
 		// A real press of the use key: that is the path on which the game announces "entity used".
-		s.run("right-click the villager", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
-		s.waitUntil("the trading screen opens", client -> client.currentScreen instanceof MerchantScreen, 60);
+		s.run("right-click the villager", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
+		s.waitUntil("the trading screen opens", client -> client.screen instanceof MerchantScreen, 60);
 		s.waitTicks(10);
-		s.run("close the trading screen", client -> client.player.closeHandledScreen());
+		s.run("close the trading screen", client -> client.player.closeContainer());
 		s.waitTicks(10);
 		s.check("both trades are remembered", client -> lookedAtVillager(client) != null
-				&& module.getKnownTrades(lookedAtVillager(client).getUuid()) != null
-				&& module.getKnownTrades(lookedAtVillager(client).getUuid()).size() == 2);
+				&& module.getKnownTrades(lookedAtVillager(client).getUUID()) != null
+				&& module.getKnownTrades(lookedAtVillager(client).getUUID()).size() == 2);
 		s.screenshot("21_villager_trades");
 		s.command("kill @e[type=villager]");
 	}
 
-	private static VillagerEntity lookedAtVillager(MinecraftClient client) {
-		return client.crosshairTarget instanceof EntityHitResult hit && hit.getEntity() instanceof VillagerEntity villager ? villager : null;
+	private static Villager lookedAtVillager(Minecraft client) {
+		return client.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof Villager villager ? villager : null;
 	}
 
 	private static void projectileLanding(SelfTest.Script s) {
@@ -800,14 +800,14 @@ public final class Scenarios {
 		s.screenshot("22_projectile_pearl");
 
 		// Throw it for real and compare where the pearl takes the player with the prediction.
-		Vec3d[] predicted = new Vec3d[1];
+		Vec3[] predicted = new Vec3[1];
 		s.run("remember the prediction and throw", client -> {
 			predicted[0] = module.getLanding();
-			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey));
+			KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse));
 		});
 		s.waitUntil("the pearl has teleported the player", client -> client.player.getZ() < -5, 200);
 		s.waitTicks(5);
-		s.info("pearl", client -> "landed=" + client.player.getEntityPos() + " predicted=" + predicted[0]);
+		s.info("pearl", client -> "landed=" + client.player.position() + " predicted=" + predicted[0]);
 		// The game throws every pearl with a little random spread, which the prediction cannot know:
 		// over a 35 block throw that is up to about two blocks.
 		s.check("the player arrived within 2.5 blocks of the predicted spot", client -> predicted[0] != null
@@ -859,7 +859,7 @@ public final class Scenarios {
 		s.waitTicks(8);
 		s.info("escape", client -> module.getEscape());
 		s.check("a safe spot within 3 blocks is found", client -> module.getEscape() != null
-				&& module.getEscape().getSquaredDistance(client.player.getBlockPos()) <= 9);
+				&& module.getEscape().distSqr(client.player.blockPosition()) <= 9);
 		s.screenshot("23_lava_escape");
 		s.command("gamemode creative @a");
 		s.command("effect clear @a");
@@ -962,7 +962,7 @@ public final class Scenarios {
 		};
 		for (String[] testCase : cases) {
 			s.run("search for " + testCase[0], client -> module.setQuery(testCase[0]));
-			s.check("'" + testCase[0] + "' finds " + testCase[1] + " slot(s)", client -> client.currentScreen instanceof HandledScreen<?> screen
+			s.check("'" + testCase[0] + "' finds " + testCase[1] + " slot(s)", client -> client.screen instanceof AbstractContainerScreen<?> screen
 					&& module.countMatches(screen) == Integer.parseInt(testCase[1]));
 		}
 		s.run("search for zs again for the screenshot", client -> module.setQuery("zs"));
@@ -999,17 +999,17 @@ public final class Scenarios {
 		});
 		s.waitUntil("the layout is applied", client -> !module.isApplying(), 60);
 		s.waitTicks(10);
-		s.check("sword and bow are now in hotbar slots 1 and 2", client -> client.player.getInventory().getStack(0).isOf(Items.DIAMOND_SWORD)
-				&& client.player.getInventory().getStack(1).isOf(Items.BOW));
+		s.check("sword and bow are now in hotbar slots 1 and 2", client -> client.player.getInventory().getItem(0).is(Items.DIAMOND_SWORD)
+				&& client.player.getInventory().getItem(1).is(Items.BOW));
 		s.check("the stone and dirt went to the backpack, nothing was lost", client ->
-				client.player.getInventory().count(Items.STONE) == 8 && client.player.getInventory().count(Items.DIRT) == 8);
+				client.player.getInventory().countItem(Items.STONE) == 8 && client.player.getInventory().countItem(Items.DIRT) == 8);
 		s.check("the missing netherite ingot was skipped without fuss", client -> module.getMissing() == 1);
 		s.screenshot("27_hotbar_layout_applied");
 		s.run("apply layout 2 to get the old hotbar back", client -> module.apply(client, 1));
 		s.waitUntil("layout 2 is applied", client -> !module.isApplying(), 60);
 		s.waitTicks(10);
-		s.check("stone and dirt are back in slots 1 and 2", client -> client.player.getInventory().getStack(0).isOf(Items.STONE)
-				&& client.player.getInventory().getStack(1).isOf(Items.DIRT));
+		s.check("stone and dirt are back in slots 1 and 2", client -> client.player.getInventory().getItem(0).is(Items.STONE)
+				&& client.player.getInventory().getItem(1).is(Items.DIRT));
 		s.run("restore the layouts", client -> {
 			module.setLayoutName(0, before[0]);
 			module.setLayout(0, before[1].split(",", -1));
@@ -1024,8 +1024,8 @@ public final class Scenarios {
 		s.check("not active in the Overworld", client -> !module.isActive());
 		// On top of the bedrock ceiling (its top layer is y 127).
 		s.command("execute in minecraft:the_nether run tp @a 12.5 128 -43.5 135 0");
-		s.waitUntil("arrived in the nether", client -> client.world != null
-				&& client.world.getRegistryKey() == World.NETHER && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitUntil("arrived in the nether", client -> client.level != null
+				&& client.level.dimension() == Level.NETHER && client.player != null && client.screen == null, 20 * 30);
 		s.run("destination: Overworld 1200, -340", client -> module.destinationSetting().set("1200, -340"));
 		s.waitTicks(40);
 		s.clearChat();
@@ -1036,8 +1036,8 @@ public final class Scenarios {
 		s.screenshot("28_nether_roof");
 		s.run("clear the destination", client -> module.destinationSetting().reset());
 		s.command("execute in minecraft:overworld run tp @a 0.5 " + GROUND_Y + " 0.5 180 0");
-		s.waitUntil("back in the overworld", client -> client.world != null
-				&& client.world.getRegistryKey() == World.OVERWORLD && client.player != null && client.currentScreen == null, 20 * 30);
+		s.waitUntil("back in the overworld", client -> client.level != null
+				&& client.level.dimension() == Level.OVERWORLD && client.player != null && client.screen == null, 20 * 30);
 		s.waitTicks(20);
 	}
 
@@ -1053,10 +1053,10 @@ public final class Scenarios {
 				+ "[{slot:0,item:{id:\"minecraft:diamond_pickaxe\",count:1}}]}}]}");
 		s.command("tp @a 2.5 " + GROUND_Y + " -1.0 180 45");
 		s.waitTicks(15);
-		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
-		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.run("right-click the chest", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
+		s.waitUntil("the chest screen opens", client -> client.screen instanceof ContainerScreen, 60);
 		s.waitTicks(15);
-		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.run("close the chest", client -> client.player.closeContainer());
 		s.waitTicks(5);
 		s.check("the chest is remembered at its position", client -> module.getChests().size() == 1
 				&& chestPos.equals(module.getChests().get(0).pos));
@@ -1077,7 +1077,7 @@ public final class Scenarios {
 		});
 		s.waitTicks(5);
 		s.screenshot("29_chest_memory_search");
-		s.run("click the result", client -> ((ChestMemoryScreen) client.currentScreen).choose(0));
+		s.run("click the result", client -> ((ChestMemoryScreen) client.screen).choose(0));
 		s.command("tp @a 6.5 " + GROUND_Y + " 6.5 0 0");
 		s.waitTicks(15);
 		s.check("the HUD now points at the chest", client -> module.getTarget() != null && chestPos.equals(module.getTarget().pos));
@@ -1090,11 +1090,11 @@ public final class Scenarios {
 	}
 
 	/** Clicks a recipe of the recipe book the way the book itself does; the server answers with the preview. */
-	private static void clickRecipe(MinecraftClient client, net.minecraft.item.Item result) {
-		for (RecipeResultCollection collection : client.player.getRecipeBook().getOrderedResults()) {
-			for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
-				if (entry.getStacks(SlotDisplayContexts.createParameters(client.world)).stream().anyMatch(stack -> stack.isOf(result))) {
-					client.interactionManager.clickRecipe(client.player.currentScreenHandler.syncId, entry.id(), false);
+	private static void clickRecipe(Minecraft client, net.minecraft.world.item.Item result) {
+		for (RecipeCollection collection : client.player.getRecipeBook().getCollections()) {
+			for (RecipeDisplayEntry entry : collection.getRecipes()) {
+				if (entry.resultItems(SlotDisplayContext.fromLevel(client.level)).stream().anyMatch(stack -> stack.is(result))) {
+					client.gameMode.handlePlaceRecipe(client.player.containerMenu.containerId, entry.id(), false);
 					return;
 				}
 			}
@@ -1115,10 +1115,10 @@ public final class Scenarios {
 		s.command("setblock 2 " + GROUND_Y + " -3 chest[facing=south]{Items:[{Slot:0b,id:\"minecraft:iron_ingot\",count:20}]}");
 		s.command("tp @a 2.5 " + GROUND_Y + " -1.0 180 45");
 		s.waitTicks(15);
-		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
-		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.run("right-click the chest", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
+		s.waitUntil("the chest screen opens", client -> client.screen instanceof ContainerScreen, 60);
 		s.waitTicks(15);
-		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.run("close the chest", client -> client.player.closeContainer());
 		s.waitTicks(5);
 		// Flint and steel = flint + iron ingot. The player has the flint only.
 		s.command("gamemode survival @a");
@@ -1134,7 +1134,7 @@ public final class Scenarios {
 		s.info("missing", client -> module.getMissing().stream().map(entry -> entry.count + "x" + entry.accepts.get(0).getItem()
 				+ " sources=" + entry.sources.size()).toList());
 		s.check("exactly one thing is missing: 1 iron ingot (the flint is there)", client -> module.getMissing().size() == 1
-				&& module.getMissing().get(0).count == 1 && module.getMissing().get(0).accepts.get(0).isOf(Items.IRON_INGOT));
+				&& module.getMissing().get(0).count == 1 && module.getMissing().get(0).accepts.get(0).is(Items.IRON_INGOT));
 		s.check("the known chest with 20 iron ingots is named as the place to get it", client -> module.getMissing().size() == 1
 				&& module.getMissing().get(0).sources.size() == 1
 				&& module.getMissing().get(0).sources.get(0).chest() != null
@@ -1153,7 +1153,7 @@ public final class Scenarios {
 		s.screenshot("32_recipe_helper_box");
 		s.run("click the missing ingredient", client -> module.activate(module.getMissing().get(0)));
 		s.waitTicks(10);
-		s.check("the inventory closed and chest memory points at the chest", client -> client.currentScreen == null
+		s.check("the inventory closed and chest memory points at the chest", client -> client.screen == null
 				&& chests.getTarget() != null && chestPos.equals(chests.getTarget().pos));
 		s.screenshot("32_recipe_helper_pointer");
 		// With the iron in the backpack the recipe can be made: no preview, nothing reported.
@@ -1164,7 +1164,7 @@ public final class Scenarios {
 		s.run("pick the recipe", client -> clickRecipe(client, Items.FLINT_AND_STEEL));
 		s.waitTicks(15);
 		s.check("with all ingredients nothing is reported missing", client -> module.getMissing().isEmpty());
-		s.run("close the inventory", client -> client.player.closeHandledScreen());
+		s.run("close the inventory", client -> client.player.closeContainer());
 		s.command("setblock 2 " + GROUND_Y + " -3 air");
 		s.command("kill @e[type=item]");
 		s.command("gamemode creative @a");
@@ -1172,7 +1172,7 @@ public final class Scenarios {
 	}
 
 	private static void pressUse(SelfTest.Script s) {
-		s.run("right click", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.run("right click", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
 		s.waitTicks(6);
 	}
 
@@ -1187,27 +1187,27 @@ public final class Scenarios {
 		s.info("preview", client -> module.getCurrent() == null ? "none" : module.getCurrent().pos().toShortString() + " " + module.getCurrent().state());
 		s.check("the preview shows oak stairs on the ground ahead, facing north, lower half", client -> module.getCurrent() != null
 				&& module.isPreviewShown() && first.equals(module.getCurrent().pos())
-				&& module.getCurrent().state().isOf(Blocks.OAK_STAIRS)
-				&& module.getCurrent().state().get(Properties.HORIZONTAL_FACING) == Direction.NORTH
-				&& module.getCurrent().state().get(Properties.BLOCK_HALF) == BlockHalf.BOTTOM);
+				&& module.getCurrent().state().is(Blocks.OAK_STAIRS)
+				&& module.getCurrent().state().getValue(BlockStateProperties.HORIZONTAL_FACING) == Direction.NORTH
+				&& module.getCurrent().state().getValue(BlockStateProperties.HALF) == Half.BOTTOM);
 		s.screenshot("33_placement_preview");
 		BlockState[] predicted = new BlockState[1];
 		s.run("remember the preview", client -> predicted[0] = module.getCurrent().state());
 		pressUse(s);
-		s.check("the block that got placed is exactly the previewed one", client -> client.world.getBlockState(first).equals(predicted[0]));
+		s.check("the block that got placed is exactly the previewed one", client -> client.level.getBlockState(first).equals(predicted[0]));
 		s.check("its orientation is remembered for the lock", client -> module.getLastOrientation() != null
 				&& "north".equals(module.getLastOrientation().get("facing")) && "bottom".equals(module.getLastOrientation().get("half")));
 
 		// Lock held, now facing east: the stairs would face east, so the click must not happen.
 		BlockPos east = new BlockPos(1, GROUND_Y, 0);
-		s.run("hold the lock key", client -> module.getLockKey().setPressed(true));
+		s.run("hold the lock key", client -> module.getLockKey().setDown(true));
 		s.command("tp @a 0.5 " + GROUND_Y + " 0.5 -90 60");
 		s.waitTicks(15);
 		s.check("facing east the preview is marked as different from the locked orientation", client -> module.getCurrent() != null
 				&& east.equals(module.getCurrent().pos()) && module.isLocking() && module.conflicts(module.getCurrent().state()));
 		s.screenshot("33_placement_lock_wrong");
 		pressUse(s);
-		s.check("the click was stopped: nothing was placed", client -> client.world.getBlockState(east).isAir() && module.getStoppedCount() == 1);
+		s.check("the click was stopped: nothing was placed", client -> client.level.getBlockState(east).isAir() && module.getStoppedCount() == 1);
 		// Facing north again, somewhere else: same orientation, so it goes through.
 		BlockPos again = new BlockPos(2, GROUND_Y, -1);
 		s.command("tp @a 2.5 " + GROUND_Y + " 0.5 180 60");
@@ -1216,9 +1216,9 @@ public final class Scenarios {
 				&& again.equals(module.getCurrent().pos()) && module.isLocking() && !module.conflicts(module.getCurrent().state()));
 		s.screenshot("33_placement_lock_ok");
 		pressUse(s);
-		s.check("a matching placement goes through while locked", client -> client.world.getBlockState(again).isOf(Blocks.OAK_STAIRS)
+		s.check("a matching placement goes through while locked", client -> client.level.getBlockState(again).is(Blocks.OAK_STAIRS)
 				&& module.getStoppedCount() == 1);
-		s.run("release the lock key", client -> module.getLockKey().setPressed(false));
+		s.run("release the lock key", client -> module.getLockKey().setDown(false));
 
 		// Upper / lower half: a slab aimed at the side of a block at eye height.
 		s.command("setblock 5 " + GROUND_Y + " -3 stone");
@@ -1227,20 +1227,20 @@ public final class Scenarios {
 		s.command("tp @a 5.5 " + GROUND_Y + " -0.5 180 0");
 		s.waitTicks(15);
 		s.check("aiming at the upper half of the side face previews an upper slab", client -> module.getCurrent() != null
-				&& module.halfZone() == 1 && module.getCurrent().state().get(Properties.SLAB_TYPE) == SlabType.TOP);
+				&& module.halfZone() == 1 && module.getCurrent().state().getValue(BlockStateProperties.SLAB_TYPE) == SlabType.TOP);
 		s.screenshot("33_placement_half_upper");
 		s.command("tp @a 5.5 " + GROUND_Y + " -0.5 180 15");
 		s.waitTicks(15);
 		s.check("aiming at the lower half previews a lower slab", client -> module.getCurrent() != null
-				&& module.halfZone() == -1 && module.getCurrent().state().get(Properties.SLAB_TYPE) == SlabType.BOTTOM);
+				&& module.halfZone() == -1 && module.getCurrent().state().getValue(BlockStateProperties.SLAB_TYPE) == SlabType.BOTTOM);
 		s.screenshot("33_placement_half_lower");
 
 		// A torch against a wall becomes a wall torch: the item decides, and the preview must follow it.
 		s.command("item replace entity @a weapon.mainhand with torch 16");
 		s.waitTicks(10);
 		s.check("a torch aimed at a wall previews as a wall torch facing away from it", client -> module.getCurrent() != null
-				&& module.getCurrent().state().isOf(Blocks.WALL_TORCH)
-				&& module.getCurrent().state().get(Properties.HORIZONTAL_FACING) == Direction.SOUTH);
+				&& module.getCurrent().state().is(Blocks.WALL_TORCH)
+				&& module.getCurrent().state().getValue(BlockStateProperties.HORIZONTAL_FACING) == Direction.SOUTH);
 		// Plain stone has no direction: by default it gets no preview.
 		s.command("item replace entity @a weapon.mainhand with stone 16");
 		s.waitTicks(10);
@@ -1257,7 +1257,7 @@ public final class Scenarios {
 		s.waitTicks(2);
 		s.run("fly", client -> {
 			client.player.getAbilities().flying = true;
-			client.player.sendAbilitiesUpdate();
+			client.player.onUpdateAbilities();
 		});
 		s.command("tp @a " + where);
 	}
@@ -1289,10 +1289,10 @@ public final class Scenarios {
 		hover(s, "0.5 " + (y + 8) + " 3.5 180 50");
 		s.waitTicks(20);
 		s.check("there is nothing to show before a scan", client -> module.getParts().isEmpty());
-		s.check("scanning from a block with no redstone near it finds nothing", client -> !module.scan(client.world, new BlockPos(0, y, 6)));
-		s.check("scanning from the first dust takes the whole machine", client -> module.scan(client.world, new BlockPos(-7, y, -4)));
+		s.check("scanning from a block with no redstone near it finds nothing", client -> !module.scan(client.level, new BlockPos(0, y, 6)));
+		s.check("scanning from the first dust takes the whole machine", client -> module.scan(client.level, new BlockPos(-7, y, -4)));
 		s.waitTicks(5);
-		s.info("machine", client -> module.buildLines().stream().map(Text::getString).toList());
+		s.info("machine", client -> module.buildLines().stream().map(Component::getString).toList());
 		s.check("all 25 components are found, through the stone blocks too", client -> module.getParts().size() == 25
 				&& module.count(DiagnosticsModule.Kind.WIRE) == 17 && module.count(DiagnosticsModule.Kind.SOURCE) == 2
 				&& module.count(DiagnosticsModule.Kind.INPUT) == 1 && module.count(DiagnosticsModule.Kind.REPEATER) == 1
@@ -1329,26 +1329,26 @@ public final class Scenarios {
 		s.command("kill @e[type=item]");
 		s.run("land", client -> {
 			client.player.getAbilities().flying = false;
-			client.player.sendAbilitiesUpdate();
+			client.player.onUpdateAbilities();
 		});
 		s.command("tp @a 6.5 " + y + " -4.5 90 30");
 		s.waitTicks(15);
-		s.run("right-click the chest", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
-		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.run("right-click the chest", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
+		s.waitUntil("the chest screen opens", client -> client.screen instanceof ContainerScreen, 60);
 		s.waitTicks(15);
-		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.run("close the chest", client -> client.player.closeContainer());
 		// 21 seconds later the chest holds 32 more iron.
 		s.waitTicks(20 * 21);
 		s.command("item replace block 4 " + y + " -5 container.0 with iron_ingot 37");
-		s.run("right-click the chest again", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
-		s.waitUntil("the chest screen opens", client -> client.currentScreen instanceof GenericContainerScreen, 60);
+		s.run("right-click the chest again", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
+		s.waitUntil("the chest screen opens", client -> client.screen instanceof ContainerScreen, 60);
 		s.waitTicks(15);
-		s.run("close the chest", client -> client.player.closeHandledScreen());
+		s.run("close the chest", client -> client.player.closeContainer());
 		s.waitTicks(15);
 		s.check("rate: the chest gained 32 iron between the two looks", client -> module.getChestGain("minecraft:iron_ingot") == 32);
 		hover(s, "0.5 " + (y + 8) + " 3.5 180 50");
 		s.waitTicks(20);
-		s.info("panel", client -> module.buildLines().stream().map(Text::getString).toList());
+		s.info("panel", client -> module.buildLines().stream().map(Component::getString).toList());
 		s.screenshot("34_diagnostics_rates");
 
 		// Slice: layer 1 is everything on the ground, layer 2 only the torch.
@@ -1371,15 +1371,15 @@ public final class Scenarios {
 		s.check("cleared", client -> module.getParts().isEmpty());
 		s.run("land, forget the chest", client -> {
 			client.player.getAbilities().flying = false;
-			client.player.sendAbilitiesUpdate();
+			client.player.onUpdateAbilities();
 			chests.forgetAll();
 		});
 	}
 
 	private static void walkForward(SelfTest.Script s, int ticks) {
-		s.run("walk forward", client -> client.options.forwardKey.setPressed(true));
+		s.run("walk forward", client -> client.options.keyUp.setDown(true));
 		s.waitTicks(ticks);
-		s.run("stop", client -> client.options.forwardKey.setPressed(false));
+		s.run("stop", client -> client.options.keyUp.setDown(false));
 		s.waitTicks(8);
 	}
 
@@ -1399,7 +1399,7 @@ public final class Scenarios {
 		s.command("execute as @a at @s run tp @s ~ ~ ~ -90 0");
 		s.waitTicks(5);
 		walkForward(s, 40);
-		s.info("trail", client -> "player=" + client.player.getEntityPos() + " points=" + module.getPointCount()
+		s.info("trail", client -> "player=" + client.player.position() + " points=" + module.getPointCount()
 				+ " length=" + module.getTrailLength() + " target=" + module.getTarget());
 		s.check("the walk went north and then east", client -> client.player.getZ() < -5 && client.player.getX() > 5);
 		s.check("the trail is about as long as the walk", client -> {
@@ -1416,11 +1416,11 @@ public final class Scenarios {
 		double[] before = new double[1];
 		s.run("remember the length", client -> before[0] = module.getTrailLength());
 		walkForward(s, 25);
-		s.info("trail after walking back", client -> "player=" + client.player.getEntityPos() + " length=" + module.getTrailLength()
+		s.info("trail after walking back", client -> "player=" + client.player.position() + " length=" + module.getTrailLength()
 				+ " (was " + before[0] + ") target=" + module.getTarget());
 		s.check("walking back uses the trail up (at least 3 blocks shorter)", client -> module.getTrailLength() < before[0] - 3.0);
 		s.check("the arrow still leads further back", client -> module.getTarget() != null
-				&& module.getTarget().distanceTo(client.player.getEntityPos()) >= 3.5 && module.getTarget().x < client.player.getX());
+				&& module.getTarget().distanceTo(client.player.position()) >= 3.5 && module.getTarget().x < client.player.getX());
 
 		// Default setting: only shown for a while after getting hurt.
 		s.run("show only after damage", client -> module.showSetting().set(EscapeTrailModule.Show.AFTER_DAMAGE));
@@ -1447,7 +1447,7 @@ public final class Scenarios {
 		s.check("ready before swinging", client -> !module.isCharging());
 		s.run("swing the axe at the air", client -> {
 			ready[0] = module.getReadyCount();
-			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.attackKey));
+			KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyAttack));
 		});
 		s.waitTicks(5);
 		s.info("cooldown", client -> "charging=" + module.isCharging() + " ticksLeft=" + module.ticksLeft(client.player));
@@ -1489,7 +1489,7 @@ public final class Scenarios {
 		s.info("shot", client -> "source=" + module.getSource() + " health=" + client.player.getHealth());
 		s.check("the arrow points behind the player, to the south where the shot came from", client -> module.getSource() != null
 				&& module.getSource().z > client.player.getZ() + 5
-				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePos(), client.player.getYaw(), module.getSource())) > 150);
+				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePosition(), client.player.getYRot(), module.getSource())) > 150);
 		s.screenshot("38_projectile_direction");
 		s.command("gamemode creative @a");
 		s.command("kill @e[type=arrow]");
@@ -1507,12 +1507,12 @@ public final class Scenarios {
 		// A pig has 10 health, a diamond sword does 7: two hits.
 		for (int hit = 0; hit < 2; hit++) {
 			s.run("hit the pig", client -> {
-				List<PigEntity> pigs = client.world.getEntitiesByClass(PigEntity.class, new Box(client.player.getBlockPos()).expand(6), pig -> pig.isAlive());
+				List<Pig> pigs = client.level.getEntitiesOfClass(Pig.class, new AABB(client.player.blockPosition()).inflate(6), pig -> pig.isAlive());
 				if (pigs.isEmpty()) {
 					throw new IllegalStateException("no pig");
 				}
-				client.interactionManager.attackEntity(client.player, pigs.get(0));
-				client.player.swingHand(Hand.MAIN_HAND);
+				client.gameMode.attack(client.player, pigs.get(0));
+				client.player.swing(InteractionHand.MAIN_HAND);
 			});
 			s.waitTicks(25);
 		}
@@ -1569,7 +1569,7 @@ public final class Scenarios {
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 6.5");
 		s.waitUntil("the alert goes off when they are 6 blocks behind", client -> module.getAlerts() == 1, 60);
 		s.check("the arrow points behind the player", client -> module.getAlertPos() != null
-				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePos(), client.player.getYaw(), module.getAlertPos())) > 150);
+				&& Math.abs(SoundCompassModule.relativeAngle(client.player.getEyePosition(), client.player.getYRot(), module.getAlertPos())) > 150);
 		s.screenshot("41_approach_alert");
 		// Away and back at once: the same player is not announced again so soon.
 		s.command("tp " + FIGURE + " 0.5 " + GROUND_Y + " 25.5");
@@ -1622,14 +1622,14 @@ public final class Scenarios {
 		s.command("fill -3 " + GROUND_Y + " 6 -3 " + (GROUND_Y + 1) + " 6 redstone_block");
 		s.waitTicks(20);
 		int[] fps = new int[2];
-		s.run("note the frame rate without the mirror", client -> fps[0] = client.getCurrentFps());
+		s.run("note the frame rate without the mirror", client -> fps[0] = client.getFps());
 		s.screenshot("43_rear_mirror_off");
 		s.run("mirror on", client -> module.setEnabled(true));
 		s.waitTicks(40);
-		s.run("note the frame rate with the mirror", client -> fps[1] = client.getCurrentFps());
+		s.run("note the frame rate with the mirror", client -> fps[1] = client.getFps());
 		s.info("frame rate", client -> "without mirror " + fps[0] + " fps, with mirror " + fps[1] + " fps");
 		s.check("a picture of the view backwards is kept every frame", client -> module.getCaptures() > 10);
-		s.check("the normal view still looks north", client -> Math.abs(MathHelper.wrapDegrees(client.gameRenderer.getCamera().getYaw() - 180F)) < 0.5F);
+		s.check("the normal view still looks north", client -> Math.abs(Mth.wrapDegrees(client.gameRenderer.getMainCamera().yRot() - 180F)) < 0.5F);
 		s.screenshot("43_rear_mirror");
 		s.dump("43_rear_mirror_picture", client -> module.getPicture());
 		s.run("mirror off", client -> module.setEnabled(false));
@@ -1655,11 +1655,11 @@ public final class Scenarios {
 				+ "{slot:3,item:{id:\"minecraft:diamond\",count:2}}]]");
 		s.waitTicks(10);
 		s.check("the first box is sorted as building blocks", client ->
-				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(0)) == ShulkerManagerModule.BoxCategory.BUILDING);
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getItem(0)) == ShulkerManagerModule.BoxCategory.BUILDING);
 		s.check("the second as gear", client ->
-				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(1)) == ShulkerManagerModule.BoxCategory.GEAR);
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getItem(1)) == ShulkerManagerModule.BoxCategory.GEAR);
 		s.check("the third as mixed", client ->
-				ShulkerManagerModule.categoryOf(client.player.getInventory().getStack(2)) == ShulkerManagerModule.BoxCategory.MIXED);
+				ShulkerManagerModule.categoryOf(client.player.getInventory().getItem(2)) == ShulkerManagerModule.BoxCategory.MIXED);
 		s.check("searching the carried boxes for '钻石镐' finds the box in hotbar slot 2", client -> {
 			List<ShulkerManagerModule.InventoryHit> hits = module.searchInventory(client.player, "钻石镐");
 			return hits.size() == 1 && hits.get(0).slot() == 1 && hits.get(0).count() == 1;
@@ -1675,7 +1675,7 @@ public final class Scenarios {
 			screen.setQuery("zsg");
 		});
 		s.waitTicks(5);
-		s.check("the chest memory screen lists the carried box", client -> client.currentScreen instanceof ChestMemoryScreen screen
+		s.check("the chest memory screen lists the carried box", client -> client.screen instanceof ChestMemoryScreen screen
 				&& screen.getCarried().size() == 1);
 		s.screenshot("30_shulker_carried");
 		s.run("close", client -> client.setScreen(null));
@@ -1699,13 +1699,13 @@ public final class Scenarios {
 		s.waitTicks(32);
 		s.clearChat();
 		s.info("afk clicker", client -> "running=" + module.isRunning() + " clicks=" + module.getClicks()
-				+ " stone left=" + client.player.getMainHandStack().getCount());
+				+ " stone left=" + client.player.getMainHandItem().getCount());
 		s.check("the clicker is running and has clicked at least 5 times", client -> module.isRunning() && module.getClicks() >= 5);
-		s.check("the clicks really placed stone (fewer than 16 left)", client -> client.player.getMainHandStack().getCount() < 16);
+		s.check("the clicks really placed stone (fewer than 16 left)", client -> client.player.getMainHandItem().getCount() < 16);
 		s.run("try to turn the view with the mouse", client -> SelfTest.moveMouse(client, 400, 200));
 		s.waitTicks(3);
-		s.check("the view stayed locked", client -> Math.abs(client.player.getPitch() - 50F) < 0.5F
-				&& Math.abs(MathHelper.wrapDegrees(client.player.getYaw() - 180F)) < 0.5F);
+		s.check("the view stayed locked", client -> Math.abs(client.player.getXRot() - 50F) < 0.5F
+				&& Math.abs(Mth.wrapDegrees(client.player.getYRot() - 180F)) < 0.5F);
 		s.screenshot("17_afk_clicker");
 		// "damage" takes exactly one entity, so @p rather than @a.
 		s.command("damage @p 1");
@@ -1728,46 +1728,46 @@ public final class Scenarios {
 		s.run("switch freecam on", client -> module.setActive(client, true));
 		// The player looks north; "back" and "jump" fly the camera south and up, behind the body.
 		s.run("hold back + jump", client -> {
-			client.options.backKey.setPressed(true);
-			client.options.jumpKey.setPressed(true);
+			client.options.keyDown.setDown(true);
+			client.options.keyJump.setDown(true);
 		});
 		s.waitTicks(12);
 		s.run("release the keys", client -> {
-			client.options.backKey.setPressed(false);
-			client.options.jumpKey.setPressed(false);
+			client.options.keyDown.setDown(false);
+			client.options.keyJump.setDown(false);
 		});
 		s.run("move the mouse down a little", client -> SelfTest.moveMouse(client, 0, 150));
 		s.waitTicks(5);
 		s.info("freecam", client -> "camera=" + module.getCameraPos(1F) + " cameraPitch=" + module.getPitch()
-				+ " player=" + client.player.getEntityPos() + " playerPitch=" + client.player.getPitch());
+				+ " player=" + client.player.position() + " playerPitch=" + client.player.getXRot());
 		s.check("freecam is on", client -> module.isActive());
 		s.check("the camera flew away (south and up)", client -> module.getCameraPos(1F).z > 3.0
 				&& module.getCameraPos(1F).y > GROUND_Y + 4.0);
 		s.check("the body did not move or jump", client -> Math.abs(client.player.getX() - 0.5) < 0.01
 				&& Math.abs(client.player.getZ() - 0.5) < 0.01 && Math.abs(client.player.getY() - GROUND_Y) < 0.01);
 		s.check("the mouse turned the camera, not the body", client -> Math.abs(module.getPitch() - 22.5F) < 0.1F
-				&& Math.abs(client.player.getPitch()) < 0.1F);
+				&& Math.abs(client.player.getXRot()) < 0.1F);
 		s.check("the game camera really is at the freecam position", client ->
-				client.gameRenderer.getCamera().getCameraPos().distanceTo(module.getCameraPos(1F)) < 0.5);
+				client.gameRenderer.getMainCamera().position().distanceTo(module.getCameraPos(1F)) < 0.5);
 		s.screenshot("18_freecam");
 		s.run("switch freecam off", client -> module.setActive(client, false));
 		s.waitTicks(5);
 		s.check("the camera is back at the eyes", client ->
-				client.gameRenderer.getCamera().getCameraPos().distanceTo(client.player.getEyePos()) < 0.5);
+				client.gameRenderer.getMainCamera().position().distanceTo(client.player.getEyePosition()) < 0.5);
 	}
 
 	/** Leaves the current world and enters another one (created on first use). */
 	private static void switchWorld(SelfTest.Script s, String name, boolean flat) {
-		s.run("leave the world", client -> client.send(() -> client.disconnect(Text.literal("self-test world switch"))));
-		s.waitUntil("back at the title screen", client -> client.world == null && client.currentScreen instanceof TitleScreen, 20 * 60);
-		s.run("enter world '" + name + "'", client -> client.send(() -> {
-			if (client.getLevelStorage().levelExists(name)) {
-				client.createIntegratedServerLoader().start(name, () -> client.setScreen(new TitleScreen()));
+		s.run("leave the world", client -> client.schedule(() -> client.disconnectFromWorld(Component.literal("self-test world switch"))));
+		s.waitUntil("back at the title screen", client -> client.level == null && client.screen instanceof TitleScreen, 20 * 60);
+		s.run("enter world '" + name + "'", client -> client.schedule(() -> {
+			if (client.getLevelSource().levelExists(name)) {
+				client.createWorldOpenFlows().openWorld(name, () -> client.setScreen(new TitleScreen()));
 			} else {
-				LevelInfo info = new LevelInfo(name, GameMode.CREATIVE, false, Difficulty.PEACEFUL, true,
-						new GameRules(FeatureFlags.DEFAULT_ENABLED_FEATURES), DataConfiguration.SAFE_MODE);
-				client.createIntegratedServerLoader().createAndStart(name, info, new GeneratorOptions(20261001L, false, false),
-						flat ? WorldPresets::createTestOptions : WorldPresets::createDemoOptions, client.currentScreen);
+				LevelSettings info = new LevelSettings(name, GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
+						new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
+				client.createWorldOpenFlows().createFreshLevel(name, info, new WorldOptions(20261001L, false, false),
+						flat ? WorldPresets::createFlatWorldDimensions : WorldPresets::createNormalWorldDimensions, client.screen);
 			}
 		}));
 		s.waitUntil("player is in '" + name + "'", Scenarios::inWorld, 20 * 240);
@@ -1787,7 +1787,7 @@ public final class Scenarios {
 				other.setEnabled(other == module);
 			}
 			module.clearMarkers();
-			client.inGameHud.getChatHud().clear(false);
+			client.gui.getChat().clearMessages(false);
 		});
 		s.command("gamemode creative @a");
 		s.command("time set noon");
@@ -1795,26 +1795,26 @@ public final class Scenarios {
 		int[] sectionsAbove = new int[1];
 		int[][] counts = new int[1][];
 		s.run("switch freecam on, remember how much is drawn", client -> {
-			sectionsAbove[0] = client.worldRenderer.getCompletedChunkCount();
+			sectionsAbove[0] = client.levelRenderer.countRenderedSections();
 			module.setActive(client, true);
 		});
 		s.waitTicks(10);
 		s.screenshot("31_freecam_surface");
 		// 30 blocks straight down from the player: inside the ground.
 		s.run("put the camera 30 blocks under the player, looking ahead", client ->
-				module.placeCamera(client.player.getEyePos().add(0, -30, 0), client.player.getYaw(), 10F));
+				module.placeCamera(client.player.getEyePosition().add(0, -30, 0), client.player.getYRot(), 10F));
 		s.waitTicks(40);
 		s.screenshot("31_freecam_underground_1");
 		s.run("fly forward through the rock", client -> {
 			counts[0] = new int[40];
-			client.options.forwardKey.setPressed(true);
+			client.options.keyUp.setDown(true);
 		});
 		for (int i = 0; i < 40; i++) {
 			int index = i;
-			s.run("sample " + i, client -> counts[0][index] = client.worldRenderer.getCompletedChunkCount());
+			s.run("sample " + i, client -> counts[0][index] = client.levelRenderer.countRenderedSections());
 			s.waitTicks(1);
 		}
-		s.run("stop", client -> client.options.forwardKey.setPressed(false));
+		s.run("stop", client -> client.options.keyUp.setDown(false));
 		s.screenshot("31_freecam_underground_2");
 		s.info("chunk sections drawn", client -> {
 			int min = Integer.MAX_VALUE;
@@ -1843,7 +1843,7 @@ public final class Scenarios {
 		});
 
 		// Mark what the camera looks at, go back to the body, and the marker must lead there.
-		s.run("right click: mark", client -> KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.useKey)));
+		s.run("right click: mark", client -> KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyUse)));
 		s.waitTicks(5);
 		s.check("one marker was set", client -> module.getMarkers().size() == 1);
 		s.run("leave freecam", client -> module.setActive(client, false));
@@ -1853,9 +1853,9 @@ public final class Scenarios {
 		s.run("back into freecam at the same spot, left click on the marker", client -> {
 			module.setActive(client, true);
 			FreecamModule.Marker marker = module.getMarkers().get(0);
-			Vec3d from = Vec3d.ofCenter(marker.pos()).add(0, 0, 3);
+			Vec3 from = Vec3.atCenterOf(marker.pos()).add(0, 0, 3);
 			module.placeCamera(from, 180F, 0F);
-			KeyBinding.onKeyPressed(KeyBindingHelper.getBoundKeyOf(client.options.attackKey));
+			KeyMapping.click(KeyBindingHelper.getBoundKeyOf(client.options.keyAttack));
 		});
 		s.waitTicks(5);
 		s.check("left click removed the marker", client -> module.getMarkers().isEmpty());
@@ -1879,12 +1879,12 @@ public final class Scenarios {
 		});
 		s.waitTicks(25);
 		s.clearChat();
-		s.info("take-off", client -> "gliding=" + client.player.isGliding() + " y=" + client.player.getY()
-				+ " rockets=" + client.player.getInventory().getStack(3).getCount()
+		s.info("take-off", client -> "gliding=" + client.player.isFallFlying() + " y=" + client.player.getY()
+				+ " rockets=" + client.player.getInventory().getItem(3).getCount()
 				+ " selectedSlot=" + client.player.getInventory().getSelectedSlot());
 		s.check("the sequence completed", client -> module.getTakeoffs() == before[0] + 1 && !module.isBusy());
-		s.check("the player is gliding and has climbed", client -> client.player.isGliding() && client.player.getY() > GROUND_Y + 5);
-		s.check("exactly one rocket was used", client -> client.player.getInventory().getStack(3).getCount() == 4);
+		s.check("the player is gliding and has climbed", client -> client.player.isFallFlying() && client.player.getY() > GROUND_Y + 5);
+		s.check("exactly one rocket was used", client -> client.player.getInventory().getItem(3).getCount() == 4);
 		s.check("the selected hotbar slot is the first one again", client -> client.player.getInventory().getSelectedSlot() == 0);
 		s.screenshot("19_elytra_takeoff");
 		s.command("gamemode creative @a");
@@ -1899,15 +1899,15 @@ public final class Scenarios {
 			before[0] = module.getTakeoffs();
 			module.trigger(client);
 		});
-		s.waitUntil("the elytra opens", client -> client.player.isGliding(), 20);
+		s.waitUntil("the elytra opens", client -> client.player.isFallFlying(), 20);
 		s.waitTicks(3);
 		s.check("without rockets the sequence still completes", client -> module.getTakeoffs() == before[0] + 1 && !module.isBusy());
 		s.command("gamemode creative @a");
 	}
 
-	private static void useLookedAtBlock(MinecraftClient client) {
-		if (client.crosshairTarget instanceof BlockHitResult hit && client.interactionManager != null) {
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hit);
+	private static void useLookedAtBlock(Minecraft client) {
+		if (client.hitResult instanceof BlockHitResult hit && client.gameMode != null) {
+			client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hit);
 		} else {
 			throw new IllegalStateException("not looking at a block");
 		}
@@ -1922,8 +1922,8 @@ public final class Scenarios {
 		return (M) module;
 	}
 
-	private static boolean inWorld(MinecraftClient client) {
-		return client.player != null && client.world != null && client.currentScreen == null && client.getOverlay() == null;
+	private static boolean inWorld(Minecraft client) {
+		return client.player != null && client.level != null && client.screen == null && client.getOverlay() == null;
 	}
 
 	/** Puts the player back to a known state: empty inventory, creative, standing at the origin looking north. */
@@ -1942,7 +1942,7 @@ public final class Scenarios {
 			if (client.player != null) {
 				client.player.getInventory().setSelectedSlot(0);
 			}
-			client.inGameHud.getChatHud().clear(false);
+			client.gui.getChat().clearMessages(false);
 		});
 		s.waitTicks(10);
 	}

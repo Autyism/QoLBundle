@@ -6,14 +6,13 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 
 /** Shows worn armor (and optionally held tools) as icons with their remaining durability. */
 public class ArmorHudModule extends Module {
@@ -32,7 +31,7 @@ public class ArmorHudModule extends Module {
 	private final BoolSetting showHands = add(new BoolSetting("show_hands", true));
 	private final BoolSetting showBar = add(new BoolSetting("show_bar", true));
 	private final BoolSetting showFreeSlots = add(new BoolSetting("show_free_slots", true));
-	private static final ItemStack CHEST_ICON = new ItemStack(net.minecraft.item.Items.CHEST);
+	private static final ItemStack CHEST_ICON = new ItemStack(net.minecraft.world.item.Items.CHEST);
 	private int freeSlots;
 
 	private int shownLastFrame;
@@ -52,8 +51,8 @@ public class ArmorHudModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
 		List<ItemStack> stacks = new ArrayList<>();
 		collect(client, ARMOR, stacks);
 		if (showHands.get()) {
@@ -63,7 +62,7 @@ public class ArmorHudModule extends Module {
 		HudAnchor anchor = position.get();
 		freeSlots = 0;
 		for (int slot = 0; slot < 36; slot++) {
-			if (client.player.getInventory().getStack(slot).isEmpty()) {
+			if (client.player.getInventory().getItem(slot).isEmpty()) {
 				freeSlots++;
 			}
 		}
@@ -77,43 +76,43 @@ public class ArmorHudModule extends Module {
 		if (slotsRow) {
 			// Last row: a chest and how many of the 36 inventory slots are still empty.
 			String text = Integer.toString(freeSlots);
-			int rowWidth = 16 + 3 + client.textRenderer.getWidth(text);
+			int rowWidth = 16 + 3 + client.font.width(text);
 			int x = layout.xFor(anchor, rowWidth);
 			int y = top + stacks.size() * ROW_HEIGHT;
-			context.drawItem(CHEST_ICON, anchor.right ? x + rowWidth - 16 : x, y);
+			context.renderItem(CHEST_ICON, anchor.right ? x + rowWidth - 16 : x, y);
 			int color = freeSlots <= 3 ? 0xFFFF5555 : freeSlots <= 9 ? 0xFFFFFF55 : 0xFF55FF55;
-			context.drawTextWithShadow(client.textRenderer, text, anchor.right ? x : x + 19, y + 4, color);
+			context.drawString(client.font, text, anchor.right ? x : x + 19, y + 4, color);
 		}
 		for (int i = 0; i < stacks.size(); i++) {
 			ItemStack stack = stacks.get(i);
 			int max = stack.getMaxDamage();
-			int remaining = max - stack.getDamage();
+			int remaining = max - stack.getDamageValue();
 			float fraction = remaining / (float) max;
 			String text = switch (display.get()) {
 				case REMAINING -> Integer.toString(remaining);
 				case PERCENT -> Math.round(fraction * 100F) + "%";
 				case BOTH -> remaining + " (" + Math.round(fraction * 100F) + "%)";
 			};
-			int textWidth = client.textRenderer.getWidth(text);
+			int textWidth = client.font.width(text);
 			int rowWidth = 16 + 3 + textWidth;
 			int x = layout.xFor(anchor, rowWidth);
 			int y = top + i * ROW_HEIGHT;
 			// Icon on the outer side, number towards the middle of the screen.
 			int iconX = anchor.right ? x + rowWidth - 16 : x;
 			int textX = anchor.right ? x : x + 19;
-			context.drawItem(stack, iconX, y);
+			context.renderItem(stack, iconX, y);
 			if (showBar.get()) {
 				// The same coloured bar the inventory shows under a damaged item.
-				context.drawStackOverlay(client.textRenderer, stack, iconX, y);
+				context.renderItemDecorations(client.font, stack, iconX, y);
 			}
-			context.drawTextWithShadow(client.textRenderer, text, textX, y + 4, colorFor(fraction));
+			context.drawString(client.font, text, textX, y + 4, colorFor(fraction));
 		}
 	}
 
-	private static void collect(MinecraftClient client, EquipmentSlot[] slots, List<ItemStack> out) {
+	private static void collect(Minecraft client, EquipmentSlot[] slots, List<ItemStack> out) {
 		for (EquipmentSlot slot : slots) {
-			ItemStack stack = client.player.getEquippedStack(slot);
-			if (!stack.isEmpty() && stack.isDamageable()) {
+			ItemStack stack = client.player.getItemBySlot(slot);
+			if (!stack.isEmpty() && stack.isDamageableItem()) {
 				out.add(stack);
 			}
 		}

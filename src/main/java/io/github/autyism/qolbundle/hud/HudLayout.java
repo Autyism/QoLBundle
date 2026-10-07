@@ -1,10 +1,9 @@
 package io.github.autyism.qolbundle.hud;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-
 import java.util.List;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 /**
  * Hands out screen space in the four corners so that several HUD modules never draw on top of each
@@ -54,28 +53,28 @@ public final class HudLayout {
 	}
 
 	/** Draws a block of text lines (each with a dark backdrop, like F3) in a corner. */
-	public void drawLines(DrawContext context, TextRenderer textRenderer, HudAnchor anchor, List<Text> lines) {
+	public void drawLines(GuiGraphics context, Font textRenderer, HudAnchor anchor, List<Component> lines) {
 		drawLines(context, textRenderer, anchor, lines, 1F);
 	}
 
 	/** @param scale font size, 1 = the normal size */
-	public void drawLines(DrawContext context, TextRenderer textRenderer, HudAnchor anchor, List<Text> lines, float scale) {
+	public void drawLines(GuiGraphics context, Font textRenderer, HudAnchor anchor, List<Component> lines, float scale) {
 		if (lines.isEmpty() || isBlocked(anchor)) {
 			return;
 		}
 		int lineHeight = Math.max(1, Math.round(LINE_HEIGHT * scale));
 		int top = reserve(anchor, lines.size() * lineHeight);
 		for (int i = 0; i < lines.size(); i++) {
-			Text line = lines.get(i);
-			int width = textRenderer.getWidth(line);
+			Component line = lines.get(i);
+			int width = textRenderer.width(line);
 			int x = xFor(anchor, Math.round(width * scale));
 			int y = top + i * lineHeight;
-			context.getMatrices().pushMatrix();
-			context.getMatrices().translate(x, y);
-			context.getMatrices().scale(scale, scale);
+			context.pose().pushMatrix();
+			context.pose().translate(x, y);
+			context.pose().scale(scale, scale);
 			context.fill(-2, -1, width + 2, LINE_HEIGHT - 1, BACKGROUND);
-			context.drawTextWithShadow(textRenderer, line, 0, 0, WHITE);
-			context.getMatrices().popMatrix();
+			context.drawString(textRenderer, line, 0, 0, WHITE);
+			context.pose().popMatrix();
 		}
 	}
 }

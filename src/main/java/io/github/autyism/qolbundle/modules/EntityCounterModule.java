@@ -7,21 +7,6 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ExperienceOrbEntity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.entity.vehicle.VehicleEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -29,6 +14,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.vehicle.VehicleEntity;
 
 /**
  * Counts the entities the client currently has loaded, by kind, and warns when dropped items pile
@@ -97,8 +97,8 @@ public class EntityCounterModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		if (client.world == null || client.player == null) {
+	public void onTick(Minecraft client) {
+		if (client.level == null || client.player == null) {
 			return;
 		}
 		if (ticks++ % RECOUNT_TICKS != 0) {
@@ -108,7 +108,7 @@ public class EntityCounterModule extends Module {
 		total = 0;
 		Map<EntityType<?>, Integer> byType = new HashMap<>();
 		Map<Long, int[]> itemCells = new HashMap<>();
-		for (Entity entity : client.world.getEntities()) {
+		for (Entity entity : client.level.entitiesForRendering()) {
 			if (entity == client.player) {
 				continue;
 			}
@@ -117,7 +117,7 @@ public class EntityCounterModule extends Module {
 			counts[category.ordinal()]++;
 			byType.merge(entity.getType(), 1, Integer::sum);
 			if (category == Category.ITEM) {
-				BlockPos at = entity.getBlockPos();
+				BlockPos at = entity.blockPosition();
 				long cell = BlockPos.asLong(at.getX() >> PILE_CELL_SHIFT, at.getY() >> PILE_CELL_SHIFT, at.getZ() >> PILE_CELL_SHIFT);
 				// count, sum x, sum y, sum z: to place the hint in the middle of the pile
 				int[] sums = itemCells.computeIfAbsent(cell, key -> new int[4]);
@@ -149,35 +149,35 @@ public class EntityCounterModule extends Module {
 		if (entity instanceof ItemEntity) {
 			return Category.ITEM;
 		}
-		if (entity instanceof ExperienceOrbEntity) {
+		if (entity instanceof ExperienceOrb) {
 			return Category.XP_ORB;
 		}
-		if (entity instanceof PlayerEntity) {
+		if (entity instanceof Player) {
 			return Category.PLAYER;
 		}
-		if (entity instanceof ProjectileEntity) {
+		if (entity instanceof Projectile) {
 			return Category.PROJECTILE;
 		}
 		if (entity instanceof VehicleEntity) {
 			return Category.VEHICLE;
 		}
-		SpawnGroup group = entity.getType().getSpawnGroup();
-		if (group == SpawnGroup.MONSTER) {
+		MobCategory group = entity.getType().getCategory();
+		if (group == MobCategory.MONSTER) {
 			return Category.HOSTILE;
 		}
-		if (group != SpawnGroup.MISC) {
+		if (group != MobCategory.MISC) {
 			return Category.ANIMAL;
 		}
 		// Villagers, golems and the like are "misc" for the game but still mobs.
-		return entity instanceof MobEntity ? Category.OTHER_MOB : Category.OTHER;
+		return entity instanceof Mob ? Category.OTHER_MOB : Category.OTHER;
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		List<Text> lines = new ArrayList<>();
-		lines.add(Text.translatable(key + "total", total));
+		List<Component> lines = new ArrayList<>();
+		lines.add(Component.translatable(key + "total", total));
 
 		int items = getCount(Category.ITEM);
 		int warnAt = itemWarning.get();
@@ -187,10 +187,10 @@ public class EntityCounterModule extends Module {
 				if (count == 0) {
 					continue;
 				}
-				MutableText line = Text.translatable(key + "category." + category.name().toLowerCase(Locale.ROOT), count);
+				MutableComponent line = Component.translatable(key + "category." + category.name().toLowerCase(Locale.ROOT), count);
 				if (category == Category.ITEM) {
 					if (items >= warnAt) {
-						line = line.append(Text.translatable(key + "lag_warning")).withColor(0xFF5555);
+						line = line.append(Component.translatable(key + "lag_warning")).withColor(0xFF5555);
 					} else if (items * 2 >= warnAt) {
 						line = line.withColor(0xFFFF55);
 					}
@@ -198,24 +198,24 @@ public class EntityCounterModule extends Module {
 				lines.add(line);
 			}
 		} else if (items >= warnAt) {
-			lines.add(Text.translatable(key + "category.item", items).append(Text.translatable(key + "lag_warning")).withColor(0xFF5555));
+			lines.add(Component.translatable(key + "category.item", items).append(Component.translatable(key + "lag_warning")).withColor(0xFF5555));
 		}
 
 		int shown = Math.min(topTypes.get(), top.size());
 		for (int i = 0; i < shown; i++) {
 			Map.Entry<EntityType<?>, Integer> entry = top.get(i);
-			lines.add(Text.translatable(key + "top", entry.getKey().getName(), entry.getValue()).withColor(0xAAAAAA));
+			lines.add(Component.translatable(key + "top", entry.getKey().getDescription(), entry.getValue()).withColor(0xAAAAAA));
 		}
 
 		if (showItemPile.get() && pilePos != null) {
 			double dx = pilePos.getX() + 0.5 - client.player.getX();
 			double dz = pilePos.getZ() + 0.5 - client.player.getZ();
-			int distance = (int) Math.round(Math.sqrt(client.player.getBlockPos().getSquaredDistance(pilePos)));
+			int distance = (int) Math.round(Math.sqrt(client.player.blockPosition().distSqr(pilePos)));
 			// atan2 with +X = east and +Z = south gives 0 = east, 90 = south.
 			int sector = Math.floorMod((int) Math.round(Math.toDegrees(Math.atan2(dz, dx)) / 45.0), 8);
-			lines.add(Text.translatable(key + "pile", pileCount, pilePos.getX(), pilePos.getY(), pilePos.getZ(), distance,
-					Text.translatable("qolbundle.compass." + COMPASS[sector])).withColor(0xFFAA00));
+			lines.add(Component.translatable(key + "pile", pileCount, pilePos.getX(), pilePos.getY(), pilePos.getZ(), distance,
+					Component.translatable("qolbundle.compass." + COMPASS[sector])).withColor(0xFFAA00));
 		}
-		layout.drawLines(context, client.textRenderer, position.get(), lines);
+		layout.drawLines(context, client.font, position.get(), lines);
 	}
 }

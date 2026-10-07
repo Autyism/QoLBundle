@@ -1,8 +1,8 @@
 package io.github.autyism.qolbundle.mixin;
 
 import io.github.autyism.qolbundle.modules.ChatEnhancementsModule;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,17 +15,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * every line on its way into the chat window passes through the module (timestamp, mention mark),
  * and the module gets a last look at the chat before a disconnect clears it.
  */
-@Mixin(ChatHud.class)
+@Mixin(ChatComponent.class)
 public class ChatHudMixin {
 	@ModifyVariable(
-			method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V",
+			method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
 			at = @At("HEAD"), argsOnly = true)
-	private Text qolbundle$decorate(Text message) {
+	private Component qolbundle$decorate(Component message) {
 		return ChatEnhancementsModule.decorate(message);
 	}
 
-	@Inject(method = "clear", at = @At("HEAD"))
+	@Inject(method = "clearMessages", at = @At("HEAD"))
 	private void qolbundle$beforeClear(boolean clearHistory, CallbackInfo ci) {
-		ChatEnhancementsModule.beforeChatCleared((ChatHud) (Object) this, clearHistory);
+		ChatEnhancementsModule.beforeChatCleared((ChatComponent) (Object) this, clearHistory);
 	}
 }

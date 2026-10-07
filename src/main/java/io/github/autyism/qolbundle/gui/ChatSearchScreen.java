@@ -1,18 +1,18 @@
 package io.github.autyism.qolbundle.gui;
 
 import io.github.autyism.qolbundle.modules.ChatEnhancementsModule;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 /** Type a word, see every chat line of this session that contains it (newest at the bottom). */
 public class ChatSearchScreen extends Screen {
@@ -26,13 +26,13 @@ public class ChatSearchScreen extends Screen {
 	private final Screen parent;
 	private final ChatEnhancementsModule module;
 	private final List<ChatEnhancementsModule.Line> results = new ArrayList<>();
-	private TextFieldWidget queryField;
+	private EditBox queryField;
 	private String query = "";
 	/** Lines scrolled up from the bottom. */
 	private int scroll;
 
 	public ChatSearchScreen(@Nullable Screen parent, ChatEnhancementsModule module) {
-		super(Text.translatable("qolbundle.module.chat_enhancements.search.title"));
+		super(Component.translatable("qolbundle.module.chat_enhancements.search.title"));
 		this.parent = parent;
 		this.module = module;
 	}
@@ -43,7 +43,7 @@ public class ChatSearchScreen extends Screen {
 
 	public void setQuery(String text) {
 		if (queryField != null) {
-			queryField.setText(text);
+			queryField.setValue(text);
 		} else {
 			query = text;
 		}
@@ -53,16 +53,16 @@ public class ChatSearchScreen extends Screen {
 	@Override
 	protected void init() {
 		int fieldWidth = Math.min(this.width - 40, 300);
-		queryField = new TextFieldWidget(this.textRenderer, (this.width - fieldWidth) / 2, 28, fieldWidth, 18,
-				Text.translatable("qolbundle.module.chat_enhancements.search.hint"));
+		queryField = new EditBox(this.font, (this.width - fieldWidth) / 2, 28, fieldWidth, 18,
+				Component.translatable("qolbundle.module.chat_enhancements.search.hint"));
 		queryField.setMaxLength(100);
-		queryField.setPlaceholder(Text.translatable("qolbundle.module.chat_enhancements.search.hint"));
-		queryField.setText(query);
-		queryField.setChangedListener(this::runSearch);
-		addDrawableChild(queryField);
+		queryField.setHint(Component.translatable("qolbundle.module.chat_enhancements.search.hint"));
+		queryField.setValue(query);
+		queryField.setResponder(this::runSearch);
+		addRenderableWidget(queryField);
 		setInitialFocus(queryField);
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> close())
-				.dimensions(this.width / 2 - 75, this.height - 27, 150, 20).build());
+		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
+				.bounds(this.width / 2 - 75, this.height - 27, 150, 20).build());
 		runSearch(query);
 	}
 
@@ -90,14 +90,14 @@ public class ChatSearchScreen extends Screen {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
 		super.render(context, mouseX, mouseY, deltaTicks);
-		context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 11, WHITE);
+		context.drawCenteredString(this.font, this.title, this.width / 2, 11, WHITE);
 
-		Text count = module.getHistory().isEmpty()
-				? Text.translatable("qolbundle.module.chat_enhancements.search.empty")
-				: Text.translatable("qolbundle.module.chat_enhancements.search.count", results.size(), module.getHistory().size());
-		context.drawCenteredTextWithShadow(this.textRenderer, count, this.width / 2, LIST_TOP - 11, GRAY);
+		Component count = module.getHistory().isEmpty()
+				? Component.translatable("qolbundle.module.chat_enhancements.search.empty")
+				: Component.translatable("qolbundle.module.chat_enhancements.search.count", results.size(), module.getHistory().size());
+		context.drawCenteredString(this.font, count, this.width / 2, LIST_TOP - 11, GRAY);
 
 		int left = 12;
 		int maxWidth = this.width - 24;
@@ -107,28 +107,28 @@ public class ChatSearchScreen extends Screen {
 		int y = LIST_TOP + 2;
 		for (int i = first; i <= last; i++) {
 			ChatEnhancementsModule.Line line = results.get(i);
-			Text shown = Text.empty()
-					.append(Text.literal(String.format(Locale.ROOT, "[%02d:%02d] ", line.time().getHour(), line.time().getMinute()))
-							.formatted(Formatting.DARK_GRAY))
+			Component shown = Component.empty()
+					.append(Component.literal(String.format(Locale.ROOT, "[%02d:%02d] ", line.time().getHour(), line.time().getMinute()))
+							.withStyle(ChatFormatting.DARK_GRAY))
 					.append(line.text());
-			if (this.textRenderer.getWidth(shown) > maxWidth) {
+			if (this.font.width(shown) > maxWidth) {
 				// Too long for one row: show the plain text cut to fit.
-				String cut = this.textRenderer.trimToWidth(shown.getString(), maxWidth - this.textRenderer.getWidth("...")) + "...";
-				context.drawTextWithShadow(this.textRenderer, cut, left, y, WHITE);
+				String cut = this.font.plainSubstrByWidth(shown.getString(), maxWidth - this.font.width("...")) + "...";
+				context.drawString(this.font, cut, left, y, WHITE);
 			} else {
-				context.drawTextWithShadow(this.textRenderer, shown, left, y, WHITE);
+				context.drawString(this.font, shown, left, y, WHITE);
 			}
 			y += LINE_HEIGHT;
 		}
 	}
 
 	@Override
-	public void close() {
-		this.client.setScreen(parent);
+	public void onClose() {
+		this.minecraft.setScreen(parent);
 	}
 
 	@Override
-	public boolean shouldPause() {
+	public boolean isPauseScreen() {
 		return false;
 	}
 }

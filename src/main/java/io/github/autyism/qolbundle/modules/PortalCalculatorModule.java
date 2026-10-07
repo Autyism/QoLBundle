@@ -10,22 +10,22 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.NetherPortalBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.NetherPortalBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -74,8 +74,8 @@ public class PortalCalculatorModule extends Module {
 	/** A rectangular sheet of portal blocks, as inclusive block coordinates. */
 	public record Portal(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
 		BlockPos nearestTo(BlockPos pos) {
-			return new BlockPos(MathHelper.clamp(pos.getX(), minX, maxX), MathHelper.clamp(pos.getY(), minY, maxY),
-					MathHelper.clamp(pos.getZ(), minZ, maxZ));
+			return new BlockPos(Mth.clamp(pos.getX(), minX, maxX), Mth.clamp(pos.getY(), minY, maxY),
+					Mth.clamp(pos.getZ(), minZ, maxZ));
 		}
 
 		boolean contains(BlockPos pos) {
@@ -140,18 +140,18 @@ public class PortalCalculatorModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		syncWorldData();
 		info = null;
-		if (client.player == null || client.world == null) {
+		if (client.player == null || client.level == null) {
 			return;
 		}
-		ClientWorld world = client.world;
+		ClientLevel world = client.level;
 		if (++ticks % RESCAN_TICKS == 0) {
 			rescanNearby(client, world);
 		}
 
-		HitResult hit = client.player.raycast(range.get(), 1.0F, false);
+		HitResult hit = client.player.pick(range.get(), 1.0F, false);
 		if (hit.getType() != HitResult.Type.BLOCK) {
 			return;
 		}
@@ -171,15 +171,15 @@ public class PortalCalculatorModule extends Module {
 
 	/** The looked-at block if it is a portal block, or a portal block touching the looked-at obsidian. */
 	@Nullable
-	private static BlockPos portalAt(ClientWorld world, BlockPos pos) {
+	private static BlockPos portalAt(ClientLevel world, BlockPos pos) {
 		BlockState state = world.getBlockState(pos);
-		if (state.isOf(Blocks.NETHER_PORTAL)) {
+		if (state.is(Blocks.NETHER_PORTAL)) {
 			return pos;
 		}
-		if (state.isOf(Blocks.OBSIDIAN)) {
+		if (state.is(Blocks.OBSIDIAN)) {
 			for (Direction direction : Direction.values()) {
-				BlockPos neighbor = pos.offset(direction);
-				if (world.getBlockState(neighbor).isOf(Blocks.NETHER_PORTAL)) {
+				BlockPos neighbor = pos.relative(direction);
+				if (world.getBlockState(neighbor).is(Blocks.NETHER_PORTAL)) {
 					return neighbor;
 				}
 			}
@@ -190,7 +190,7 @@ public class PortalCalculatorModule extends Module {
 	private Info compute(Portal portal, boolean inNether) {
 		// Nether -> Overworld multiplies by 8, Overworld -> Nether divides by 8. Y stays.
 		double scale = inNether ? 8.0 : 0.125;
-		BlockPos target = BlockPos.ofFloored(portal.centerX() * scale, portal.minY(), portal.centerZ() * scale);
+		BlockPos target = BlockPos.containing(portal.centerX() * scale, portal.minY(), portal.centerZ() * scale);
 		// The game searches 16 blocks around the target in the Nether, 128 in the Overworld.
 		int radius = inNether ? 128 : 16;
 		String here = inNether ? NETHER : OVERWORLD;
@@ -204,7 +204,7 @@ public class PortalCalculatorModule extends Module {
 			BlockPos nearest = link.nearestTo(target);
 			distance = (int) Math.round(Math.hypot(nearest.getX() - target.getX(), nearest.getZ() - target.getZ()));
 			double back = inNether ? 0.125 : 8.0;
-			BlockPos backTarget = BlockPos.ofFloored(link.centerX() * back, link.minY(), link.centerZ() * back);
+			BlockPos backTarget = BlockPos.containing(link.centerX() * back, link.minY(), link.centerZ() * back);
 			returnPortal = findLink(known.get(here), backTarget, inNether ? 16 : 128);
 		}
 		return new Info(portal, inNether, target, link, distance, radius, returnPortal);
@@ -224,7 +224,7 @@ public class PortalCalculatorModule extends Module {
 			if (Math.abs(nearest.getX() - target.getX()) > radius || Math.abs(nearest.getZ() - target.getZ()) > radius) {
 				continue;
 			}
-			double distance = nearest.getSquaredDistance(target);
+			double distance = nearest.distSqr(target);
 			if (distance < bestDistance || distance == bestDistance && nearest.getY() < bestY) {
 				best = portal;
 				bestDistance = distance;
@@ -236,14 +236,14 @@ public class PortalCalculatorModule extends Module {
 
 	// ---- finding and remembering portals -------------------------------------------------------
 
-	private static String dimensionId(World world) {
-		return world.getRegistryKey().getValue().toString();
+	private static String dimensionId(Level world) {
+		return world.dimension().identifier().toString();
 	}
 
 	/** Grows from one portal block to the whole rectangular sheet. */
-	private static Portal measure(ClientWorld world, BlockPos start) {
+	private static Portal measure(ClientLevel world, BlockPos start) {
 		BlockState state = world.getBlockState(start);
-		Direction.Axis axis = state.get(NetherPortalBlock.AXIS);
+		Direction.Axis axis = state.getValue(NetherPortalBlock.AXIS);
 		Direction along = axis == Direction.Axis.X ? Direction.EAST : Direction.SOUTH;
 		BlockPos min = extend(world, state, extend(world, state, start, Direction.DOWN), along.getOpposite());
 		BlockPos max = extend(world, state, extend(world, state, start, Direction.UP), along);
@@ -251,8 +251,8 @@ public class PortalCalculatorModule extends Module {
 				Math.max(min.getX(), max.getX()), Math.max(min.getY(), max.getY()), Math.max(min.getZ(), max.getZ()));
 	}
 
-	private static BlockPos extend(ClientWorld world, BlockState state, BlockPos from, Direction direction) {
-		BlockPos.Mutable pos = from.mutableCopy();
+	private static BlockPos extend(ClientLevel world, BlockState state, BlockPos from, Direction direction) {
+		BlockPos.MutableBlockPos pos = from.mutable();
 		for (int i = 0; i < MAX_PORTAL_SIZE; i++) {
 			pos.move(direction);
 			if (world.getBlockState(pos) != state) {
@@ -260,7 +260,7 @@ public class PortalCalculatorModule extends Module {
 				break;
 			}
 		}
-		return pos.toImmutable();
+		return pos.immutable();
 	}
 
 	/** Adds a portal, replacing any older overlapping record. Returns the stored instance. */
@@ -275,22 +275,22 @@ public class PortalCalculatorModule extends Module {
 		return portal;
 	}
 
-	private void scanChunk(ClientWorld world, WorldChunk chunk) {
-		ChunkSection[] sections = chunk.getSectionArray();
+	private void scanChunk(ClientLevel world, LevelChunk chunk) {
+		LevelChunkSection[] sections = chunk.getSections();
 		String dimension = dimensionId(world);
 		for (int i = 0; i < sections.length; i++) {
-			ChunkSection section = sections[i];
+			LevelChunkSection section = sections[i];
 			// hasAny looks at the section's block palette first, so portal-free sections cost almost nothing.
-			if (section == null || section.isEmpty() || !section.hasAny(state -> state.isOf(Blocks.NETHER_PORTAL))) {
+			if (section == null || section.hasOnlyAir() || !section.maybeHas(state -> state.is(Blocks.NETHER_PORTAL))) {
 				continue;
 			}
-			int baseX = chunk.getPos().getStartX();
-			int baseY = chunk.sectionIndexToCoord(i) << 4;
-			int baseZ = chunk.getPos().getStartZ();
+			int baseX = chunk.getPos().getMinBlockX();
+			int baseY = chunk.getSectionYFromSectionIndex(i) << 4;
+			int baseZ = chunk.getPos().getMinBlockZ();
 			for (int y = 0; y < 16; y++) {
 				for (int z = 0; z < 16; z++) {
 					for (int x = 0; x < 16; x++) {
-						if (!section.getBlockState(x, y, z).isOf(Blocks.NETHER_PORTAL)) {
+						if (!section.getBlockState(x, y, z).is(Blocks.NETHER_PORTAL)) {
 							continue;
 						}
 						BlockPos pos = new BlockPos(baseX + x, baseY + y, baseZ + z);
@@ -317,7 +317,7 @@ public class PortalCalculatorModule extends Module {
 	}
 
 	/** Every two seconds: pick up portals lit near the player and drop remembered ones that are gone. */
-	private void rescanNearby(MinecraftClient client, ClientWorld world) {
+	private void rescanNearby(Minecraft client, ClientLevel world) {
 		String dimension = dimensionId(world);
 		int chunkX = client.player.getBlockX() >> 4;
 		int chunkZ = client.player.getBlockZ() >> 4;
@@ -327,8 +327,8 @@ public class PortalCalculatorModule extends Module {
 				int cx = portal.minX() >> 4;
 				int cz = portal.minZ() >> 4;
 				boolean near = Math.abs(cx - chunkX) <= 1 && Math.abs(cz - chunkZ) <= 1;
-				return near && world.getChunkManager().isChunkLoaded(cx, cz)
-						&& !world.getBlockState(new BlockPos(portal.minX(), portal.minY(), portal.minZ())).isOf(Blocks.NETHER_PORTAL);
+				return near && world.getChunkSource().hasChunk(cx, cz)
+						&& !world.getBlockState(new BlockPos(portal.minX(), portal.minY(), portal.minZ())).is(Blocks.NETHER_PORTAL);
 			});
 			if (removed) {
 				store();
@@ -336,7 +336,7 @@ public class PortalCalculatorModule extends Module {
 		}
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dz = -1; dz <= 1; dz++) {
-				WorldChunk chunk = world.getChunkManager().getWorldChunk(chunkX + dx, chunkZ + dz);
+				LevelChunk chunk = world.getChunkSource().getChunkNow(chunkX + dx, chunkZ + dz);
 				if (chunk != null) {
 					scanChunk(world, chunk);
 				}
@@ -405,18 +405,18 @@ public class PortalCalculatorModule extends Module {
 	// ---- HUD -----------------------------------------------------------------------------------
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		Info shown = info;
 		if (shown == null) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		List<Text> lines = new ArrayList<>();
+		List<Component> lines = new ArrayList<>();
 		List<Integer> colors = new ArrayList<>();
 
 		BlockPos target = shown.target();
-		lines.add(Text.translatable(key + (shown.inNether() ? "target_overworld" : "target_nether"),
+		lines.add(Component.translatable(key + (shown.inNether() ? "target_overworld" : "target_nether"),
 				target.getX(), target.getY(), target.getZ()));
 		colors.add(HudLayout.WHITE);
 
@@ -424,36 +424,36 @@ public class PortalCalculatorModule extends Module {
 			Portal link = shown.link();
 			if (link != null) {
 				BlockPos at = link.nearestTo(target);
-				lines.add(Text.translatable(key + "link_known", at.getX(), at.getY(), at.getZ(), shown.linkDistance()));
+				lines.add(Component.translatable(key + "link_known", at.getX(), at.getY(), at.getZ(), shown.linkDistance()));
 				colors.add(0xFF55FF55);
 				if (showReturn.get()) {
 					Portal back = shown.returnPortal();
 					if (shown.returnsHere()) {
-						lines.add(Text.translatable(key + "return_ok"));
+						lines.add(Component.translatable(key + "return_ok"));
 						colors.add(0xFF55FF55);
 					} else if (back != null) {
-						lines.add(Text.translatable(key + "return_other", back.minX(), back.minY(), back.minZ()));
+						lines.add(Component.translatable(key + "return_other", back.minX(), back.minY(), back.minZ()));
 						colors.add(0xFFFF5555);
 					}
 				}
 			} else {
-				lines.add(Text.translatable(key + "link_new", shown.searchRadius()));
+				lines.add(Component.translatable(key + "link_new", shown.searchRadius()));
 				colors.add(0xFFFFFF55);
-				lines.add(Text.translatable(key + "note"));
+				lines.add(Component.translatable(key + "note"));
 				colors.add(0xFFAAAAAA);
 			}
 		}
 
 		int width = 0;
-		for (Text line : lines) {
-			width = Math.max(width, client.textRenderer.getWidth(line));
+		for (Component line : lines) {
+			width = Math.max(width, client.font.width(line));
 		}
 		// Centred a little below the crosshair, so the crosshair itself stays visible.
 		int x = (layout.getScreenWidth() - width) / 2;
 		int y = layout.getScreenHeight() / 2 + 30;
 		context.fill(x - 3, y - 3, x + width + 3, y + lines.size() * HudLayout.LINE_HEIGHT + 1, 0x90000000);
 		for (int i = 0; i < lines.size(); i++) {
-			context.drawTextWithShadow(client.textRenderer, lines.get(i), x, y + i * HudLayout.LINE_HEIGHT, colors.get(i));
+			context.drawString(client.font, lines.get(i), x, y + i * HudLayout.LINE_HEIGHT, colors.get(i));
 		}
 	}
 }

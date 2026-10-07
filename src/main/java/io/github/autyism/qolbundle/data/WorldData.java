@@ -9,9 +9,9 @@ import io.github.autyism.qolbundle.QoLBundleClient;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.world.level.storage.LevelResource;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -81,19 +81,19 @@ public final class WorldData {
 		return FabricLoader.getInstance().getConfigDir().resolve(QoLBundleClient.MOD_ID).resolve("worlds").resolve(id + ".json");
 	}
 
-	private static String computeId(MinecraftClient client) {
+	private static String computeId(Minecraft client) {
 		String raw;
-		if (client.isIntegratedServerRunning() && client.getServer() != null) {
-			Path folder = client.getServer().getSavePath(WorldSavePath.ROOT).toAbsolutePath().normalize();
+		if (client.hasSingleplayerServer() && client.getSingleplayerServer() != null) {
+			Path folder = client.getSingleplayerServer().getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
 			raw = "local_" + folder.getFileName();
 		} else {
-			ServerInfo server = client.getCurrentServerEntry();
-			raw = "server_" + (server != null ? server.address : "unknown");
+			ServerData server = client.getCurrentServer();
+			raw = "server_" + (server != null ? server.ip : "unknown");
 		}
 		return raw.replaceAll("[^A-Za-z0-9._-]", "_");
 	}
 
-	private static void load(MinecraftClient client) {
+	private static void load(Minecraft client) {
 		save();
 		worldId = computeId(client);
 		root = new JsonObject();

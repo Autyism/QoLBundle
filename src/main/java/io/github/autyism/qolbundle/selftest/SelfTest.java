@@ -4,9 +4,9 @@ import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.config.ConfigManager;
 import io.github.autyism.qolbundle.input.ViewHooks;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.ScreenshotRecorder;
-import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.client.server.IntegratedServer;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
@@ -38,7 +38,7 @@ public final class SelfTest {
 	private final List<String> failedScenarios = new ArrayList<>();
 	private final AtomicInteger pendingScreenshots = new AtomicInteger();
 	/** Things to put back when the run ends (game options the test had to change). */
-	private final List<Consumer<MinecraftClient>> cleanups = new ArrayList<>();
+	private final List<Consumer<Minecraft>> cleanups = new ArrayList<>();
 	private int index;
 	private int ticksInStep;
 	private long startNanos = -1;
@@ -59,13 +59,13 @@ public final class SelfTest {
 	 * Turns the view the way a mouse movement would. During a self-test the real mouse is ignored
 	 * (somebody may be using the computer while the test window is open), so scenarios must use this.
 	 */
-	public static void moveMouse(MinecraftClient client, double deltaX, double deltaY) {
+	public static void moveMouse(Minecraft client, double deltaX, double deltaY) {
 		if (client.player == null) {
 			return;
 		}
 		testIsMovingMouse = true;
 		try {
-			client.player.changeLookDirection(deltaX, deltaY);
+			client.player.turn(deltaX, deltaY);
 		} finally {
 			testIsMovingMouse = false;
 		}
@@ -77,8 +77,8 @@ public final class SelfTest {
 	 * otherwise count as a key press in a scenario. Scenarios press keys through the game's own
 	 * key bindings, which does not need these callbacks.
 	 */
-	private static void ignoreRealInput(MinecraftClient client) {
-		long window = client.getWindow().getHandle();
+	private static void ignoreRealInput(Minecraft client) {
+		long window = client.getWindow().handle();
 		GLFW.glfwSetMouseButtonCallback(window, null);
 		GLFW.glfwSetScrollCallback(window, null);
 		GLFW.glfwSetKeyCallback(window, null);
@@ -115,11 +115,11 @@ public final class SelfTest {
 	}
 
 	/** Registers code that runs once at the very end, whether the run passed, failed or timed out. */
-	public void onFinish(Consumer<MinecraftClient> cleanup) {
+	public void onFinish(Consumer<Minecraft> cleanup) {
 		cleanups.add(cleanup);
 	}
 
-	private void tick(MinecraftClient client) {
+	private void tick(Minecraft client) {
 		if (done) {
 			return;
 		}
@@ -193,13 +193,13 @@ public final class SelfTest {
 		runningScenario = null;
 	}
 
-	private void tickFinish(MinecraftClient client) {
+	private void tickFinish(Minecraft client) {
 		// Screenshots are written on a background thread; wait for them (max 10 s) before stopping.
 		if (pendingScreenshots.get() > 0 && finishTicks++ < 200) {
 			return;
 		}
 		done = true;
-		for (Consumer<MinecraftClient> cleanup : cleanups) {
+		for (Consumer<Minecraft> cleanup : cleanups) {
 			try {
 				cleanup.accept(client);
 			} catch (RuntimeException e) {
@@ -208,14 +208,14 @@ public final class SelfTest {
 		}
 		LOGGER.info(PREFIX + "SUMMARY passed={} failed={} {}", passed, failedScenarios.size(), failedScenarios);
 		LOGGER.info(PREFIX + "DONE");
-		client.scheduleStop();
+		client.stop();
 	}
 
-	private static File screenshotDir(MinecraftClient client) {
-		return new File(new File(client.runDirectory, ScreenshotRecorder.SCREENSHOTS_DIRECTORY), SCREENSHOT_FOLDER);
+	private static File screenshotDir(Minecraft client) {
+		return new File(new File(client.gameDirectory, Screenshot.SCREENSHOT_DIR), SCREENSHOT_FOLDER);
 	}
 
-	private void clearOldScreenshots(MinecraftClient client) {
+	private void clearOldScreenshots(Minecraft client) {
 		File dir = screenshotDir(client);
 		File[] old = dir.listFiles((d, name) -> name.endsWith(".png"));
 		if (old != null) {
@@ -233,7 +233,7 @@ public final class SelfTest {
 	@FunctionalInterface
 	private interface Action {
 		/** @return true when the step is finished, false to be called again next tick */
-		boolean run(MinecraftClient client, int ticksInStep) throws Exception;
+		boolean run(Minecraft client, int ticksInStep) throws Exception;
 	}
 
 	private record Step(String scenario, boolean fatal, String description, Action action) {
@@ -254,7 +254,7 @@ public final class SelfTest {
 		}
 
 		/** Runs code on the client thread. */
-		public Script run(String description, Consumer<MinecraftClient> code) {
+		public Script run(String description, Consumer<Minecraft> code) {
 			add(description, (client, ticks) -> {
 				code.accept(client);
 				return true;
@@ -268,14 +268,14 @@ public final class SelfTest {
 		}
 
 		/** Waits until the condition holds; fails the scenario when it does not within the timeout. */
-		public Script waitUntil(String description, Predicate<MinecraftClient> condition, int timeoutTicks) {
+		public Script waitUntil(String description, Predicate<Minecraft> condition, int timeoutTicks) {
 			add("wait until " + description, (client, ticks) -> {
 				if (condition.test(client)) {
 					return true;
 				}
 				if (ticks >= timeoutTicks) {
 					throw new IllegalStateException("timed out after " + timeoutTicks + " ticks; current screen: "
-							+ (client.currentScreen == null ? "none" : client.currentScreen.getClass().getSimpleName()));
+							+ (client.screen == null ? "none" : client.screen.getClass().getSimpleName()));
 				}
 				return false;
 			});
@@ -285,27 +285,27 @@ public final class SelfTest {
 		/** Runs a command as the integrated server (the self-test world is a single-player world). */
 		public Script command(String command) {
 			add("command /" + command, (client, ticks) -> {
-				IntegratedServer server = client.getServer();
+				IntegratedServer server = client.getSingleplayerServer();
 				if (server == null) {
 					throw new IllegalStateException("no integrated server");
 				}
 				// Silent: no "[Server: ...]" lines in the chat, they would clutter the screenshots.
-				server.execute(() -> server.getCommandManager().parseAndExecute(server.getCommandSource().withSilent(), command));
+				server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command));
 				return true;
 			});
 			return this;
 		}
 
 		/** Like {@link #command(String)}, for commands that are only known while the test runs. */
-		public Script command(Function<MinecraftClient, String> commandSupplier) {
+		public Script command(Function<Minecraft, String> commandSupplier) {
 			add("command (computed)", (client, ticks) -> {
-				IntegratedServer server = client.getServer();
+				IntegratedServer server = client.getSingleplayerServer();
 				if (server == null) {
 					throw new IllegalStateException("no integrated server");
 				}
 				String command = commandSupplier.apply(client);
 				LOGGER.info(PREFIX + "computed command: /{}", command);
-				server.execute(() -> server.getCommandManager().parseAndExecute(server.getCommandSource().withSilent(), command));
+				server.execute(() -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command));
 				return true;
 			});
 			return this;
@@ -314,14 +314,14 @@ public final class SelfTest {
 		/** Empties the chat so that server messages ("game mode updated") are not in the screenshot. */
 		public Script clearChat() {
 			add("clear chat", (client, ticks) -> {
-				client.inGameHud.getChatHud().clear(false);
+				client.gui.getChat().clearMessages(false);
 				return true;
 			});
 			return this;
 		}
 
 		/** Checks a condition and logs it; a failed check fails the scenario but lets it continue. */
-		public Script check(String description, Predicate<MinecraftClient> condition) {
+		public Script check(String description, Predicate<Minecraft> condition) {
 			add("check " + description, (client, ticks) -> {
 				if (condition.test(client)) {
 					LOGGER.info(PREFIX + "check ok: {}", description);
@@ -334,7 +334,7 @@ public final class SelfTest {
 		}
 
 		/** Writes a value into the log so it can be compared with the screenshot. */
-		public Script info(String label, Function<MinecraftClient, Object> value) {
+		public Script info(String label, Function<Minecraft, Object> value) {
 			add("info " + label, (client, ticks) -> {
 				LOGGER.info(PREFIX + "info {}: {}", label, value.apply(client));
 				return true;
@@ -358,8 +358,8 @@ public final class SelfTest {
 					return false;
 				}
 				pendingScreenshots.incrementAndGet();
-				ScreenshotRecorder.saveScreenshot(client.runDirectory, SCREENSHOT_FOLDER + "/" + name + ".png",
-						client.getFramebuffer(), 1, message -> {
+				Screenshot.grab(client.gameDirectory, SCREENSHOT_FOLDER + "/" + name + ".png",
+						client.getMainRenderTarget(), 1, message -> {
 							pendingScreenshots.decrementAndGet();
 							LOGGER.info(PREFIX + "screenshot {}: {}", name, message.getString());
 						});
@@ -369,14 +369,14 @@ public final class SelfTest {
 		}
 
 		/** Saves the contents of some other picture buffer (not the screen) as a PNG next to the screenshots. */
-		public Script dump(String name, Function<MinecraftClient, net.minecraft.client.gl.Framebuffer> buffer) {
+		public Script dump(String name, Function<Minecraft, com.mojang.blaze3d.pipeline.RenderTarget> buffer) {
 			add("dump " + name, (client, ticks) -> {
-				net.minecraft.client.gl.Framebuffer framebuffer = buffer.apply(client);
+				com.mojang.blaze3d.pipeline.RenderTarget framebuffer = buffer.apply(client);
 				if (framebuffer == null) {
 					throw new IllegalStateException("nothing to dump for " + name);
 				}
 				pendingScreenshots.incrementAndGet();
-				ScreenshotRecorder.saveScreenshot(client.runDirectory, SCREENSHOT_FOLDER + "/" + name + ".png", framebuffer, 1, message -> {
+				Screenshot.grab(client.gameDirectory, SCREENSHOT_FOLDER + "/" + name + ".png", framebuffer, 1, message -> {
 					pendingScreenshots.decrementAndGet();
 					LOGGER.info(PREFIX + "dump {}: {}", name, message.getString());
 				});

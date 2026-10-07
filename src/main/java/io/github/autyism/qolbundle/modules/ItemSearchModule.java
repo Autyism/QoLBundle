@@ -9,14 +9,14 @@ import io.github.autyism.qolbundle.util.ItemNames;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 
@@ -31,12 +31,12 @@ public class ItemSearchModule extends Module {
 
 	private String query = "";
 	@Nullable
-	private TextFieldWidget field;
+	private EditBox field;
 
 	public ItemSearchModule() {
 		super("item_search", ModuleCategory.TOOLS, true);
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-			if (isEnabled() && screen instanceof HandledScreen<?> handled && !(screen instanceof CreativeInventoryScreen)) {
+			if (isEnabled() && screen instanceof AbstractContainerScreen<?> handled && !(screen instanceof CreativeModeInventoryScreen)) {
 				attach(client, handled, height);
 			}
 		});
@@ -50,28 +50,28 @@ public class ItemSearchModule extends Module {
 	public void setQuery(String text) {
 		query = text;
 		if (field != null) {
-			field.setText(text);
+			field.setValue(text);
 		}
 	}
 
 	/** How many slots of the screen hold a matching item (for the self-test). */
-	public int countMatches(HandledScreen<?> screen) {
+	public int countMatches(AbstractContainerScreen<?> screen) {
 		int count = 0;
-		for (Slot slot : screen.getScreenHandler().slots) {
-			if (!slot.getStack().isEmpty() && matches(slot.getStack(), query)) {
+		for (Slot slot : screen.getMenu().slots) {
+			if (!slot.getItem().isEmpty() && matches(slot.getItem(), query)) {
 				count++;
 			}
 		}
 		return count;
 	}
 
-	private void attach(MinecraftClient client, HandledScreen<?> screen, int height) {
+	private void attach(Minecraft client, AbstractContainerScreen<?> screen, int height) {
 		query = "";
-		TextFieldWidget box = new TextFieldWidget(client.textRenderer, 4, height - 20, 110, 16,
-				Text.translatable(getTranslationKey() + ".placeholder"));
-		box.setPlaceholder(Text.translatable(getTranslationKey() + ".placeholder"));
+		EditBox box = new EditBox(client.font, 4, height - 20, 110, 16,
+				Component.translatable(getTranslationKey() + ".placeholder"));
+		box.setHint(Component.translatable(getTranslationKey() + ".placeholder"));
 		box.setMaxLength(40);
-		box.setChangedListener(text -> query = text);
+		box.setResponder(text -> query = text);
 		field = box;
 		Screens.getButtons(screen).add(box);
 
@@ -80,7 +80,7 @@ public class ItemSearchModule extends Module {
 			if (!box.isFocused() || input.isEscape()) {
 				return true;
 			}
-			if (input.isEnter()) {
+			if (input.isConfirmation()) {
 				box.setFocused(false);
 				current.setFocused(null);
 			} else {
@@ -96,23 +96,23 @@ public class ItemSearchModule extends Module {
 		});
 	}
 
-	private void highlight(DrawContext context, HandledScreen<?> screen) {
+	private void highlight(GuiGraphics context, AbstractContainerScreen<?> screen) {
 		if (query.isBlank() || !isEnabled()) {
 			return;
 		}
 		HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 		int left = accessor.qolbundle$getX();
 		int top = accessor.qolbundle$getY();
-		for (Slot slot : screen.getScreenHandler().slots) {
-			if (!slot.isEnabled()) {
+		for (Slot slot : screen.getMenu().slots) {
+			if (!slot.isActive()) {
 				continue;
 			}
 			int x = left + slot.x;
 			int y = top + slot.y;
-			if (!slot.getStack().isEmpty() && matches(slot.getStack(), query)) {
-				context.drawStrokedRectangle(x - 1, y - 1, 18, 18, 0xFF55FF55);
+			if (!slot.getItem().isEmpty() && matches(slot.getItem(), query)) {
+				context.renderOutline(x - 1, y - 1, 18, 18, 0xFF55FF55);
 			} else if (ModuleRegistry.get("shulker_manager") instanceof ShulkerManagerModule shulkers && shulkers.isEnabled()
-					&& !ShulkerManagerModule.firstMatchInside(slot.getStack(), query).isEmpty()) {
+					&& !ShulkerManagerModule.firstMatchInside(slot.getItem(), query).isEmpty()) {
 				// A shulker box with a match inside: the Shulker Box Manager frames it, so leave it bright.
 				continue;
 			} else if (dimOthers.get()) {

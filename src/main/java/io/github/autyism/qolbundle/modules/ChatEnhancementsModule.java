@@ -1,5 +1,6 @@
 package io.github.autyism.qolbundle.modules;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.data.WorldData;
 import io.github.autyism.qolbundle.gui.ChatSearchScreen;
@@ -12,19 +13,18 @@ import io.github.autyism.qolbundle.module.setting.StringSetting;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.client.gui.hud.MessageIndicator;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.toast.SystemToast;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableTextContent;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.GuiMessageTag;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.sounds.SoundEvents;
 import org.jspecify.annotations.Nullable;
 
 import java.time.LocalTime;
@@ -60,14 +60,14 @@ public class ChatEnhancementsModule extends Module {
 	private final BoolSetting keepHistory = add(new BoolSetting("keep_history", true));
 	private final BoolSetting searchButton = add(new BoolSetting("search_button", true));
 
-	private final KeyBinding searchKey;
+	private final KeyMapping searchKey;
 
 	/** One chat line as it arrived, for searching. */
-	public record Line(LocalTime time, Text text, String lowerCase) {
+	public record Line(LocalTime time, Component text, String lowerCase) {
 	}
 
 	/** What the chat window held when the player left a world. */
-	private record SavedChat(List<ChatHudLine> lines, List<String> sentHistory) {
+	private record SavedChat(List<GuiMessage> lines, List<String> sentHistory) {
 	}
 
 	/** Everything said, per world / server, for the search screen. */
@@ -85,13 +85,13 @@ public class ChatEnhancementsModule extends Module {
 	public ChatEnhancementsModule() {
 		super("chat_enhancements", ModuleCategory.TOOLS, true);
 		instance = this;
-		searchKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.qolbundle.chat_search",
-				InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), QoLBundleClient.KEY_CATEGORY));
+		searchKey = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.qolbundle.chat_search",
+				InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), QoLBundleClient.KEY_CATEGORY));
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof ChatScreen && isEnabled() && searchButton.get()) {
 				// Mouse only: the arrow keys and Tab belong to the chat box (message history, completion).
 				Screens.getButtons(screen).add(new MouseOnlyButton(width - 64, height - 34, 60, 16,
-						Text.translatable(getTranslationKey() + ".search.button"),
+						Component.translatable(getTranslationKey() + ".search.button"),
 						button -> client.setScreen(new ChatSearchScreen(null, this))));
 			}
 		});
@@ -121,7 +121,7 @@ public class ChatEnhancementsModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		String worldId = WorldData.getWorldId();
 		boolean inWorld = worldId != null && client.player != null;
 		if (inWorld) {
@@ -132,8 +132,8 @@ public class ChatEnhancementsModule extends Module {
 		}
 		wasInWorld = inWorld;
 
-		while (searchKey.wasPressed()) {
-			if (client.currentScreen == null) {
+		while (searchKey.consumeClick()) {
+			if (client.screen == null) {
 				client.setScreen(new ChatSearchScreen(null, this));
 			}
 		}
@@ -142,7 +142,7 @@ public class ChatEnhancementsModule extends Module {
 	// ---- every line on its way into the chat window ---------------------------------------------
 
 	/** Called by the mixin for each line added to the chat window. Returns the line to show. */
-	public static Text decorate(Text message) {
+	public static Component decorate(Component message) {
 		ChatEnhancementsModule module = instance;
 		if (module == null || !module.isEnabled() || module.addingOwnLine) {
 			return message;
@@ -156,8 +156,8 @@ public class ChatEnhancementsModule extends Module {
 		}
 	}
 
-	private Text process(Text message) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	private Component process(Component message) {
+		Minecraft client = Minecraft.getInstance();
 		LocalTime now = LocalTime.now();
 		String plain = message.getString();
 
@@ -169,16 +169,16 @@ public class ChatEnhancementsModule extends Module {
 			}
 		}
 
-		boolean mentioned = isMention(message, plain, client.getSession().getUsername());
+		boolean mentioned = isMention(message, plain, client.getUser().getName());
 		if (mentioned) {
 			mentionCount++;
 			if (mentionSound.get()) {
-				client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F));
+				client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F));
 			}
 			if (mentionToast.get()) {
 				String shortened = plain.length() > 60 ? plain.substring(0, 57) + "..." : plain;
-				SystemToast.add(client.getToastManager(), SystemToast.Type.PERIODIC_NOTIFICATION,
-						Text.translatable(getTranslationKey() + ".mention.toast"), Text.literal(shortened));
+				SystemToast.add(client.getToastManager(), SystemToast.SystemToastId.PERIODIC_NOTIFICATION,
+						Component.translatable(getTranslationKey() + ".mention.toast"), Component.literal(shortened));
 			}
 		}
 
@@ -186,15 +186,15 @@ public class ChatEnhancementsModule extends Module {
 		if (!timestamps.get() && !mark) {
 			return message;
 		}
-		var decorated = Text.empty();
+		var decorated = Component.empty();
 		if (timestamps.get()) {
 			String stamp = timestampSeconds.get()
 					? String.format(Locale.ROOT, "[%02d:%02d:%02d] ", now.getHour(), now.getMinute(), now.getSecond())
 					: String.format(Locale.ROOT, "[%02d:%02d] ", now.getHour(), now.getMinute());
-			decorated.append(Text.literal(stamp).formatted(Formatting.DARK_GRAY));
+			decorated.append(Component.literal(stamp).withStyle(ChatFormatting.DARK_GRAY));
 		}
 		if (mark) {
-			decorated.append(Text.literal("[@] ").formatted(Formatting.GOLD, Formatting.BOLD));
+			decorated.append(Component.literal("[@] ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 		}
 		return decorated.append(message);
 	}
@@ -203,8 +203,8 @@ public class ChatEnhancementsModule extends Module {
 	 * Does this line mention the player (or one of the extra keywords), and was it said by somebody else?
 	 * Works on the visible text, so it also covers servers whose plugins send chat as plain system messages.
 	 */
-	private boolean isMention(Text message, String plain, String ownName) {
-		if (message.getContent() instanceof TranslatableTextContent content
+	private boolean isMention(Component message, String plain, String ownName) {
+		if (message.getContents() instanceof TranslatableContents content
 				&& content.getKey().equals("commands.message.display.incoming")) {
 			return true; // a private message to you
 		}
@@ -271,36 +271,36 @@ public class ChatEnhancementsModule extends Module {
 	// ---- keeping the chat across a disconnect ----------------------------------------------------
 
 	/** Called by the mixin right before the chat window is emptied. */
-	public static void beforeChatCleared(ChatHud chatHud, boolean clearHistory) {
+	public static void beforeChatCleared(ChatComponent chatHud, boolean clearHistory) {
 		ChatEnhancementsModule module = instance;
 		// clearHistory is true when leaving a world, false for the player's own F3+D "clear chat".
 		if (module == null || !module.isEnabled() || !clearHistory || module.currentWorldId == null) {
 			return;
 		}
-		List<ChatHudLine> lines = List.copyOf(((ChatHudAccessor) chatHud).qolbundle$getMessages());
+		List<GuiMessage> lines = List.copyOf(((ChatHudAccessor) chatHud).qolbundle$getMessages());
 		if (!lines.isEmpty() && module.keepHistory.get()) {
-			module.savedChats.put(module.currentWorldId, new SavedChat(lines, List.copyOf(chatHud.getMessageHistory())));
+			module.savedChats.put(module.currentWorldId, new SavedChat(lines, List.copyOf(chatHud.getRecentChat())));
 		}
 		module.currentWorldId = null;
 	}
 
-	private void restoreChat(MinecraftClient client, String worldId) {
+	private void restoreChat(Minecraft client, String worldId) {
 		restoredLines = 0;
 		SavedChat saved = savedChats.remove(worldId);
 		if (saved == null || !keepHistory.get()) {
 			return;
 		}
-		ChatHud chatHud = client.inGameHud.getChatHud();
+		ChatComponent chatHud = client.gui.getChat();
 		// Newest first. Lines that arrived since joining stay on top, then a divider, then the old chat.
-		List<ChatHudLine> merged = new ArrayList<>(((ChatHudAccessor) chatHud).qolbundle$getMessages());
-		merged.add(new ChatHudLine(client.inGameHud.getTicks(),
-				Text.translatable(getTranslationKey() + ".restored").formatted(Formatting.GRAY, Formatting.ITALIC),
-				null, MessageIndicator.system()));
+		List<GuiMessage> merged = new ArrayList<>(((ChatHudAccessor) chatHud).qolbundle$getMessages());
+		merged.add(new GuiMessage(client.gui.getGuiTicks(),
+				Component.translatable(getTranslationKey() + ".restored").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+				null, GuiMessageTag.system()));
 		merged.addAll(saved.lines);
-		List<String> sent = saved.sentHistory.isEmpty() ? List.copyOf(chatHud.getMessageHistory()) : saved.sentHistory;
+		List<String> sent = saved.sentHistory.isEmpty() ? List.copyOf(chatHud.getRecentChat()) : saved.sentHistory;
 		addingOwnLine = true;
 		try {
-			chatHud.restoreChatState(new ChatHud.ChatState(merged, sent, List.of()));
+			chatHud.restoreState(new ChatComponent.State(merged, sent, List.of()));
 		} finally {
 			addingOwnLine = false;
 		}

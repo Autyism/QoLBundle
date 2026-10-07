@@ -6,25 +6,25 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -74,17 +74,17 @@ public class LavaSafetyModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
-		if (player == null || client.world == null) {
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
+		if (player == null || client.level == null) {
 			lavaBelow = 0;
 			inLava = false;
 			escape = null;
 			return;
 		}
 		// Lava cannot hurt in these cases, so stay quiet.
-		if (player.getAbilities().invulnerable || player.isSpectator() || player.isFireImmune()
-				|| player.hasStatusEffect(StatusEffects.FIRE_RESISTANCE)) {
+		if (player.getAbilities().invulnerable || player.isSpectator() || player.fireImmune()
+				|| player.hasEffect(MobEffects.FIRE_RESISTANCE)) {
 			lavaBelow = 0;
 			inLava = false;
 			escape = null;
@@ -93,7 +93,7 @@ public class LavaSafetyModule extends Module {
 		if (ticks++ % SCAN_TICKS != 0) {
 			return;
 		}
-		ClientWorld world = client.world;
+		ClientLevel world = client.level;
 		boolean wasInLava = inLava;
 		int before = lavaBelow;
 		inLava = player.isInLava();
@@ -104,7 +104,7 @@ public class LavaSafetyModule extends Module {
 			escape = null;
 			lavaBelow = scanBelow(world, player);
 			if (lavaBelow > 0 && before == 0 && !wasInLava && warningSound.get()) {
-				client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_BASS, 1.2F));
+				client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BASS, 1.2F));
 			}
 		}
 	}
@@ -113,16 +113,16 @@ public class LavaSafetyModule extends Module {
 	 * Looks straight down under the player and the eight columns around, from the feet until
 	 * something solid. Lava met on the way counts; lava under a floor does not.
 	 */
-	private int scanBelow(ClientWorld world, ClientPlayerEntity player) {
-		BlockPos feet = player.getBlockPos();
+	private int scanBelow(ClientLevel world, LocalPlayer player) {
+		BlockPos feet = player.blockPosition();
 		int nearest = 0;
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dz = -1; dz <= 1; dz++) {
 				for (int down = 0; down <= depth.get(); down++) {
 					pos.set(feet.getX() + dx, feet.getY() - down, feet.getZ() + dz);
 					BlockState state = world.getBlockState(pos);
-					if (state.getFluidState().isIn(FluidTags.LAVA)) {
+					if (state.getFluidState().is(FluidTags.LAVA)) {
 						if (nearest == 0 || down < nearest) {
 							nearest = Math.max(1, down);
 						}
@@ -139,12 +139,12 @@ public class LavaSafetyModule extends Module {
 
 	/** Nearest place with a solid block to stand on and two free blocks above it. */
 	@Nullable
-	private BlockPos findEscape(ClientWorld world, ClientPlayerEntity player) {
-		BlockPos center = player.getBlockPos();
+	private BlockPos findEscape(ClientLevel world, LocalPlayer player) {
+		BlockPos center = player.blockPosition();
 		int reach = searchRadius.get();
 		BlockPos best = null;
 		double bestDistance = Double.MAX_VALUE;
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (int dx = -reach; dx <= reach; dx++) {
 			for (int dz = -reach; dz <= reach; dz++) {
 				for (int dy = -3; dy <= 6; dy++) {
@@ -153,7 +153,7 @@ public class LavaSafetyModule extends Module {
 					double distance = dx * dx + dz * dz + dy * dy * (dy > 0 ? 3.0 : 1.0);
 					if (distance < bestDistance && canStandAt(world, pos)) {
 						bestDistance = distance;
-						best = pos.toImmutable();
+						best = pos.immutable();
 					}
 				}
 			}
@@ -161,7 +161,7 @@ public class LavaSafetyModule extends Module {
 		return best;
 	}
 
-	private static boolean canStandAt(ClientWorld world, BlockPos.Mutable feet) {
+	private static boolean canStandAt(ClientLevel world, BlockPos.MutableBlockPos feet) {
 		if (!isFree(world, feet)) {
 			return false;
 		}
@@ -169,54 +169,54 @@ public class LavaSafetyModule extends Module {
 		boolean headFree = isFree(world, feet);
 		feet.move(Direction.DOWN, 2);
 		BlockState floor = world.getBlockState(feet);
-		boolean solidFloor = floor.isSideSolidFullSquare(world, feet, Direction.UP)
-				&& !floor.isOf(Blocks.MAGMA_BLOCK) && !floor.isOf(Blocks.CAMPFIRE) && !floor.isOf(Blocks.SOUL_CAMPFIRE);
+		boolean solidFloor = floor.isFaceSturdy(world, feet, Direction.UP)
+				&& !floor.is(Blocks.MAGMA_BLOCK) && !floor.is(Blocks.CAMPFIRE) && !floor.is(Blocks.SOUL_CAMPFIRE);
 		feet.move(Direction.UP);
 		return headFree && solidFloor;
 	}
 
 	/** Nothing to bump into, and neither lava nor fire. */
-	private static boolean isFree(ClientWorld world, BlockPos pos) {
+	private static boolean isFree(ClientLevel world, BlockPos pos) {
 		BlockState state = world.getBlockState(pos);
 		return state.getCollisionShape(world, pos).isEmpty() && state.getFluidState().isEmpty()
-				&& !state.isOf(Blocks.FIRE) && !state.isOf(Blocks.SOUL_FIRE);
+				&& !state.is(Blocks.FIRE) && !state.is(Blocks.SOUL_FIRE);
 	}
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
 		BlockPos target = escape;
 		if (inLava && target != null && escapeArrow.get()) {
-			GizmoDrawing.box(new Box(target).contract(0.1), DrawStyle.stroked(0xFF55FF55, 3.0F));
+			Gizmos.cuboid(new AABB(target).deflate(0.1), GizmoStyle.stroke(0xFF55FF55, 3.0F));
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
 		int centerX = layout.getScreenWidth() / 2;
 		int centerY = layout.getScreenHeight() / 2;
 
 		if (inLava && escapeArrow.get()) {
 			BlockPos target = escape;
-			Text text;
+			Component text;
 			if (target == null) {
-				text = Text.translatable(key + "no_escape");
+				text = Component.translatable(key + "no_escape");
 			} else {
-				Vec3d spot = Vec3d.ofBottomCenter(target);
-				Vec3d eye = client.gameRenderer.getCamera().getCameraPos();
-				float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(eye, client.gameRenderer.getCamera().getYaw(), spot));
-				context.getMatrices().pushMatrix();
-				context.getMatrices().translate(centerX, centerY);
-				context.getMatrices().rotate(angle);
+				Vec3 spot = Vec3.atBottomCenterOf(target);
+				Vec3 eye = client.gameRenderer.getMainCamera().position();
+				float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(eye, client.gameRenderer.getMainCamera().yRot(), spot));
+				context.pose().pushMatrix();
+				context.pose().translate(centerX, centerY);
+				context.pose().rotate(angle);
 				// A fat arrow head 34 px from the crosshair, pointing at the safe spot.
 				for (int row = 0; row < 12; row++) {
 					context.fill(-row, -46 + row, row + 1, -45 + row, 0xFF55FF55);
 				}
-				context.getMatrices().popMatrix();
-				int distance = (int) Math.round(Math.sqrt(target.getSquaredDistance(client.player.getBlockPos())));
+				context.pose().popMatrix();
+				int distance = (int) Math.round(Math.sqrt(target.distSqr(client.player.blockPosition())));
 				int height = target.getY() - client.player.getBlockY();
-				text = Text.translatable(key + (height > 0 ? "escape_up" : "escape"), distance, Math.abs(height));
+				text = Component.translatable(key + (height > 0 ? "escape_up" : "escape"), distance, Math.abs(height));
 			}
 			drawCentered(context, client, text, centerX, centerY + 56, 0xFF55FF55);
 			return;
@@ -227,21 +227,21 @@ public class LavaSafetyModule extends Module {
 				drawOrangeEdges(context, layout.getScreenWidth(), layout.getScreenHeight());
 			}
 			if (warningText.get()) {
-				drawCentered(context, client, Text.translatable(key + "below", lavaBelow), centerX, centerY + 30, 0xFFFFAA00);
+				drawCentered(context, client, Component.translatable(key + "below", lavaBelow), centerX, centerY + 30, 0xFFFFAA00);
 			}
 		}
 	}
 
-	private static void drawCentered(DrawContext context, MinecraftClient client, Text text, int centerX, int y, int color) {
-		int width = client.textRenderer.getWidth(text);
+	private static void drawCentered(GuiGraphics context, Minecraft client, Component text, int centerX, int y, int color) {
+		int width = client.font.width(text);
 		context.fill(centerX - width / 2 - 3, y - 2, centerX + width / 2 + 3, y + 10, 0x90000000);
-		context.drawTextWithShadow(client.textRenderer, text, centerX - width / 2, y, color);
+		context.drawString(client.font, text, centerX - width / 2, y, color);
 	}
 
-	private static void drawOrangeEdges(DrawContext context, int width, int height) {
+	private static void drawOrangeEdges(GuiGraphics context, int width, int height) {
 		for (int i = 0; i < EDGE_DEPTH; i++) {
 			float fade = 1F - i / (float) EDGE_DEPTH;
-			int alpha = MathHelper.clamp((int) (140 * fade * fade), 0, 255);
+			int alpha = Mth.clamp((int) (140 * fade * fade), 0, 255);
 			int color = alpha << 24 | 0xFF7A00;
 			context.fill(i, i, width - i, i + 1, color);
 			context.fill(i, height - i - 1, width - i, height - i, color);

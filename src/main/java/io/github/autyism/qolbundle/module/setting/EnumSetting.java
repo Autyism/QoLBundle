@@ -2,9 +2,8 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.text.Text;
-
 import java.util.Locale;
+import net.minecraft.network.chat.Component;
 
 /** A choice between the constants of an enum. Shown as a button that cycles through them. */
 public class EnumSetting<E extends Enum<E>> extends Setting<E> {
@@ -21,14 +20,14 @@ public class EnumSetting<E extends Enum<E>> extends Setting<E> {
 	}
 
 	/** Lang key: qolbundle.option.[enum class name].[constant], all lower case. */
-	public static Text nameOf(Enum<?> value) {
-		return Text.translatable("qolbundle.option."
+	public static Component nameOf(Enum<?> value) {
+		return Component.translatable("qolbundle.option."
 				+ value.getDeclaringClass().getSimpleName().toLowerCase(Locale.ROOT) + "."
 				+ value.name().toLowerCase(Locale.ROOT));
 	}
 
 	@Override
-	public Text getValueText() {
+	public Component getValueText() {
 		return nameOf(get());
 	}
 

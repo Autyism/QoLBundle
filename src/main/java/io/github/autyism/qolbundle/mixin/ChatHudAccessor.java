@@ -1,15 +1,15 @@
 package io.github.autyism.qolbundle.mixin;
 
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.List;
+import net.minecraft.client.GuiMessage;
+import net.minecraft.client.gui.components.ChatComponent;
 
 /** Read access to the lines currently in the chat window (newest first). */
-@Mixin(ChatHud.class)
+@Mixin(ChatComponent.class)
 public interface ChatHudAccessor {
-	@Accessor("messages")
-	List<ChatHudLine> qolbundle$getMessages();
+	@Accessor("allMessages")
+	List<GuiMessage> qolbundle$getMessages();
 }

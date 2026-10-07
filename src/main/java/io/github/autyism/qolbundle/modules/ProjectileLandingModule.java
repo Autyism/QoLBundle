@@ -5,25 +5,25 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -68,11 +68,11 @@ public class ProjectileLandingModule extends Module {
 	private final BoolSetting showRadius = add(new BoolSetting("show_radius", true));
 	private final BoolSetting showHud = add(new BoolSetting("show_hud", true));
 
-	private final List<Vec3d> path = new ArrayList<>();
+	private final List<Vec3> path = new ArrayList<>();
 	@Nullable
 	private Kind kind;
 	@Nullable
-	private Vec3d landing;
+	private Vec3 landing;
 	private Light light = Light.GREEN;
 
 	public ProjectileLandingModule() {
@@ -81,7 +81,7 @@ public class ProjectileLandingModule extends Module {
 
 	/** Predicted landing point, null when nothing throwable is held or it flies out of the loaded world. */
 	@Nullable
-	public Vec3d getLanding() {
+	public Vec3 getLanding() {
 		return landing;
 	}
 
@@ -95,70 +95,70 @@ public class ProjectileLandingModule extends Module {
 
 	@Nullable
 	private static Kind kindOf(ItemStack stack) {
-		if (stack.isOf(Items.ENDER_PEARL)) {
+		if (stack.is(Items.ENDER_PEARL)) {
 			return PEARL;
 		}
-		if (stack.isOf(Items.SNOWBALL) || stack.isOf(Items.EGG) || stack.isOf(Items.BLUE_EGG) || stack.isOf(Items.BROWN_EGG)) {
+		if (stack.is(Items.SNOWBALL) || stack.is(Items.EGG) || stack.is(Items.BLUE_EGG) || stack.is(Items.BROWN_EGG)) {
 			return SMALL;
 		}
-		if (stack.isOf(Items.SPLASH_POTION)) {
+		if (stack.is(Items.SPLASH_POTION)) {
 			return SPLASH;
 		}
-		if (stack.isOf(Items.LINGERING_POTION)) {
+		if (stack.is(Items.LINGERING_POTION)) {
 			return LINGERING;
 		}
-		if (stack.isOf(Items.EXPERIENCE_BOTTLE)) {
+		if (stack.is(Items.EXPERIENCE_BOTTLE)) {
 			return XP_BOTTLE;
 		}
 		return null;
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
 		path.clear();
 		landing = null;
 		kind = null;
-		if (player == null || client.world == null) {
+		if (player == null || client.level == null) {
 			return;
 		}
-		kind = kindOf(player.getMainHandStack());
+		kind = kindOf(player.getMainHandItem());
 		if (kind == null) {
-			kind = kindOf(player.getOffHandStack());
+			kind = kindOf(player.getOffhandItem());
 		}
 		if (kind != null) {
-			simulate(client.world, player, kind);
+			simulate(client.level, player, kind);
 		}
 	}
 
 	/** The same steps the game takes for a thrown item each tick: gravity, drag, then move. */
-	private void simulate(ClientWorld world, ClientPlayerEntity player, Kind thrown) {
-		float yaw = player.getYaw() * (float) (Math.PI / 180.0);
-		float pitch = player.getPitch() * (float) (Math.PI / 180.0);
-		float tilted = (player.getPitch() + thrown.tilt) * (float) (Math.PI / 180.0);
-		Vec3d velocity = new Vec3d(-MathHelper.sin(yaw) * MathHelper.cos(pitch), -MathHelper.sin(tilted),
-				MathHelper.cos(yaw) * MathHelper.cos(pitch)).normalize().multiply(thrown.power);
-		Vec3d own = player.getMovement();
-		velocity = velocity.add(own.x, player.isOnGround() ? 0.0 : own.y, own.z);
+	private void simulate(ClientLevel world, LocalPlayer player, Kind thrown) {
+		float yaw = player.getYRot() * (float) (Math.PI / 180.0);
+		float pitch = player.getXRot() * (float) (Math.PI / 180.0);
+		float tilted = (player.getXRot() + thrown.tilt) * (float) (Math.PI / 180.0);
+		Vec3 velocity = new Vec3(-Mth.sin(yaw) * Mth.cos(pitch), -Mth.sin(tilted),
+				Mth.cos(yaw) * Mth.cos(pitch)).normalize().scale(thrown.power);
+		Vec3 own = player.getKnownMovement();
+		velocity = velocity.add(own.x, player.onGround() ? 0.0 : own.y, own.z);
 
-		Vec3d pos = new Vec3d(player.getX(), player.getEyeY() - 0.1, player.getZ());
-		Vec3d start = pos;
+		Vec3 pos = new Vec3(player.getX(), player.getEyeY() - 0.1, player.getZ());
+		Vec3 start = pos;
 		path.add(pos);
 		Direction side = null;
 		for (int tick = 0; tick < MAX_TICKS; tick++) {
 			velocity = velocity.add(0.0, -thrown.gravity, 0.0);
-			boolean inWater = world.getFluidState(BlockPos.ofFloored(pos)).isIn(FluidTags.WATER);
-			velocity = velocity.multiply(inWater ? 0.8F : 0.99F);
-			Vec3d next = pos.add(velocity);
-			if (next.y < world.getBottomY() - 8
-					|| !world.getChunkManager().isChunkLoaded(MathHelper.floor(next.x) >> 4, MathHelper.floor(next.z) >> 4)) {
+			boolean inWater = world.getFluidState(BlockPos.containing(pos)).is(FluidTags.WATER);
+			velocity = velocity.scale(inWater ? 0.8F : 0.99F);
+			Vec3 next = pos.add(velocity);
+			if (next.y < world.getMinY() - 8
+					|| !world.getChunkSource().hasChunk(Mth.floor(next.x) >> 4, Mth.floor(next.z) >> 4)) {
 				return; // leaves the loaded world: no landing point to show
 			}
-			BlockHitResult hit = world.raycast(new RaycastContext(pos, next, RaycastContext.ShapeType.COLLIDER,
-					RaycastContext.FluidHandling.NONE, player));
+			BlockHitResult hit = world.clip(new ClipContext(pos, next, ClipContext.Block.COLLIDER,
+					ClipContext.Fluid.NONE, player));
 			if (hit.getType() == HitResult.Type.BLOCK) {
-				landing = hit.getPos();
-				side = hit.getSide();
+				landing = hit.getLocation();
+				side = hit.getDirection();
 				path.add(landing);
 				break;
 			}
@@ -192,48 +192,48 @@ public class ProjectileLandingModule extends Module {
 		if (showArc.get()) {
 			// The first stretch starts inside the player's head; skip it so it does not cover the view.
 			for (int i = 2; i < path.size(); i++) {
-				GizmoDrawing.line(path.get(i - 1), path.get(i), color, 2.0F);
+				Gizmos.line(path.get(i - 1), path.get(i), color, 2.0F);
 			}
 		}
-		Vec3d target = landing;
+		Vec3 target = landing;
 		if (target == null) {
 			return;
 		}
 		if (showLanding.get()) {
-			GizmoDrawing.box(Box.of(target, 0.4, 0.4, 0.4), DrawStyle.stroked(color, 2.5F));
+			Gizmos.cuboid(AABB.ofSize(target, 0.4, 0.4, 0.4), GizmoStyle.stroke(color, 2.5F));
 		}
 		if (showRadius.get() && thrown.effectRadius > 0F) {
-			GizmoDrawing.circle(target.add(0, 0.1, 0), thrown.effectRadius, DrawStyle.stroked(0xFFFF55FF, 2.5F));
+			Gizmos.circle(target.add(0, 0.1, 0), thrown.effectRadius, GizmoStyle.stroke(0xFFFF55FF, 2.5F));
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		Kind thrown = kind;
-		Vec3d target = landing;
+		Vec3 target = landing;
 		if (thrown == null || !showHud.get()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		Text text;
+		Component text;
 		int color = HudLayout.WHITE;
 		if (target == null) {
-			text = Text.translatable(key + "out_of_range");
+			text = Component.translatable(key + "out_of_range");
 			color = 0xFFAAAAAA;
 		} else {
 			int distance = (int) Math.round(Math.hypot(target.x - client.player.getX(), target.z - client.player.getZ()));
 			if (thrown.pearl) {
-				text = Text.translatable(key + "pearl_" + light.name().toLowerCase(java.util.Locale.ROOT), distance);
+				text = Component.translatable(key + "pearl_" + light.name().toLowerCase(java.util.Locale.ROOT), distance);
 				color = 0xFF000000 | light.rgb;
 			} else {
-				text = Text.translatable(key + "distance", distance);
+				text = Component.translatable(key + "distance", distance);
 			}
 		}
-		int width = client.textRenderer.getWidth(text);
+		int width = client.font.width(text);
 		int x = (layout.getScreenWidth() - width) / 2;
 		int y = layout.getScreenHeight() / 2 + 16;
 		context.fill(x - 3, y - 2, x + width + 3, y + 10, 0x90000000);
-		context.drawTextWithShadow(client.textRenderer, text, x, y, color);
+		context.drawString(client.font, text, x, y, color);
 	}
 }

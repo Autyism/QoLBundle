@@ -12,18 +12,18 @@ import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.module.setting.StringSetting;
 import io.github.autyism.qolbundle.render.HighlightColor;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.DrawStyle;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.ChunkRandom;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.World;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Direction;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class SlimeChunksModule extends Module {
 	private final EnumSetting<HudAnchor> position = add(new EnumSetting<>("position", HudAnchor.TOP_LEFT));
 
 	/** Ground patches of all slime chunks in range: pairs of (north-west-low corner, south-east-high corner). */
-	private final List<Vec3d[]> patches = new ArrayList<>();
+	private final List<Vec3[]> patches = new ArrayList<>();
 	/** Corners of slime chunks in range, as x/z block coordinates. */
 	private final List<int[]> slimeChunks = new ArrayList<>();
 	private OptionalLong activeSeed = OptionalLong.empty();
@@ -84,7 +84,7 @@ public class SlimeChunksModule extends Module {
 
 	/** The game's own rule: one chunk in ten, picked by a random number seeded from the world seed and the chunk position. */
 	public static boolean isSlimeChunk(long worldSeed, int chunkX, int chunkZ) {
-		return ChunkRandom.getSlimeRandom(chunkX, chunkZ, worldSeed, SLIME_SCRAMBLER).nextInt(10) == 0;
+		return WorldgenRandom.seedSlimeChunk(chunkX, chunkZ, worldSeed, SLIME_SCRAMBLER).nextInt(10) == 0;
 	}
 
 	/** Same reading of the seed box as the "create world" screen: a number is used as is, other text is hashed. */
@@ -104,21 +104,21 @@ public class SlimeChunksModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		syncWorldData();
-		if (client.player == null || client.world == null) {
+		if (client.player == null || client.level == null) {
 			activeSeed = OptionalLong.empty();
 			return;
 		}
 		String text = seed.get().trim();
 		if (!text.isEmpty()) {
 			activeSeed = OptionalLong.of(parseSeed(text));
-		} else if (client.getServer() != null) {
-			activeSeed = OptionalLong.of(client.getServer().getOverworld().getSeed());
+		} else if (client.getSingleplayerServer() != null) {
+			activeSeed = OptionalLong.of(client.getSingleplayerServer().overworld().getSeed());
 		} else {
 			activeSeed = OptionalLong.empty();
 		}
-		inOverworld = client.world.getRegistryKey() == World.OVERWORLD;
+		inOverworld = client.level.dimension() == Level.OVERWORLD;
 		if (activeSeed.isEmpty() || !inOverworld) {
 			patches.clear();
 			slimeChunks.clear();
@@ -129,12 +129,12 @@ public class SlimeChunksModule extends Module {
 		int chunkZ = client.player.getBlockZ() >> 4;
 		standingInSlimeChunk = isSlimeChunk(activeSeed.getAsLong(), chunkX, chunkZ);
 		if (ticks++ % REBUILD_TICKS == 0) {
-			rebuild(client.world, chunkX, chunkZ);
+			rebuild(client.level, chunkX, chunkZ);
 		}
 	}
 
 	/** Works out the slime chunks around the player and the ground patches to draw on them. */
-	private void rebuild(ClientWorld world, int centerX, int centerZ) {
+	private void rebuild(ClientLevel world, int centerX, int centerZ) {
 		patches.clear();
 		slimeChunks.clear();
 		long worldSeed = activeSeed.getAsLong();
@@ -145,7 +145,7 @@ public class SlimeChunksModule extends Module {
 					continue;
 				}
 				slimeChunks.add(new int[] {cx << 4, cz << 4});
-				if (world.getChunkManager().isChunkLoaded(cx, cz)) {
+				if (world.getChunkSource().hasChunk(cx, cz)) {
 					addGroundPatches(world, cx << 4, cz << 4);
 				}
 			}
@@ -156,15 +156,15 @@ public class SlimeChunksModule extends Module {
 	 * Covers the surface of one chunk. Neighbouring columns of the same height in a row are merged
 	 * into one strip, so flat ground needs 16 strips instead of 256 squares.
 	 */
-	private void addGroundPatches(ClientWorld world, int baseX, int baseZ) {
+	private void addGroundPatches(ClientLevel world, int baseX, int baseZ) {
 		for (int dz = 0; dz < 16; dz++) {
 			int runStart = 0;
-			int runHeight = world.getTopY(Heightmap.Type.MOTION_BLOCKING, baseX, baseZ + dz);
+			int runHeight = world.getHeight(Heightmap.Types.MOTION_BLOCKING, baseX, baseZ + dz);
 			for (int dx = 1; dx <= 16; dx++) {
-				int height = dx < 16 ? world.getTopY(Heightmap.Type.MOTION_BLOCKING, baseX + dx, baseZ + dz) : Integer.MIN_VALUE;
+				int height = dx < 16 ? world.getHeight(Heightmap.Types.MOTION_BLOCKING, baseX + dx, baseZ + dz) : Integer.MIN_VALUE;
 				if (height != runHeight) {
 					double y = runHeight + LIFT;
-					patches.add(new Vec3d[] {new Vec3d(baseX + runStart, y, baseZ + dz), new Vec3d(baseX + dx, y, baseZ + dz + 1)});
+					patches.add(new Vec3[] {new Vec3(baseX + runStart, y, baseZ + dz), new Vec3(baseX + dx, y, baseZ + dz + 1)});
 					runStart = dx;
 					runHeight = height;
 				}
@@ -174,47 +174,47 @@ public class SlimeChunksModule extends Module {
 
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.world == null || slimeChunks.isEmpty()) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.level == null || slimeChunks.isEmpty()) {
 			return;
 		}
-		DrawStyle fill = DrawStyle.filled(color.get().withOpacity(opacity.get()));
-		for (Vec3d[] patch : patches) {
-			GizmoDrawing.face(patch[0], patch[1], Direction.UP, fill);
+		GizmoStyle fill = GizmoStyle.fill(color.get().withOpacity(opacity.get()));
+		for (Vec3[] patch : patches) {
+			Gizmos.rect(patch[0], patch[1], Direction.UP, fill);
 		}
 		// Corner posts through the whole world height, so the chunk can also be found from underground.
 		int line = color.get().withOpacity(70);
-		double bottom = client.world.getBottomY();
-		double top = client.world.getTopYInclusive() + 1;
+		double bottom = client.level.getMinY();
+		double top = client.level.getMaxY() + 1;
 		for (int[] chunk : slimeChunks) {
 			for (int i = 0; i <= 1; i++) {
 				for (int j = 0; j <= 1; j++) {
 					double x = chunk[0] + i * 16;
 					double z = chunk[1] + j * 16;
-					GizmoDrawing.line(new Vec3d(x, bottom, z), new Vec3d(x, top, z), line, 2.0F);
+					Gizmos.line(new Vec3(x, bottom, z), new Vec3(x, top, z), line, 2.0F);
 				}
 			}
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		if (!showHud.get()) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		Text line;
+		Component line;
 		if (activeSeed.isEmpty()) {
-			line = Text.translatable(key + "no_seed").withColor(0xAAAAAA);
+			line = Component.translatable(key + "no_seed").withColor(0xAAAAAA);
 		} else if (!inOverworld) {
 			return; // slimes only use slime chunks in the Overworld
 		} else if (standingInSlimeChunk) {
-			line = Text.translatable(key + "yes").withColor(0x55FF55);
+			line = Component.translatable(key + "yes").withColor(0x55FF55);
 		} else {
-			line = Text.translatable(key + "no");
+			line = Component.translatable(key + "no");
 		}
-		layout.drawLines(context, client.textRenderer, position.get(), List.of(line));
+		layout.drawLines(context, client.font, position.get(), List.of(line));
 	}
 
 	// ---- the seed is remembered per world -------------------------------------------------------

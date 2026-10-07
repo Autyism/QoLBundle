@@ -4,12 +4,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.autyism.qolbundle.QoLBundleClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.ItemStack;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +11,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Finds items by name in several ways at once: the name as shown, the English name, the Chinese
@@ -49,7 +48,7 @@ public final class ItemNames {
 	}
 
 	public static String searchText(ItemStack stack, boolean withPinyin) {
-		return searchText(stack.getItem().getTranslationKey(), stack.getName().getString(), withPinyin);
+		return searchText(stack.getItem().getDescriptionId(), stack.getHoverName().getString(), withPinyin);
 	}
 
 	/** True when every word of the query occurs in the search text. An empty query matches nothing. */
@@ -92,7 +91,7 @@ public final class ItemNames {
 		if (english != null) {
 			return;
 		}
-		ResourceManager resources = MinecraftClient.getInstance().getResourceManager();
+		ResourceManager resources = Minecraft.getInstance().getResourceManager();
 		english = readLanguage(resources, "en_us");
 		chinese = readLanguage(resources, "zh_cn");
 		String table = "";
@@ -110,12 +109,12 @@ public final class ItemNames {
 	/** Item and block names of one language, from every mod's language file. */
 	private static Map<String, String> readLanguage(ResourceManager resources, String code) {
 		Map<String, String> names = new HashMap<>();
-		for (String namespace : resources.getAllNamespaces()) {
-			Optional<Resource> resource = resources.getResource(Identifier.of(namespace, "lang/" + code + ".json"));
+		for (String namespace : resources.getNamespaces()) {
+			Optional<Resource> resource = resources.getResource(Identifier.fromNamespaceAndPath(namespace, "lang/" + code + ".json"));
 			if (resource.isEmpty()) {
 				continue;
 			}
-			try (Reader reader = resource.get().getReader()) {
+			try (Reader reader = resource.get().openAsReader()) {
 				JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
 				for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
 					String key = entry.getKey();

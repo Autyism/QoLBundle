@@ -4,15 +4,14 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
-import net.minecraft.world.debug.gizmo.TextGizmo;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.gizmos.TextGizmo;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -34,7 +33,7 @@ public class LootTimerModule extends Module {
 	private static final int MAX_LABELS = 12;
 
 	/** One label: the items lying in the same block. */
-	public record Pile(Vec3d pos, int stacks, int secondsLeft) {
+	public record Pile(Vec3 pos, int stacks, int secondsLeft) {
 	}
 
 	private final IntSetting radius = add(new IntSetting("radius", 16, 4, 32));
@@ -60,10 +59,10 @@ public class LootTimerModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		ClientPlayerEntity player = client.player;
-		if (player == null || client.world == null) {
+		LocalPlayer player = client.player;
+		if (player == null || client.level == null) {
 			firstSeen.clear();
 			piles.clear();
 			return;
@@ -76,11 +75,11 @@ public class LootTimerModule extends Module {
 		Set<Integer> present = new HashSet<>();
 		Map<BlockPos, List<ItemEntity>> byBlock = new HashMap<>();
 		double range = radius.get();
-		for (ItemEntity item : client.world.getEntitiesByClass(ItemEntity.class, new Box(player.getBlockPos()).expand(64.0), entity -> true)) {
+		for (ItemEntity item : client.level.getEntitiesOfClass(ItemEntity.class, new AABB(player.blockPosition()).inflate(64.0), entity -> true)) {
 			present.add(item.getId());
 			firstSeen.putIfAbsent(item.getId(), tick);
-			if (item.squaredDistanceTo(player) <= range * range && player.canSee(item)) {
-				byBlock.computeIfAbsent(item.getBlockPos(), pos -> new ArrayList<>()).add(item);
+			if (item.distanceToSqr(player) <= range * range && player.hasLineOfSight(item)) {
+				byBlock.computeIfAbsent(item.blockPosition(), pos -> new ArrayList<>()).add(item);
 			}
 		}
 		firstSeen.keySet().retainAll(present);
@@ -91,15 +90,15 @@ public class LootTimerModule extends Module {
 				continue;
 			}
 			long oldest = tick;
-			Vec3d middle = Vec3d.ZERO;
+			Vec3 middle = Vec3.ZERO;
 			for (ItemEntity item : items) {
 				oldest = Math.min(oldest, firstSeen.get(item.getId()));
-				middle = middle.add(item.getEntityPos());
+				middle = middle.add(item.position());
 			}
 			int left = (int) Math.max(0, (LIFETIME_TICKS - (tick - oldest)) / 20);
-			piles.add(new Pile(middle.multiply(1.0 / items.size()), items.size(), left));
+			piles.add(new Pile(middle.scale(1.0 / items.size()), items.size(), left));
 		}
-		piles.sort(Comparator.comparingDouble(pile -> pile.pos.squaredDistanceTo(player.getEntityPos())));
+		piles.sort(Comparator.comparingDouble(pile -> pile.pos.distanceToSqr(player.position())));
 		while (piles.size() > MAX_LABELS) {
 			piles.remove(piles.size() - 1);
 		}
@@ -112,7 +111,7 @@ public class LootTimerModule extends Module {
 			String time = "≤" + seconds / 60 + ":" + (seconds % 60 < 10 ? "0" : "") + seconds % 60;
 			String text = pile.stacks > 1 ? "×" + pile.stacks + "  " + time : time;
 			int color = seconds <= 20 ? 0xFFFF5555 : seconds <= 60 ? 0xFFFFFF55 : 0xFFFFFFFF;
-			GizmoDrawing.text(text, pile.pos.add(0, 0.9, 0), TextGizmo.Style.centered(color).scaled(0.7F));
+			Gizmos.billboardText(text, pile.pos.add(0, 0.9, 0), TextGizmo.Style.forColor(color).withScale(0.7F));
 		}
 	}
 }

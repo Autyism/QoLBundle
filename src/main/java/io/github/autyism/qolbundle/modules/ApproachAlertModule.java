@@ -6,15 +6,6 @@ import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
 import io.github.autyism.qolbundle.util.Sight;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.entity.PlayerLikeEntity;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -22,6 +13,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Approach alert: a sound and an arrow when another player comes close, from any side, as long as
@@ -45,9 +45,9 @@ public class ApproachAlertModule extends Module {
 	private final Map<UUID, Long> lastAlert = new HashMap<>();
 	private long tick;
 	@Nullable
-	private Vec3d alertPos;
+	private Vec3 alertPos;
 	@Nullable
-	private Text alertName;
+	private Component alertName;
 	private long showUntil;
 	private int alerts;
 
@@ -61,7 +61,7 @@ public class ApproachAlertModule extends Module {
 
 	/** Where the player who set off the alert was, while the arrow is shown; otherwise null. */
 	@Nullable
-	public Vec3d getAlertPos() {
+	public Vec3 getAlertPos() {
 		return tick < showUntil ? alertPos : null;
 	}
 
@@ -73,9 +73,9 @@ public class ApproachAlertModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
+	public void onTick(Minecraft client) {
 		tick++;
-		if (client.player == null || client.world == null) {
+		if (client.player == null || client.level == null) {
 			inside.clear();
 			return;
 		}
@@ -83,21 +83,21 @@ public class ApproachAlertModule extends Module {
 			return;
 		}
 		Set<UUID> now = new HashSet<>();
-		for (PlayerLikeEntity other : Sight.visiblePlayers(client, radius.get())) {
-			if (onlySneaking.get() && !other.isSneaking()) {
+		for (Avatar other : Sight.visiblePlayers(client, radius.get())) {
+			if (onlySneaking.get() && !other.isShiftKeyDown()) {
 				continue;
 			}
-			UUID id = other.getUuid();
+			UUID id = other.getUUID();
 			now.add(id);
 			Long last = lastAlert.get(id);
 			if (!inside.contains(id) && (last == null || tick - last > cooldownSeconds.get() * 20L)) {
 				lastAlert.put(id, tick);
-				alertPos = other.getEntityPos();
+				alertPos = other.position();
 				alertName = other.getName();
 				showUntil = tick + SHOW_TICKS;
 				alerts++;
 				if (sound.get()) {
-					client.getSoundManager().play(PositionedSoundInstance.ui(SoundEvents.BLOCK_NOTE_BLOCK_BELL.value(), 0.7F, 0.8F));
+					client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 0.7F, 0.8F));
 				}
 			}
 		}
@@ -106,31 +106,31 @@ public class ApproachAlertModule extends Module {
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
-		Vec3d where = getAlertPos();
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
+		Vec3 where = getAlertPos();
 		if (where == null) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		int centerX = layout.getScreenWidth() / 2;
 		int centerY = layout.getScreenHeight() / 2;
-		Vec3d eye = client.gameRenderer.getCamera().getCameraPos();
-		float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(eye, client.gameRenderer.getCamera().getYaw(), where));
-		context.getMatrices().pushMatrix();
-		context.getMatrices().translate(centerX, centerY);
-		context.getMatrices().rotate(angle);
+		Vec3 eye = client.gameRenderer.getMainCamera().position();
+		float angle = (float) Math.toRadians(SoundCompassModule.relativeAngle(eye, client.gameRenderer.getMainCamera().yRot(), where));
+		context.pose().pushMatrix();
+		context.pose().translate(centerX, centerY);
+		context.pose().rotate(angle);
 		for (int row = 0; row < 9; row++) {
 			context.fill(-row, -RING + row, row + 1, -RING + row + 1, COLOR);
 		}
-		context.getMatrices().popMatrix();
+		context.pose().popMatrix();
 
-		Text label = Text.translatable(getTranslationKey() + ".hud", alertName, (int) Math.round(where.distanceTo(eye)));
-		int width = client.textRenderer.getWidth(label);
+		Component label = Component.translatable(getTranslationKey() + ".hud", alertName, (int) Math.round(where.distanceTo(eye)));
+		int width = client.font.width(label);
 		int labelRadius = RING + 12;
-		int x = centerX + Math.round(MathHelper.sin(angle) * (labelRadius + width / 2F)) - width / 2;
-		int y = centerY - Math.round(MathHelper.cos(angle) * labelRadius) - 4;
-		x = MathHelper.clamp(x, 2, layout.getScreenWidth() - width - 2);
+		int x = centerX + Math.round(Mth.sin(angle) * (labelRadius + width / 2F)) - width / 2;
+		int y = centerY - Math.round(Mth.cos(angle) * labelRadius) - 4;
+		x = Mth.clamp(x, 2, layout.getScreenWidth() - width - 2);
 		context.fill(x - 2, y - 1, x + width + 2, y + 9, 0x80000000);
-		context.drawTextWithShadow(client.textRenderer, label, x, y, COLOR);
+		context.drawString(client.font, label, x, y, COLOR);
 	}
 }

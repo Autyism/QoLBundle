@@ -2,7 +2,7 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class IntSetting extends Setting<Integer> {
 	private final int min;
@@ -38,8 +38,8 @@ public class IntSetting extends Setting<Integer> {
 	}
 
 	@Override
-	public Text getValueText() {
-		return Text.literal(get() + suffix);
+	public Component getValueText() {
+		return Component.literal(get() + suffix);
 	}
 
 	@Override

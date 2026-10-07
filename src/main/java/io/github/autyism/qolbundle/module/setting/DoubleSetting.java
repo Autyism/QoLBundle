@@ -2,9 +2,8 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.text.Text;
-
 import java.util.Locale;
+import net.minecraft.network.chat.Component;
 
 public class DoubleSetting extends Setting<Double> {
 	private final double min;
@@ -38,9 +37,9 @@ public class DoubleSetting extends Setting<Double> {
 	}
 
 	@Override
-	public Text getValueText() {
+	public Component getValueText() {
 		int decimals = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
-		return Text.literal(String.format(Locale.ROOT, "%." + decimals + "f", get()) + suffix);
+		return Component.literal(String.format(Locale.ROOT, "%." + decimals + "f", get()) + suffix);
 	}
 
 	@Override

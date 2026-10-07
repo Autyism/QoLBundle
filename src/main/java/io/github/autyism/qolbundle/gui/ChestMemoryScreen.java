@@ -3,21 +3,21 @@ package io.github.autyism.qolbundle.gui;
 import io.github.autyism.qolbundle.module.ModuleRegistry;
 import io.github.autyism.qolbundle.modules.ChestMemoryModule;
 import io.github.autyism.qolbundle.modules.ShulkerManagerModule;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Search the remembered containers for an item. Each result is one container; clicking it makes
@@ -37,12 +37,12 @@ public class ChestMemoryScreen extends Screen {
 	private List<ChestMemoryModule.Hit> hits = new ArrayList<>();
 	/** Shulker boxes the player carries that hold the item; listed before the chests. */
 	private List<ShulkerManagerModule.InventoryHit> carried = new ArrayList<>();
-	private TextFieldWidget queryField;
+	private EditBox queryField;
 	private String query = "";
 	private int scroll;
 
 	public ChestMemoryScreen(@Nullable Screen parent, ChestMemoryModule module) {
-		super(Text.translatable(KEY + "title"));
+		super(Component.translatable(KEY + "title"));
 		this.parent = parent;
 		this.module = module;
 	}
@@ -57,7 +57,7 @@ public class ChestMemoryScreen extends Screen {
 
 	public void setQuery(String text) {
 		if (queryField != null) {
-			queryField.setText(text);
+			queryField.setValue(text);
 		} else {
 			query = text;
 		}
@@ -67,27 +67,27 @@ public class ChestMemoryScreen extends Screen {
 	@Override
 	protected void init() {
 		int fieldWidth = Math.min(this.width - 40, 300);
-		queryField = new TextFieldWidget(this.textRenderer, (this.width - fieldWidth) / 2, 28, fieldWidth, 18, Text.translatable(KEY + "hint"));
+		queryField = new EditBox(this.font, (this.width - fieldWidth) / 2, 28, fieldWidth, 18, Component.translatable(KEY + "hint"));
 		queryField.setMaxLength(60);
-		queryField.setPlaceholder(Text.translatable(KEY + "hint"));
-		queryField.setText(query);
-		queryField.setChangedListener(this::runSearch);
-		addDrawableChild(queryField);
+		queryField.setHint(Component.translatable(KEY + "hint"));
+		queryField.setValue(query);
+		queryField.setResponder(this::runSearch);
+		addRenderableWidget(queryField);
 		setInitialFocus(queryField);
-		addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> close())
-				.dimensions(this.width / 2 - 75, this.height - 27, 150, 20).build());
+		addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
+				.bounds(this.width / 2 - 75, this.height - 27, 150, 20).build());
 		runSearch(query);
 	}
 
 	private void runSearch(String text) {
 		query = text;
 		scroll = 0;
-		String dimension = this.client != null && this.client.world != null
-				? this.client.world.getRegistryKey().getValue().toString() : "";
-		hits = text.isBlank() ? new ArrayList<>() : module.search(text, this.client == null ? null : this.client.player, dimension);
+		String dimension = this.minecraft != null && this.minecraft.level != null
+				? this.minecraft.level.dimension().identifier().toString() : "";
+		hits = text.isBlank() ? new ArrayList<>() : module.search(text, this.minecraft == null ? null : this.minecraft.player, dimension);
 		carried = new ArrayList<>();
-		if (this.client != null && ModuleRegistry.get("shulker_manager") instanceof ShulkerManagerModule shulkers) {
-			carried = shulkers.searchInventory(this.client.player, text);
+		if (this.minecraft != null && ModuleRegistry.get("shulker_manager") instanceof ShulkerManagerModule shulkers) {
+			carried = shulkers.searchInventory(this.minecraft.player, text);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class ChestMemoryScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(Click click, boolean doubled) {
+	public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
 		if (super.mouseClicked(click, doubled)) {
 			return true;
 		}
@@ -137,24 +137,24 @@ public class ChestMemoryScreen extends Screen {
 			module.setTarget(hits.get(index - carried.size()).chest());
 		}
 		// A box you are carrying needs no pointer: its place in the backpack is written in the row.
-		this.client.setScreen(null);
+		this.minecraft.setScreen(null);
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
 		super.render(context, mouseX, mouseY, deltaTicks);
-		context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 11, WHITE);
-		Text status;
+		context.drawCenteredString(this.font, this.title, this.width / 2, 11, WHITE);
+		Component status;
 		if (module.getChests().isEmpty() && carried.isEmpty()) {
-			status = Text.translatable(KEY + "nothing_remembered");
+			status = Component.translatable(KEY + "nothing_remembered");
 		} else if (query.isBlank()) {
-			status = Text.translatable(KEY + "remembered", module.getChests().size());
+			status = Component.translatable(KEY + "remembered", module.getChests().size());
 		} else {
 			status = carried.isEmpty()
-					? Text.translatable(KEY + "found", hits.size())
-					: Text.translatable(KEY + "found_carried", carried.size(), hits.size());
+					? Component.translatable(KEY + "found", hits.size())
+					: Component.translatable(KEY + "found_carried", carried.size(), hits.size());
 		}
-		context.drawCenteredTextWithShadow(this.textRenderer, status, this.width / 2, LIST_TOP - 12, GRAY);
+		context.drawCenteredString(this.font, status, this.width / 2, LIST_TOP - 12, GRAY);
 
 		int left = rowLeft();
 		int hovered = rowAt(mouseX, mouseY);
@@ -165,84 +165,84 @@ public class ChestMemoryScreen extends Screen {
 			}
 			if (i < carried.size()) {
 				ShulkerManagerModule.InventoryHit box = carried.get(i);
-				context.drawItem(box.box(), left, y + 1);
-				context.drawTextWithShadow(this.textRenderer, Text.translatable(KEY + "what", box.name(), box.count()), left + 20, y + 1, WHITE);
-				context.drawTextWithShadow(this.textRenderer, carriedWhere(box), left + 20, y + 10, 0xFF55FF55);
+				context.renderItem(box.box(), left, y + 1);
+				context.drawString(this.font, Component.translatable(KEY + "what", box.name(), box.count()), left + 20, y + 1, WHITE);
+				context.drawString(this.font, carriedWhere(box), left + 20, y + 10, 0xFF55FF55);
 				continue;
 			}
 			ChestMemoryModule.Hit hit = hits.get(i - carried.size());
 			ChestMemoryModule.Chest chest = hit.chest();
-			context.drawItem(new ItemStack(ChestMemoryModule.itemOf(chest.blockId)), left, y + 1);
-			MutableText what = Text.translatable(KEY + (hit.inShulkerBox() ? "what_in_box" : "what"), hit.name(), hit.count());
-			context.drawTextWithShadow(this.textRenderer, what, left + 20, y + 1, WHITE);
-			context.drawTextWithShadow(this.textRenderer, where(chest), left + 20, y + 10, module.isStale(chest) ? 0xFFFFAA00 : GRAY);
+			context.renderItem(new ItemStack(ChestMemoryModule.itemOf(chest.blockId)), left, y + 1);
+			MutableComponent what = Component.translatable(KEY + (hit.inShulkerBox() ? "what_in_box" : "what"), hit.name(), hit.count());
+			context.drawString(this.font, what, left + 20, y + 1, WHITE);
+			context.drawString(this.font, where(chest), left + 20, y + 10, module.isStale(chest) ? 0xFFFFAA00 : GRAY);
 		}
 	}
 
 	/** "in the shulker box in your hotbar, slot 5". */
-	private static Text carriedWhere(ShulkerManagerModule.InventoryHit box) {
-		return Text.translatable(KEY + "carried", box.box().getName(), slotPlace(box.slot()));
+	private static Component carriedWhere(ShulkerManagerModule.InventoryHit box) {
+		return Component.translatable(KEY + "carried", box.box().getHoverName(), slotPlace(box.slot()));
 	}
 
 	/** An inventory slot in words: "hotbar slot 5", "backpack row 2, column 3", "off hand". */
-	public static Text slotPlace(int slot) {
+	public static Component slotPlace(int slot) {
 		if (slot < 9) {
-			return Text.translatable(KEY + "slot.hotbar", slot + 1);
+			return Component.translatable(KEY + "slot.hotbar", slot + 1);
 		} else if (slot < 36) {
-			return Text.translatable(KEY + "slot.backpack", (slot - 9) / 9 + 1, (slot - 9) % 9 + 1);
+			return Component.translatable(KEY + "slot.backpack", (slot - 9) / 9 + 1, (slot - 9) % 9 + 1);
 		}
-		return Text.translatable(KEY + "slot.offhand");
+		return Component.translatable(KEY + "slot.offhand");
 	}
 
 	/** "at 12, 64, -30 (35 blocks, 2 hours ago)" plus a note when the record is old. */
-	private Text where(ChestMemoryModule.Chest chest) {
-		MutableText text;
+	private Component where(ChestMemoryModule.Chest chest) {
+		MutableComponent text;
 		if (chest.isEnderChest()) {
-			text = Text.translatable(KEY + "ender_chest");
+			text = Component.translatable(KEY + "ender_chest");
 		} else {
-			String here = this.client.world == null ? "" : this.client.world.getRegistryKey().getValue().toString();
+			String here = this.minecraft.level == null ? "" : this.minecraft.level.dimension().identifier().toString();
 			String position = chest.pos.getX() + ", " + chest.pos.getY() + ", " + chest.pos.getZ();
-			if (chest.dimension.equals(here) && this.client.player != null) {
-				int distance = (int) Math.round(Math.sqrt(chest.pos.getSquaredDistance(this.client.player.getBlockPos())));
-				text = Text.translatable(KEY + "where", position, distance);
+			if (chest.dimension.equals(here) && this.minecraft.player != null) {
+				int distance = (int) Math.round(Math.sqrt(chest.pos.distSqr(this.minecraft.player.blockPosition())));
+				text = Component.translatable(KEY + "where", position, distance);
 			} else {
-				text = Text.translatable(KEY + "where_other", dimensionName(chest.dimension), position);
+				text = Component.translatable(KEY + "where_other", dimensionName(chest.dimension), position);
 			}
 		}
-		text.append(Text.literal("  ")).append(age(chest.seenMs));
+		text.append(Component.literal("  ")).append(age(chest.seenMs));
 		if (module.isStale(chest)) {
-			text.append(Text.literal("  ")).append(Text.translatable(KEY + "stale"));
+			text.append(Component.literal("  ")).append(Component.translatable(KEY + "stale"));
 		}
 		return text;
 	}
 
-	private static Text age(long seenMs) {
+	private static Component age(long seenMs) {
 		long minutes = Math.max(0, (System.currentTimeMillis() - seenMs) / 60000L);
 		if (minutes < 1) {
-			return Text.translatable(KEY + "age.now");
+			return Component.translatable(KEY + "age.now");
 		}
 		if (minutes < 60) {
-			return Text.translatable(KEY + "age.minutes", minutes);
+			return Component.translatable(KEY + "age.minutes", minutes);
 		}
 		if (minutes < 60 * 24) {
-			return Text.translatable(KEY + "age.hours", minutes / 60);
+			return Component.translatable(KEY + "age.hours", minutes / 60);
 		}
-		return Text.translatable(KEY + "age.days", minutes / (60 * 24));
+		return Component.translatable(KEY + "age.days", minutes / (60 * 24));
 	}
 
-	public static Text dimensionName(String id) {
+	public static Component dimensionName(String id) {
 		String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
 		String key = "qolbundle.dimension." + path.toLowerCase(Locale.ROOT);
-		return I18n.hasTranslation(key) ? Text.translatable(key) : Text.literal(id);
+		return I18n.exists(key) ? Component.translatable(key) : Component.literal(id);
 	}
 
 	@Override
-	public void close() {
-		this.client.setScreen(parent);
+	public void onClose() {
+		this.minecraft.setScreen(parent);
 	}
 
 	@Override
-	public boolean shouldPause() {
+	public boolean isPauseScreen() {
 		return false;
 	}
 }

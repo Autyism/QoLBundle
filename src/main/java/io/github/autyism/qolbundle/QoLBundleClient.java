@@ -7,6 +7,7 @@ import io.github.autyism.qolbundle.modules.CombatStatsModule;
 import io.github.autyism.qolbundle.modules.ProjectileDirectionModule;
 import io.github.autyism.qolbundle.modules.LootTimerModule;
 import io.github.autyism.qolbundle.modules.AttackCooldownModule;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.autyism.qolbundle.api.QoLBundleAddon;
 import io.github.autyism.qolbundle.config.ConfigManager;
 import io.github.autyism.qolbundle.data.WorldData;
@@ -56,12 +57,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,11 +73,11 @@ public class QoLBundleClient implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("QoLBundle");
 
 	/** The "QoL Bundle" section in Options > Controls > Key Binds. */
-	public static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(id("main"));
-	private static KeyBinding openSettingsKey;
+	public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(id("main"));
+	private static KeyMapping openSettingsKey;
 
 	public static Identifier id(String path) {
-		return Identifier.of(MOD_ID, path);
+		return Identifier.fromNamespaceAndPath(MOD_ID, path);
 	}
 
 	@Override
@@ -86,8 +86,8 @@ public class QoLBundleClient implements ClientModInitializer {
 		registerModules();
 		ConfigManager.load();
 
-		openSettingsKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-				"key.qolbundle.open_settings", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
+		openSettingsKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				"key.qolbundle.open_settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
 
 		ClientTickEvents.START_CLIENT_TICK.register(client -> {
 			for (Module module : ModuleRegistry.all()) {
@@ -163,9 +163,9 @@ public class QoLBundleClient implements ClientModInitializer {
 		return FabricLoader.getInstance().getEntrypoints(QoLBundleAddon.ENTRYPOINT_KEY, QoLBundleAddon.class);
 	}
 
-	private void onClientTick(MinecraftClient client) {
-		while (openSettingsKey.wasPressed()) {
-			if (client.currentScreen == null) {
+	private void onClientTick(Minecraft client) {
+		while (openSettingsKey.consumeClick()) {
+			if (client.screen == null) {
 				client.setScreen(new ModuleListScreen(null));
 			}
 		}
@@ -193,13 +193,13 @@ public class QoLBundleClient implements ClientModInitializer {
 		}
 	}
 
-	private void onRenderHud(DrawContext context, RenderTickCounter tickCounter) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.player == null || client.world == null || client.options.hudHidden) {
+	private void onRenderHud(GuiGraphics context, DeltaTracker tickCounter) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.player == null || client.level == null || client.options.hideGui) {
 			return;
 		}
-		HudLayout layout = new HudLayout(context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-				client.getDebugHud().shouldShowDebugHud());
+		HudLayout layout = new HudLayout(context.guiWidth(), context.guiHeight(),
+				client.getDebugOverlay().showDebugScreen());
 		for (Module module : ModuleRegistry.all()) {
 			if (module.isEnabled()) {
 				module.onRenderHud(context, tickCounter, layout);

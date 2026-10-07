@@ -7,21 +7,21 @@ import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.EnumSetting;
 import io.github.autyism.qolbundle.render.HighlightColor;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Items;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.debug.gizmo.GizmoDrawing;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gizmos.Gizmos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -65,32 +65,32 @@ public class EffectRangeModule extends Module {
 	}
 
 	@Override
-	public void onTick(MinecraftClient client) {
-		ClientPlayerEntity player = client.player;
+	public void onTick(Minecraft client) {
+		LocalPlayer player = client.player;
 		shown = null;
-		if (player == null || client.world == null) {
+		if (player == null || client.level == null) {
 			return;
 		}
-		ClientWorld world = client.world;
-		HitResult hit = player.raycast(LOOK_RANGE, 1.0F, false);
+		ClientLevel world = client.level;
+		HitResult hit = player.pick(LOOK_RANGE, 1.0F, false);
 		BlockHitResult blockHit = hit.getType() == HitResult.Type.BLOCK ? (BlockHitResult) hit : null;
 
 		if (whenLooking.get() && blockHit != null) {
 			BlockState state = world.getBlockState(blockHit.getBlockPos());
-			if (state.isOf(Blocks.BEACON)) {
+			if (state.is(Blocks.BEACON)) {
 				shown = beacon(world, blockHit.getBlockPos(), false);
 				return;
 			}
-			if (state.isOf(Blocks.CONDUIT)) {
+			if (state.is(Blocks.CONDUIT)) {
 				shown = conduit(world, blockHit.getBlockPos(), false);
 				return;
 			}
 		}
-		if (whenHolding.get() && blockHit != null && blockHit.getPos().distanceTo(player.getEyePos()) <= 6.0) {
+		if (whenHolding.get() && blockHit != null && blockHit.getLocation().distanceTo(player.getEyePosition()) <= 6.0) {
 			// Where the block would go if placed now.
-			BlockPos target = blockHit.getBlockPos().offset(blockHit.getSide());
-			boolean beaconInHand = player.getMainHandStack().isOf(Items.BEACON) || player.getOffHandStack().isOf(Items.BEACON);
-			boolean conduitInHand = player.getMainHandStack().isOf(Items.CONDUIT) || player.getOffHandStack().isOf(Items.CONDUIT);
+			BlockPos target = blockHit.getBlockPos().relative(blockHit.getDirection());
+			boolean beaconInHand = player.getMainHandItem().is(Items.BEACON) || player.getOffhandItem().is(Items.BEACON);
+			boolean conduitInHand = player.getMainHandItem().is(Items.CONDUIT) || player.getOffhandItem().is(Items.CONDUIT);
 			if (beaconInHand) {
 				shown = beacon(world, target, true);
 			} else if (conduitInHand) {
@@ -100,11 +100,11 @@ public class EffectRangeModule extends Module {
 	}
 
 	/** Same check as the game: complete layers of beacon base blocks under it, up to four. */
-	private static Shown beacon(ClientWorld world, BlockPos pos, boolean preview) {
+	private static Shown beacon(ClientLevel world, BlockPos pos, boolean preview) {
 		int level = 0;
 		for (int layer = 1; layer <= 4; layer++) {
 			int y = pos.getY() - layer;
-			if (y < world.getBottomY() || !layerComplete(world, pos, layer, y)) {
+			if (y < world.getMinY() || !layerComplete(world, pos, layer, y)) {
 				break;
 			}
 			level = layer;
@@ -112,11 +112,11 @@ public class EffectRangeModule extends Module {
 		return new Shown(Source.BEACON, pos, level, level == 0 ? 0 : level * 10 + 10, preview);
 	}
 
-	private static boolean layerComplete(ClientWorld world, BlockPos pos, int layer, int y) {
-		BlockPos.Mutable check = new BlockPos.Mutable();
+	private static boolean layerComplete(ClientLevel world, BlockPos pos, int layer, int y) {
+		BlockPos.MutableBlockPos check = new BlockPos.MutableBlockPos();
 		for (int x = pos.getX() - layer; x <= pos.getX() + layer; x++) {
 			for (int z = pos.getZ() - layer; z <= pos.getZ() + layer; z++) {
-				if (!world.getBlockState(check.set(x, y, z)).isIn(BlockTags.BEACON_BASE_BLOCKS)) {
+				if (!world.getBlockState(check.set(x, y, z)).is(BlockTags.BEACON_BASE_BLOCKS)) {
 					return false;
 				}
 			}
@@ -125,9 +125,9 @@ public class EffectRangeModule extends Module {
 	}
 
 	/** Same pattern as the game: the three prismarine rings around the conduit, 42 blocks at most. */
-	private static Shown conduit(ClientWorld world, BlockPos pos, boolean preview) {
+	private static Shown conduit(ClientLevel world, BlockPos pos, boolean preview) {
 		int frame = 0;
-		BlockPos.Mutable check = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos check = new BlockPos.MutableBlockPos();
 		for (int i = -2; i <= 2; i++) {
 			for (int j = -2; j <= 2; j++) {
 				for (int k = -2; k <= 2; k++) {
@@ -136,8 +136,8 @@ public class EffectRangeModule extends Module {
 					int n = Math.abs(k);
 					if ((l > 1 || m > 1 || n > 1) && (i == 0 && (m == 2 || n == 2) || j == 0 && (l == 2 || n == 2) || k == 0 && (l == 2 || m == 2))) {
 						BlockState state = world.getBlockState(check.set(pos.getX() + i, pos.getY() + j, pos.getZ() + k));
-						if (state.isOf(Blocks.PRISMARINE) || state.isOf(Blocks.PRISMARINE_BRICKS)
-								|| state.isOf(Blocks.SEA_LANTERN) || state.isOf(Blocks.DARK_PRISMARINE)) {
+						if (state.is(Blocks.PRISMARINE) || state.is(Blocks.PRISMARINE_BRICKS)
+								|| state.is(Blocks.SEA_LANTERN) || state.is(Blocks.DARK_PRISMARINE)) {
 							frame++;
 						}
 					}
@@ -150,8 +150,8 @@ public class EffectRangeModule extends Module {
 	@Override
 	public void onRenderWorld(WorldRenderContext context) {
 		Shown current = shown;
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (current == null || current.range <= 0 || client.player == null || client.world == null) {
+		Minecraft client = Minecraft.getInstance();
+		if (current == null || current.range <= 0 || client.player == null || client.level == null) {
 			return;
 		}
 		int line = color.get().withOpacity(100);
@@ -162,11 +162,11 @@ public class EffectRangeModule extends Module {
 			double x1 = current.pos.getX() + 1 + current.range;
 			double z0 = current.pos.getZ() - current.range;
 			double z1 = current.pos.getZ() + 1 + current.range;
-			double bottom = Math.max(client.world.getBottomY(), current.pos.getY() - current.range);
-			double top = client.world.getTopYInclusive() + 1;
+			double bottom = Math.max(client.level.getMinY(), current.pos.getY() - current.range);
+			double top = client.level.getMaxY() + 1;
 			for (double x : new double[] {x0, x1}) {
 				for (double z : new double[] {z0, z1}) {
-					GizmoDrawing.line(new Vec3d(x, bottom, z), new Vec3d(x, top, z), line, 3.0F);
+					Gizmos.line(new Vec3(x, bottom, z), new Vec3(x, top, z), line, 3.0F);
 				}
 			}
 			rectangle(x0, z0, x1, z1, bottom, faint);
@@ -174,7 +174,7 @@ public class EffectRangeModule extends Module {
 			// The border at your own height is the one you can walk up to.
 			rectangle(x0, z0, x1, z1, Math.max(bottom, playerY), line);
 		} else {
-			Vec3d center = Vec3d.ofCenter(current.pos);
+			Vec3 center = Vec3.atCenterOf(current.pos);
 			double r = current.range;
 			circle(center, r, 0, line);
 			circle(center, r, 1, faint);
@@ -182,66 +182,66 @@ public class EffectRangeModule extends Module {
 			// Where the ball cuts through your own height.
 			double dy = playerY - center.y;
 			if (Math.abs(dy) < r) {
-				circle(new Vec3d(center.x, playerY, center.z), Math.sqrt(r * r - dy * dy), 0, line);
+				circle(new Vec3(center.x, playerY, center.z), Math.sqrt(r * r - dy * dy), 0, line);
 			}
 		}
 	}
 
 	private static void rectangle(double x0, double z0, double x1, double z1, double y, int color) {
-		Vec3d a = new Vec3d(x0, y, z0);
-		Vec3d b = new Vec3d(x1, y, z0);
-		Vec3d c = new Vec3d(x1, y, z1);
-		Vec3d d = new Vec3d(x0, y, z1);
-		GizmoDrawing.line(a, b, color, 2.0F);
-		GizmoDrawing.line(b, c, color, 2.0F);
-		GizmoDrawing.line(c, d, color, 2.0F);
-		GizmoDrawing.line(d, a, color, 2.0F);
+		Vec3 a = new Vec3(x0, y, z0);
+		Vec3 b = new Vec3(x1, y, z0);
+		Vec3 c = new Vec3(x1, y, z1);
+		Vec3 d = new Vec3(x0, y, z1);
+		Gizmos.line(a, b, color, 2.0F);
+		Gizmos.line(b, c, color, 2.0F);
+		Gizmos.line(c, d, color, 2.0F);
+		Gizmos.line(d, a, color, 2.0F);
 	}
 
 	/** A circle around the centre. plane 0 = flat, 1 and 2 = the two upright ones. */
-	private static void circle(Vec3d center, double radius, int plane, int color) {
-		Vec3d previous = null;
+	private static void circle(Vec3 center, double radius, int plane, int color) {
+		Vec3 previous = null;
 		for (int i = 0; i <= CIRCLE_POINTS; i++) {
 			double angle = i * 2.0 * Math.PI / CIRCLE_POINTS;
 			double a = Math.cos(angle) * radius;
 			double b = Math.sin(angle) * radius;
-			Vec3d point = switch (plane) {
+			Vec3 point = switch (plane) {
 				case 1 -> center.add(a, b, 0);
 				case 2 -> center.add(0, b, a);
 				default -> center.add(a, 0, b);
 			};
 			if (previous != null) {
-				GizmoDrawing.line(previous, point, color, 2.0F);
+				Gizmos.line(previous, point, color, 2.0F);
 			}
 			previous = point;
 		}
 	}
 
 	@Override
-	public void onRenderHud(DrawContext context, RenderTickCounter tickCounter, HudLayout layout) {
+	public void onRenderHud(GuiGraphics context, DeltaTracker tickCounter, HudLayout layout) {
 		Shown current = shown;
 		if (current == null) {
 			return;
 		}
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		String key = getTranslationKey() + ".hud.";
-		Text text;
+		Component text;
 		if (current.source == Source.BEACON) {
 			text = current.range > 0
-					? Text.translatable(key + "beacon", current.level, current.range)
-					: Text.translatable(key + "beacon_none");
+					? Component.translatable(key + "beacon", current.level, current.range)
+					: Component.translatable(key + "beacon_none");
 		} else {
 			text = current.range > 0
-					? Text.translatable(key + "conduit", current.range, current.level)
-					: Text.translatable(key + "conduit_none", current.level);
+					? Component.translatable(key + "conduit", current.range, current.level)
+					: Component.translatable(key + "conduit_none", current.level);
 		}
 		if (current.preview) {
-			text = Text.translatable(key + "preview", text);
+			text = Component.translatable(key + "preview", text);
 		}
-		int width = client.textRenderer.getWidth(text);
+		int width = client.font.width(text);
 		int x = (layout.getScreenWidth() - width) / 2;
 		int y = layout.getScreenHeight() / 2 + 30;
 		context.fill(x - 3, y - 2, x + width + 3, y + 10, 0x90000000);
-		context.drawTextWithShadow(client.textRenderer, text, x, y, current.range > 0 ? 0xFF55FFFF : 0xFFAAAAAA);
+		context.drawString(client.font, text, x, y, current.range > 0 ? 0xFF55FFFF : 0xFFAAAAAA);
 	}
 }

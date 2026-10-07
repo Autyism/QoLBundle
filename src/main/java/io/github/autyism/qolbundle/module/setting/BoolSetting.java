@@ -2,8 +2,8 @@ package io.github.autyism.qolbundle.module.setting;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 public class BoolSetting extends Setting<Boolean> {
 	public BoolSetting(String id, boolean defaultValue) {
@@ -15,8 +15,8 @@ public class BoolSetting extends Setting<Boolean> {
 	}
 
 	@Override
-	public Text getValueText() {
-		return get() ? ScreenTexts.ON : ScreenTexts.OFF;
+	public Component getValueText() {
+		return get() ? CommonComponents.OPTION_ON : CommonComponents.OPTION_OFF;
 	}
 
 	@Override
