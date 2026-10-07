@@ -26,9 +26,16 @@ public class GameRendererMixin {
 	 * Rear mirror: before the world is drawn for this frame, draw it once looking backwards and
 	 * keep that picture. The normal drawing afterwards overwrites the screen as always.
 	 */
+	//? if >=26.3 {
+	/*@WrapOperation(method = "render", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel()V"))
+	private void qolbundle$rearMirror(GameRenderer renderer, Operation<Void> original) {
+		DeltaTracker tickCounter = minecraft.getDeltaTracker();
+	*///?} else {
 	@WrapOperation(method = "render", at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel(Lnet/minecraft/client/DeltaTracker;)V"))
 	private void qolbundle$rearMirror(GameRenderer renderer, DeltaTracker tickCounter, Operation<Void> original) {
+	//?}
 		RearMirrorModule mirror = RearMirrorModule.current();
 		if (mirror != null && mirror.wantsPicture()) {
 			mirror.beginRear();
@@ -50,7 +57,29 @@ public class GameRendererMixin {
 		original.call(renderer, tickCounter);
 	}
 
-	//? if >=26.2 {
+	//? if >=26.3 {
+	/*@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Minecraft minecraft;
+
+	@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Camera mainCamera;
+
+	@org.spongepowered.asm.mixin.Shadow
+	private void extractCamera(DeltaTracker deltaTracker, float worldPartialTicks) {
+		throw new AssertionError();
+	}
+
+	/^* The camera and what it sees are worked out before drawing starts; do that again for another view. ^/
+	@org.spongepowered.asm.mixin.Unique
+	private void qolbundle$extractView(GameRenderer renderer, DeltaTracker tickCounter) {
+		renderer.update(tickCounter);
+		float worldPartialTicks = tickCounter.getGameTimeDeltaPartialTick(false);
+		extractCamera(tickCounter, worldPartialTicks);
+		minecraft.levelExtractor.extract(tickCounter, mainCamera, worldPartialTicks);
+	}
+	*///?} elif >=26.2 {
 	/*@org.spongepowered.asm.mixin.Shadow
 	@org.spongepowered.asm.mixin.Final
 	private net.minecraft.client.Minecraft minecraft;
