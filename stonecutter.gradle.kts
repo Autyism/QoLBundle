@@ -38,8 +38,11 @@ stonecutter parameters {
         "\\bSheets\\.translucentBlockItemSheet\\(\\)" to "Sheets.translucentItemSheet()",
         "\\bextends Button\\.Plain\\b" to "extends Button",
     )
+    // 1.21.9-1.21.10: GUI outline call renamed; and Fabric API for 1.21.9 has no world-drawing events, so on these
+    // two versions the mod uses its own (render.legacy, same names and calls) and one jar runs on both.
     oneWay(current.parsed >= "1.21.9" && current.parsed < "1.21.11",
         "\\.renderOutline\\(" to ".submitOutline(",
+        "\\bnet\\.fabricmc\\.fabric\\.api\\.client\\.rendering\\.v1\\.world\\.(WorldRenderContext|WorldRenderEvents)\\b" to "io.github.autyism.qolbundle.render.legacy.$1",
     )
     // Before 1.21.9: Fabric's older world-rendering package, no Avatar (players were just Player), and the
     // window handle had another getter. Self-test only: key presses were plain numbers, the chat screen took one

@@ -60,7 +60,7 @@ val templateProps = mapOf(
     // Mixins that only exist for some versions (their sources are empty on the others)
     "extra_mixins" to when {
         sc.current.parsed < "1.21.9" -> ",\n\t\t\"LegacyDebugRendererMixin\""
-        sc.current.parsed < "1.21.11" -> ",\n\t\t\"DebugRendererMixin\""
+        sc.current.parsed < "1.21.11" -> ",\n\t\t\"DebugRendererMixin\",\n\t\t\"WorldRenderEventsMixin\""
         else -> ""
     },
 )
