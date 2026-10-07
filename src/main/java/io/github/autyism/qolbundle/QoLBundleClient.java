@@ -104,7 +104,8 @@ public class QoLBundleClient implements ClientModInitializer {
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
 		//? if >=26.1 {
 		/*LevelRenderEvents.BEFORE_GIZMOS.register(this::onRenderWorld);
-		LevelRenderEvents.COLLECT_SUBMITS.register(this::onSubmitWorld);
+		// Right after the game's own debug shapes, so lines behind a see-through block stay visible.
+		LevelRenderEvents.BEFORE_TRANSLUCENT_TERRAIN.register(this::onSubmitWorld);
 		*///?} else {
 		WorldRenderEvents.BEFORE_DEBUG_RENDER.register(this::onRenderWorld);
 		WorldRenderEvents.BEFORE_ENTITIES.register(this::onSubmitWorld);

@@ -25,6 +25,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.Sheets;
 //? if >=26.1 {
 /*import com.mojang.blaze3d.vertex.QuadInstance;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -314,7 +316,10 @@ public class PlacementMasterModule extends Module {
 		matrices.scale(0.998F, 0.998F, 0.998F);
 		matrices.translate(-0.5, -0.5, -0.5);
 		//? if >=26.1 {
-		/*context.submitNodeCollector().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
+		/*MultiBufferSource.BufferSource buffers = context.bufferSource();
+		VertexConsumer consumer = buffers.getBuffer(Sheets.translucentBlockItemSheet());
+		PoseStack.Pose entry = matrices.last();
+		{
 			List<BlockStateModelPart> parts = new ArrayList<>();
 			model.collectParts(RandomSource.create(42L), parts);
 			for (BlockStateModelPart part : parts) {
@@ -342,7 +347,8 @@ public class PlacementMasterModule extends Module {
 					}
 				}
 			}
-		});
+		}
+		buffers.endBatch(Sheets.translucentBlockItemSheet());
 		*///?} else {
 		context.commandQueue().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
 			for (BlockModelPart part : model.collectParts(RandomSource.create(42L))) {
