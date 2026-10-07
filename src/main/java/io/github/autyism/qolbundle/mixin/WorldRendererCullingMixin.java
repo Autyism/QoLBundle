@@ -17,8 +17,14 @@ import org.spongepowered.asm.mixin.injection.At;
  * therefore skips this mixin when Sodium is installed; Sodium gets the spectator flag from
  * {@link WorldRendererMixin} instead.
  */
+//? if >=26.2 {
+/*@Mixin(net.minecraft.client.Camera.class)
+*///?} else
 @Mixin(LevelRenderer.class)
 public class WorldRendererCullingMixin {
+	//? if >=26.2 {
+	/*@ModifyExpressionValue(method = "extractRenderState", require = 0, at = @At(value = "FIELD",
+	*///?} else
 	@ModifyExpressionValue(method = "cullTerrain", require = 0, at = @At(value = "FIELD",
 			target = "Lnet/minecraft/client/Minecraft;smartCull:Z"))
 	private boolean qolbundle$noHiddenChunkSkippingInFreecam(boolean cullingEnabled) {

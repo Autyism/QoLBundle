@@ -52,4 +52,23 @@ stonecutter parameters {
         // a container's stacks are now handed out as templates; copies read the same
         "\\.nonEmptyItems\\(\\)" to ".nonEmptyItemCopyStream().toList()",
     )
+    // 26.2: the open screen moved from Minecraft to Gui, chat and on-screen messages to Gui's Hud.
+    // "client" is always a Minecraft in this code, "minecraft" always a screen's Minecraft field.
+    oneWay(current.parsed >= "26.2",
+        "(?<![.\\w])client\\.screen\\b" to "client.gui.screen()",
+        "\\b(client|minecraft)\\.setScreen\\(" to "$1.gui.setScreen(",
+        "\\bclient\\.getOverlay\\(\\)" to "client.gui.overlay()",
+        "\\bclient\\.getToastManager\\(\\)" to "client.gui.toastManager()",
+        "\\bclient\\.getMainRenderTarget\\(\\)" to "client.gameRenderer.mainRenderTarget()",
+        "\\bclient\\.options\\.hideGui\\b" to "client.gui.hud.isHidden()",
+        "\\.gui\\.getChat\\(\\)" to ".gui.hud.getChat()",
+        "\\.gui\\.getGuiTicks\\(\\)" to ".gui.hud.getGuiTicks()",
+        "\\.gui\\.setOverlayMessage\\(" to ".gui.hud.setOverlayMessage(",
+        "\\.getMainCamera\\(\\)" to ".mainCamera()",
+        "\\bI18n\\.exists\\(" to "net.minecraft.locale.Language.getInstance().has(",
+        "\\bclient\\.levelRenderer\\.countRenderedSections\\(\\)" to "client.levelExtractor.countRenderedSections()",
+        "\\bDripstoneThickness\\b" to "SpeleothemThickness",
+        // self-test only: the flat preset helper is gone (Scenarios has its own)
+        "\\bWorldPresets::createFlatWorldDimensions\\b" to "Scenarios::flatDimensions",
+    )
 }

@@ -11,9 +11,14 @@ import org.spongepowered.asm.mixin.injection.At;
  * not hidden just because the camera sits inside rock. Renderer mods such as Sodium read this same
  * flag. The vanilla-only part lives in {@link WorldRendererCullingMixin}.
  */
+//? if >=26.2 {
+/*@Mixin(net.minecraft.client.Camera.class)
+*///?} else
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
-	//? if >=26.1 {
+	//? if >=26.2 {
+	/*@ModifyExpressionValue(method = "extractRenderState", require = 0, at = @At(value = "INVOKE",
+	*///?} elif >=26.1 {
 	/*@ModifyExpressionValue(method = "update", require = 0, at = @At(value = "INVOKE",
 	*///?} else
 	@ModifyExpressionValue(method = "renderLevel", require = 0, at = @At(value = "INVOKE",

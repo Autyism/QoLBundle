@@ -37,6 +37,9 @@ public class LightmapTextureManagerMixin {
 	/*@WrapOperation(method = "extract", at = @At(value = "INVOKE",
 	*///?} else
 	@WrapOperation(method = "updateLightTexture", at = @At(value = "INVOKE",
+			//? if >=26.2 {
+			/*target = "Lnet/minecraft/client/renderer/GameRenderer;nightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F"))
+			*///?} else
 			target = "Lnet/minecraft/client/renderer/GameRenderer;getNightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F"))
 	private float qolbundle$nightVisionStrength(LivingEntity entity, float tickProgress, Operation<Float> original) {
 		if (FullbrightModule.isActive()) {

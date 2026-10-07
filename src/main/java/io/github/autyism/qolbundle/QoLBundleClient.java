@@ -102,7 +102,10 @@ public class QoLBundleClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
-		//? if >=26.1 {
+		//? if >=26.2 {
+		/*LevelRenderEvents.BEFORE_GIZMOS.register(this::onRenderWorld);
+		LevelRenderEvents.COLLECT_SUBMITS.register(this::onSubmitWorld);
+		*///?} elif >=26.1 {
 		/*LevelRenderEvents.BEFORE_GIZMOS.register(this::onRenderWorld);
 		// Right after the game's own debug shapes, so lines behind a see-through block stay visible.
 		LevelRenderEvents.BEFORE_TRANSLUCENT_TERRAIN.register(this::onSubmitWorld);

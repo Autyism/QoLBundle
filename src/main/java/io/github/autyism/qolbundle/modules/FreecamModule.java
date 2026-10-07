@@ -168,6 +168,10 @@ public class FreecamModule extends Module {
 			world = null;
 		}
 		// Which chunks are drawn depends on whether the camera is free; have it worked out afresh.
+		//? if >=26.2 {
+		/*client.levelRenderer.sectionOcclusionGraph().invalidate();
+		client.levelRenderer.cloudRenderer().markForRebuild();
+		*///?} else
 		client.levelRenderer.needsUpdate();
 		client.gui.setOverlayMessage(Component.translatable(getTranslationKey() + (on ? ".on" : ".off")), false);
 	}
