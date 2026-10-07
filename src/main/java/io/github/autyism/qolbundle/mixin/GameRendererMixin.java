@@ -50,7 +50,29 @@ public class GameRendererMixin {
 		original.call(renderer, tickCounter);
 	}
 
-	//? if >=26.1 {
+	//? if >=26.2 {
+	/*@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Minecraft minecraft;
+
+	@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Camera mainCamera;
+
+	@org.spongepowered.asm.mixin.Shadow
+	private void extractCamera(DeltaTracker deltaTracker, float worldPartialTicks, float cameraEntityPartialTicks) {
+		throw new AssertionError();
+	}
+
+	/^* The camera and what it sees are worked out before drawing starts; do that again for another view. ^/
+	@org.spongepowered.asm.mixin.Unique
+	private void qolbundle$extractView(GameRenderer renderer, DeltaTracker tickCounter) {
+		renderer.update(tickCounter);
+		float worldPartialTicks = tickCounter.getGameTimeDeltaPartialTick(false);
+		extractCamera(tickCounter, worldPartialTicks, mainCamera.getCameraEntityPartialTicks(tickCounter));
+		minecraft.levelExtractor.extract(tickCounter, mainCamera, worldPartialTicks);
+	}
+	*///?} elif >=26.1 {
 	/*@org.spongepowered.asm.mixin.Shadow
 	@org.spongepowered.asm.mixin.Final
 	private net.minecraft.client.Minecraft minecraft;

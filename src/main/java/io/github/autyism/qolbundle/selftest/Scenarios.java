@@ -406,6 +406,13 @@ public final class Scenarios {
 		s.command("gamemode creative @a");
 	}
 
+	//? if >=26.2 {
+	/*/^* The superflat preset, as WorldPresets.createFlatWorldDimensions made it before 26.2. ^/
+	private static net.minecraft.world.level.levelgen.WorldDimensions flatDimensions(net.minecraft.core.HolderLookup.Provider provider) {
+		return provider.lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions();
+	}
+
+	*///?}
 	//? if >=26.1 {
 	/*/^* Tells the game the window has (or has lost) focus, through the same callback GLFW itself uses. ^/
 	private static void setWindowFocused(Minecraft client, boolean focused) {

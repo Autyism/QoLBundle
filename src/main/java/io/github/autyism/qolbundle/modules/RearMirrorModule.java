@@ -118,6 +118,9 @@ public class RearMirrorModule extends Module {
 		int width = main.width;
 		int height = main.height;
 		if (buffer == null) {
+			//? if >=26.2 {
+			/*buffer = new TextureTarget("QoL Bundle rear mirror", width, height, false, com.mojang.blaze3d.GpuFormat.RGBA8_UNORM);
+			*///?} else
 			buffer = new TextureTarget("QoL Bundle rear mirror", width, height, false);
 		} else if (buffer.width != width || buffer.height != height) {
 			buffer.resize(width, height);

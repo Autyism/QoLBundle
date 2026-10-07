@@ -26,7 +26,6 @@ import net.minecraft.client.renderer.Sheets;
 //? if >=26.1 {
 /*import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -315,8 +314,39 @@ public class PlacementMasterModule extends Module {
 		matrices.translate(0.5, 0.5, 0.5);
 		matrices.scale(0.998F, 0.998F, 0.998F);
 		matrices.translate(-0.5, -0.5, -0.5);
-		//? if >=26.1 {
-		/*MultiBufferSource.BufferSource buffers = context.bufferSource();
+		//? if >=26.2 {
+		/*// Queued with the game's own see-through blocks, which are drawn after the debug lines
+		// (custom geometry would be drawn before them and hide the lines behind the block).
+		List<BlockStateModelPart> parts = new ArrayList<>();
+		model.collectParts(RandomSource.create(42L), parts);
+		List<BlockTintSource> sources = client.getBlockColors().getTintSources(state);
+		int[] tints = new int[sources.size()];
+		for (int i = 0; i < tints.length; i++) {
+			tints[i] = sources.get(i).colorInWorld(state, world, pos);
+		}
+		int color = ARGB.colorFromFloat(alpha, 1F, wrong ? 0.35F : 1F, wrong ? 0.35F : 1F);
+		if (context.submitNodeCollector().order(0) instanceof net.minecraft.client.renderer.SubmitNodeCollection queue) {
+			queue.translucentBlocksAndItems.submit(new net.minecraft.client.renderer.feature.BlockModelFeatureRenderer.Submit(matrices.last().copy(),
+					Sheets.translucentBlockItemSheet(), parts, tints, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, color, null));
+		} else {
+			// Another renderer took over the queue: draw it as plain geometry.
+			context.submitNodeCollector().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
+				QuadInstance instance = new QuadInstance();
+				instance.setLightCoords(LightCoordsUtil.FULL_BRIGHT);
+				instance.setOverlayCoords(OverlayTexture.NO_OVERLAY);
+				for (BlockStateModelPart part : parts) {
+					for (int side = -1; side < 6; side++) {
+						for (BakedQuad quad : part.getQuads(side < 0 ? null : Direction.from3DDataValue(side))) {
+							int tintIndex = quad.materialInfo().tintIndex();
+							instance.setColor(tintIndex >= 0 && tintIndex < tints.length ? ARGB.multiply(color, tints[tintIndex]) : color);
+							consumer.putBakedQuad(entry, quad, instance);
+						}
+					}
+				}
+			});
+		}
+		*///?} elif >=26.1 {
+		/*net.minecraft.client.renderer.MultiBufferSource.BufferSource buffers = context.bufferSource();
 		VertexConsumer consumer = buffers.getBuffer(Sheets.translucentBlockItemSheet());
 		PoseStack.Pose entry = matrices.last();
 		{
