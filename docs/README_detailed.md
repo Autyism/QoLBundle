@@ -6,7 +6,7 @@
 
 <p align="center"><a href="#english">English</a> · <a href="#简体中文">简体中文</a></p>
 
-![Minecraft 1.21.11 | 26.1–26.2](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.2-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Minecraft 1.21.11 | 26.1–26.3](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.3-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
 
 # English
 
@@ -293,7 +293,7 @@ Settings are stored in `config/qolbundle.json`. If that file is damaged, the def
 
 | | Version |
 |---|---|
-| Minecraft | Java Edition 1.21.11, or 26.1–26.2 (each version has its own jar, see below) |
+| Minecraft | Java Edition 1.21.11 or 26.1–26.3 (each version has its own jar) |
 | Fabric Loader | 0.19.5 or newer |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | required, for the same Minecraft version |
 | Java | 21 or newer |
@@ -314,9 +314,9 @@ QoL Bundle runs on the client only. The server does not need it, and the mod doe
 
 1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5 or newer for your Minecraft version.
 2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for that Minecraft version and put it into your `mods` folder.
-3. Download the QoL Bundle jar for your version and put it into the same `mods` folder: `qolbundle-0.1.0.jar` for 1.21.11, `qolbundle-0.1.0+26.1.2.jar` for 26.1–26.1.2, `qolbundle-0.1.0+26.2.jar` for 26.2 (both need Java 25).
+3. Download the QoL Bundle jar for your Minecraft version from the [releases](https://github.com/Autyism/QoLBundle/releases) and put it into the same `mods` folder (26.x needs Java 25).
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) for a settings button in the mod list.
-5. Optional, only if you want X-ray: `qolbundle-xray-addon-0.1.0.jar` (1.21.11), `qolbundle-xray-addon-0.1.0+26.1.2.jar` (26.1–26.1.2) or `qolbundle-xray-addon-0.1.0+26.2.jar` (26.2).
+5. Optional, only if you want X-ray: the X-ray add-on jar for the same version.
 6. Start the game and press **K** in a world.
 
 ## FAQ
@@ -658,7 +658,7 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 
 | | 版本 |
 |---|---|
-| Minecraft | Java 版 1.21.11，或 26.1–26.2（每个版本有单独的 jar，见下面） |
+| Minecraft | Java 版 1.21.11 或 26.1–26.3（每个版本有单独的 jar） |
 | Fabric 加载器（Fabric Loader） | 0.19.5 或更新 |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | 必需，要对应同一个 Minecraft 版本 |
 | Java | 21 或更新 |
@@ -679,9 +679,9 @@ QoL 全家桶只在客户端运行。服务器不需要安装，模组也不会�
 
 1. 为你的 Minecraft 版本安装 [Fabric 加载器](https://fabricmc.net/use/) 0.19.5 或更新版本。
 2. 下载这个 Minecraft 版本对应的 [Fabric API](https://modrinth.com/mod/fabric-api)，放进 `mods` 文件夹。
-3. 下载对应版本的 QoL 全家桶 jar，放进同一个 `mods` 文件夹：1.21.11 用 `qolbundle-0.1.0.jar`，26.1–26.1.2 用 `qolbundle-0.1.0+26.1.2.jar`，26.2 用 `qolbundle-0.1.0+26.2.jar`（都需要 Java 25）。
+3. 从 [Releases](https://github.com/Autyism/QoLBundle/releases) 下载对应你 Minecraft 版本的 QoL 全家桶 jar，放进同一个 `mods` 文件夹（26.x 需要 Java 25）。
 4. 可选：装 [Mod Menu](https://modrinth.com/mod/modmenu)，模组列表里就有设置按钮。
-5. 可选，只有想要 X-ray 时才装：`qolbundle-xray-addon-0.1.0.jar`（1.21.11）、`qolbundle-xray-addon-0.1.0+26.1.2.jar`（26.1–26.1.2）或 `qolbundle-xray-addon-0.1.0+26.2.jar`（26.2）。
+5. 可选，只有想要 X-ray 时才装：同一个版本的 X-ray 附属包。
 6. 启动游戏，进入世界后按 **K**。
 
 ## 常见问题

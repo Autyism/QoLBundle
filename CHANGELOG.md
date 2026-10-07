@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0+26.3 — 2026-10-08
+
+QoL Bundle and its X-ray add-on for Minecraft 26.3, same features as 0.1.0 for 1.21.11.
+
+- Needs Java 25 and Fabric Loader 0.19.5 or newer.
+- Your key bindings carry over: the same physical keys as on the other versions.
+
+### 中文
+
+适用于 Minecraft 26.3 的 QoL 全家桶和 X-ray 附属包，功能与 1.21.11 的 0.1.0 相同。
+
+- 需要 Java 25 和 Fabric Loader 0.19.5 或更新。
+- 键位设置通用：和其他版本对应同样的物理按键。
+
 ## 0.1.0+26.2 — 2026-10-08
 
 QoL Bundle and its X-ray add-on for Minecraft 26.2, same features as 0.1.0 for 1.21.11.
