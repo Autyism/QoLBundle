@@ -4,17 +4,20 @@
 #   .\scripts\selftest-start.ps1                      everything: main mod + X-ray add-on (run this before a commit)
 #   .\scripts\selftest-start.ps1 -Only "freecam,xray"  just these scenarios (quick check while working on a module)
 #   .\scripts\selftest-start.ps1 -NoAddon             main mod alone, as someone without the add-on has it
-param([switch]$NoAddon, [string]$Only = "")
+#   .\scripts\selftest-start.ps1 -Version 26.1.2      another Minecraft version (default 1.21.11)
+#
+# Gradle has to run on JDK 25: set JAVA_HOME before starting it.
+param([switch]$NoAddon, [string]$Only = "", [string]$Version = "1.21.11")
 
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 # The old log still contains the previous run's "[SelfTest] DONE"; remove it so the wait script
 # cannot mistake it for the new run's.
-$log = Join-Path $root "run\logs\latest.log"
+$log = Join-Path $root "run\$Version\logs\latest.log"
 if (Test-Path $log) { Remove-Item $log -Force -Confirm:$false }
 
-$gradleArgs = @("runClient", "--console=plain")
+$gradleArgs = @(":${Version}:runClient", "--console=plain")
 if ($Only) { $gradleArgs += "-Pselftest=$Only" } else { $gradleArgs += "-Pselftest" }
 if ($NoAddon) { $gradleArgs += "-PnoAddon" }
 & "$root\gradlew.bat" @gradleArgs

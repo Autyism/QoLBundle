@@ -3,16 +3,18 @@
 # Usage (from the project root):
 #   1. In the BACKGROUND:  .\scripts\selftest-start.ps1
 #   2. Then:               .\scripts\selftest-wait.ps1
+#   For another Minecraft version pass the same -Version to both (default 1.21.11).
 #
 # Ends when the log contains "[SelfTest] DONE", when the dev client exits without it (crash),
 # or after the timeout (13 minutes). On timeout only this project's dev client is stopped;
 # no other java process (the Minecraft server, Gradle daemons) is ever touched.
-param([int]$TimeoutSeconds = 780)
+param([int]$TimeoutSeconds = 780, [string]$Version = "1.21.11")
 
 $root = Split-Path -Parent $PSScriptRoot
-$log = Join-Path $root "run\logs\latest.log"
-$crashDir = Join-Path $root "run\crash-reports"
-$shotDir = Join-Path $root "run\screenshots\selftest"
+$runDir = Join-Path $root "run\$Version"
+$log = Join-Path $runDir "logs\latest.log"
+$crashDir = Join-Path $runDir "crash-reports"
+$shotDir = Join-Path $runDir "screenshots\selftest"
 $start = Get-Date
 
 function Get-DevClient {

@@ -27,9 +27,9 @@
 		"qolbundle.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.19.5",
-		"minecraft": "1.21.11",
-		"java": ">=21",
+		"fabricloader": "${loader_compat}",
+		"minecraft": "${minecraft_version}",
+		"java": ">=${java_version}",
 		"fabric-api": "*"
 	},
 	"suggests": {
