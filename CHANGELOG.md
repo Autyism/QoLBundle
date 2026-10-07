@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.1.0+1.21.10 — 2026-10-08
+
+QoL Bundle and its X-ray add-on for Minecraft 1.21.9–1.21.10, same features as 0.1.0 for 1.21.11.
+
+- Needs Java 21 and Fabric Loader 0.19.5 or newer.
+
+### 中文
+
+适用于 Minecraft 1.21.9–1.21.10 的 QoL 全家桶和 X-ray 附属包，功能与 1.21.11 的 0.1.0 相同。
+
+- 需要 Java 21 和 Fabric Loader 0.19.5 或更新。
+
+## 0.1.0+1.21.8 — 2026-10-08
+
+QoL Bundle and its X-ray add-on for Minecraft 1.21.6–1.21.8, same features as 0.1.0 for 1.21.11.
+
+- Needs Java 21 and Fabric Loader 0.19.5 or newer.
+
+### 中文
+
+适用于 Minecraft 1.21.6–1.21.8 的 QoL 全家桶和 X-ray 附属包，功能与 1.21.11 的 0.1.0 相同。
+
+- 需要 Java 21 和 Fabric Loader 0.19.5 或更新。
+
+## 0.1.0+1.21.5 — 2026-10-08
+
+QoL Bundle and its X-ray add-on for Minecraft 1.21.5, same features as 0.1.0 for 1.21.11.
+
+- Needs Java 21 and Fabric Loader 0.19.5 or newer.
+
+### 中文
+
+适用于 Minecraft 1.21.5 的 QoL 全家桶和 X-ray 附属包，功能与 1.21.11 的 0.1.0 相同。
+
+- 需要 Java 21 和 Fabric Loader 0.19.5 或更新。
+
 ## 0.1.0+26.3 — 2026-10-08
 
 QoL Bundle and its X-ray add-on for Minecraft 26.3, same features as 0.1.0 for 1.21.11.

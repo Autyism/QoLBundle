@@ -6,7 +6,7 @@
 
 <p align="center"><a href="#english">English</a> · <a href="#简体中文">简体中文</a></p>
 
-![Minecraft 1.21.11 | 26.1–26.3](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.3-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Minecraft 1.21.5–26.3](https://img.shields.io/badge/Minecraft-1.21.5--26.3-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
 
 # English
 
@@ -293,7 +293,7 @@ Settings are stored in `config/qolbundle.json`. If that file is damaged, the def
 
 | | Version |
 |---|---|
-| Minecraft | Java Edition 1.21.11 or 26.1–26.3 (each version has its own jar) |
+| Minecraft | Java Edition 1.21.5–1.21.11 or 26.1–26.3 (each version has its own jar) |
 | Fabric Loader | 0.19.5 or newer |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | required, for the same Minecraft version |
 | Java | 21 or newer |
@@ -658,7 +658,7 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 
 | | 版本 |
 |---|---|
-| Minecraft | Java 版 1.21.11 或 26.1–26.3（每个版本有单独的 jar） |
+| Minecraft | Java 版 1.21.5–1.21.11 或 26.1–26.3（每个版本有单独的 jar） |
 | Fabric 加载器（Fabric Loader） | 0.19.5 或更新 |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | 必需，要对应同一个 Minecraft 版本 |
 | Java | 21 或更新 |
