@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0+26.1.2 — 2026-10-07
+
+QoL Bundle and its X-ray add-on for Minecraft 26.1–26.1.2, same features as 0.1.0 for 1.21.11.
+
+- Needs Java 25 and Fabric Loader 0.19.5 or newer.
+
+### 中文
+
+适用于 Minecraft 26.1–26.1.2 的 QoL 全家桶和 X-ray 附属包，功能与 1.21.11 的 0.1.0 相同。
+
+- 需要 Java 25 和 Fabric Loader 0.19.5 或更新。
+
 ## 0.1.0 — 2026-10-04
 
 First public release.

@@ -6,9 +6,19 @@
 
 <p align="center"><a href="#english">English</a> · <a href="#简体中文">简体中文</a></p>
 
-![Minecraft 1.21.11](https://img.shields.io/badge/Minecraft-1.21.11-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Minecraft 1.21.11 | 26.1–26.1.2](https://img.shields.io/badge/Minecraft-1.21.11_%7C_26.1--26.1.2-62B47A) ![Fabric](https://img.shields.io/badge/Loader-Fabric-DBD0B4) ![License GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue)
 
 # English
+
+**In short**
+
+- Dozens of small helpers in one mod; each one can be switched on or off.
+- HUD info, survival warnings, chest memory and item search.
+- Placement previews, redstone checks, PvP awareness and more.
+- Client-side only. Press K in a world to open the settings.
+- X-ray is a separate, optional add-on.
+
+Everything else is in the folded sections below (features, how to use, settings, FAQ): click a title to open it.
 
 </div>
 
@@ -20,7 +30,8 @@ QoL Bundle collects many small helpers in one Fabric mod: HUD information, survi
 - **X-ray is not included.** It is a separate, optional add-on jar (see [below](#x-ray-add-on-separate-download)).
 - English and Simplified Chinese.
 
-## Features
+<details>
+<summary><b>Features</b> (click to open)</summary>
 
 ### HUD and information
 
@@ -113,6 +124,8 @@ X-ray is deliberately not part of QoL Bundle. Many servers ban X-ray, and not ev
 
 When the add-on is installed next to QoL Bundle, the module **X-ray (add-on)** appears in the Grey zone group of the settings screen (off by default, no key). Switched on, it outlines ores within 32 blocks through walls and ground, each ore in its own colour: diamond cyan, gold yellow, redstone red, lapis blue, emerald green, iron light brown, ancient debris brown. Coal, copper and nether quartz can be switched on, and any other block can be added by its id (for example `minecraft:spawner`). It only draws outlines on top of the world, can only see blocks your game has received, and is meant for single-player and your own server only.
 
+</details>
+
 ## Screenshots
 
 ![Info HUD, respawn point line and free slot counter](docs/images/hud-overview.png)
@@ -131,7 +144,8 @@ Back in your body, a pink arrow and a beam lead to a spot you marked while flyin
 
 Freecam lights up dark caves while you fly.
 
-## How to use
+<details>
+<summary><b>How to use</b> (click to open)</summary>
 
 ### Opening the settings
 
@@ -223,7 +237,10 @@ Apart from K, a module's keys only work while that module is switched on. QoL Bu
 1. Put the add-on jar next to QoL Bundle in your `mods` folder.
 2. Press K and switch on **X-ray (add-on)** in the Grey zone group. Choose the ores in its settings.
 
-## Settings
+</details>
+
+<details>
+<summary><b>Settings</b> (click to open)</summary>
 
 The most useful options. Every module has more; hover over an option in game to read what it does.
 
@@ -289,20 +306,27 @@ The most useful options. Every module has more; hover over an option in game to 
 
 Settings are stored in `config/qolbundle.json`. If that file is damaged, the defaults are used and the damaged file is kept as `qolbundle.json.broken`. Things remembered per world (portals seen, respawn point, chest contents, slime chunk seed, Freecam markers) are stored in `config/qolbundle/worlds/`, one file per world or server.
 
+</details>
+
 ## Requirements
 
-| | Version |
+There is a separate jar for each Minecraft version:
+
+| Minecraft | QoL Bundle | X-ray add-on (optional) | Java | Fabric Loader |
+|---|---|---|---|---|
+| 1.21.11 | `qolbundle-0.1.0.jar` | `qolbundle-xray-addon-0.1.0.jar` | 21 or newer | 0.19.5 or newer |
+| 26.1, 26.1.1, 26.1.2 | `qolbundle-0.1.0+26.1.2.jar` | `qolbundle-xray-addon-0.1.0+26.1.2.jar` | 25 or newer | 0.19.5 or newer |
+
+| | |
 |---|---|
-| Minecraft | Java Edition 1.21.11 |
-| Fabric Loader | 0.19.5 or newer |
-| [Fabric API](https://modrinth.com/mod/fabric-api) | required (built against 0.141.6+1.21.11) |
-| Java | 21 or newer |
+| [Fabric API](https://modrinth.com/mod/fabric-api) | required, for the same Minecraft version |
 | [Mod Menu](https://modrinth.com/mod/modmenu) | optional, adds a settings button to the mod list (built against 17.0.1) |
 | QoL Bundle: X-ray add-on | optional, separate jar; needs QoL Bundle (use the same version) |
 
 QoL Bundle runs on the client only. The server does not need it, and the mod does not add any network channel of its own.
 
-## Compatibility
+<details>
+<summary><b>Compatibility</b> (click to open)</summary>
 
 - **Sodium, Iris and shader packs:** not fully tested yet. If something looks wrong, these are the most likely places: the see-through block of Placement Master, the Rear-view Mirror, the underground view of Freecam (it works differently when Sodium is installed), and the lines and walls drawn into the world (chunk borders, slime chunks, landing markers, X-ray outlines). Fullbright may have no effect while a shader pack is active.
 - **Multiplayer:** so far tested in single-player only. Modules that read server messages or other players (respawn point, chat mentions, portal links, the PvP modules) may behave differently on servers with unusual plugins.
@@ -310,16 +334,19 @@ QoL Bundle runs on the client only. The server does not need it, and the mod doe
 - **Keys:** K, F6, F7, F8, V, Left Alt, [ and ] may already be used by other mods. Rebind them under Options → Controls → Key Binds → QoL Bundle.
 - **What is sent to the server:** Placement Master never changes what is sent; it only holds back a click. Hotbar Layouts moves items with ordinary inventory clicks, one per tick. The AFK Clicker presses your own attack and use keys; Elytra One-Key Take-off presses your jump key and uses a rocket just like a right click would.
 
+</details>
+
 ## Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5 or newer for Minecraft 1.21.11.
-2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.11 and put it into your `mods` folder.
-3. Download `qolbundle-0.1.0.jar` and put it into the same `mods` folder.
+1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5 or newer for your Minecraft version.
+2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for that Minecraft version and put it into your `mods` folder.
+3. Download the QoL Bundle jar for your Minecraft version (see the table under Requirements) and put it into the same `mods` folder.
 4. Optional: [Mod Menu](https://modrinth.com/mod/modmenu) for a settings button in the mod list.
-5. Optional, only if you want X-ray: `qolbundle-xray-addon-0.1.0.jar`.
+5. Optional, only if you want X-ray: the X-ray add-on jar for the same Minecraft version.
 6. Start the game and press **K** in a world.
 
-## FAQ
+<details>
+<summary><b>FAQ</b> (click to open)</summary>
 
 **Does the server need QoL Bundle?**
 No. It is client-side only and works on servers that do not have it.
@@ -345,7 +372,10 @@ Servers do not send the world seed. Type it into the module's settings once; in 
 **Can I copy my settings to another computer or give them to a friend?**
 Yes, with **Copy share code** and **Import share code** at the bottom of the settings screen.
 
-## Known limitations
+</details>
+
+<details>
+<summary><b>Known limitations</b> (click to open)</summary>
 
 - Version 0.1.0 has been tested in single-player. It has not yet been tested on public servers or in depth with Sodium, Iris or shader packs. The PvP modules have not yet been tried in real fights against other players.
 - Placement Master: chests, beds, signs, banners and similar blocks get only the outline and the arrow, no see-through block.
@@ -361,6 +391,8 @@ Yes, with **Copy share code** and **Import share code** at the bottom of the set
 - Elytra Dashboard counts flight time as one durability point per second, so with Unbreaking you can fly longer than shown.
 - Fall Damage Preview assumes you drop straight down; it does not predict sideways movement.
 
+</details>
+
 ## Credits
 
 - Made by Autyism.
@@ -375,6 +407,16 @@ Yes, with **Copy share code** and **Import share code** at the bottom of the set
 
 **QoL 全家桶（QoL Bundle）**
 
+**一句话看懂**
+
+- 一个模组里几十个小功能，每个都能单独开关。
+- HUD 信息、生存提醒、箱子记忆和物品搜索。
+- 放置预览、红石诊断、PvP 提示等等。
+- 纯客户端。进世界后按 K 打开设置。
+- X-ray 是单独的可选附属包。
+
+详细说明都在下面折叠起来的部分（功能、使用方法、设置、常见问题），点标题就能展开。
+
 </div>
 
 QoL 全家桶把很多实用小功能放进了同一个 Fabric 模组：HUD 信息、生存预警、箱子记忆和物品搜索、放置预览、生电诊断、PvP 信息等等。每个功能都是一个独立模块，有自己的开关和设置，用不上的关掉就行。
@@ -385,7 +427,8 @@ QoL 全家桶把很多实用小功能放进了同一个 Fabric 模组：HUD 信�
 - **不含 X-ray。** X-ray 是一个单独的可选附属包（见下文"X-ray 附属包"一节）。
 - 支持英文和简体中文。
 
-## 功能
+<details>
+<summary><b>功能</b>（点开查看）</summary>
 
 ### HUD 与信息显示
 
@@ -478,6 +521,8 @@ X-ray 是特意不放进 QoL 全家桶的。很多服务器禁止 X-ray，也不
 
 把附属包和 QoL 全家桶放在一起后，设置界面的灰档一组里会多出 **X-ray 矿物透视（附属包）**（默认关，没有快捷键）。打开后，它会隔着墙和地面给 32 格内的矿石描边，每种矿一个颜色：钻石青色、金矿金色、红石红色、青金石蓝色、绿宝石绿色、铁矿浅棕、远古残骸棕色。煤、铜、下界石英可以在设置里打开，其他方块可以按方块 id 添加（例如 `minecraft:spawner`）。它只是在世界上面画线框，只能看到客户端已经收到的方块，仅限单人和自建服使用。
 
+</details>
+
 ## 截图
 
 ![信息 HUD、重生点那一行和背包空格数](docs/images/hud-overview.png)
@@ -496,7 +541,8 @@ Freecam：镜头离开身体自由飞，顶部提示条写着退出键和离身�
 
 Freecam 飞的时候会自动照亮黑暗的洞穴。
 
-## 使用方法
+<details>
+<summary><b>使用方法</b>（点开查看）</summary>
 
 ### 打开设置界面
 
@@ -588,7 +634,10 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 1. 把附属包的 jar 和 QoL 全家桶一起放进 `mods` 文件夹。
 2. 按 K，在灰档一组里打开 **X-ray 矿物透视（附属包）**，在它的设置里选要找的矿。
 
-## 设置项
+</details>
+
+<details>
+<summary><b>设置项</b>（点开查看）</summary>
 
 下面是最常用的选项，每个模块还有更多；在游戏里把鼠标移到选项上就能看到说明。
 
@@ -654,20 +703,27 @@ Freecam 飞的时候会自动照亮黑暗的洞穴。
 
 设置保存在 `config/qolbundle.json`。这个文件损坏时会使用默认值，并把坏文件另存为 `qolbundle.json.broken`。按存档记住的东西（见过的传送门、重生点、箱子内容、史莱姆区块种子、Freecam 标记）保存在 `config/qolbundle/worlds/` 里，每个存档或服务器一个文件。
 
+</details>
+
 ## 运行需求
 
-| | 版本 |
+每个 Minecraft 版本有单独的 jar：
+
+| Minecraft | QoL 全家桶 | X-ray 附属包（可选） | Java | Fabric 加载器 |
+|---|---|---|---|---|
+| 1.21.11 | `qolbundle-0.1.0.jar` | `qolbundle-xray-addon-0.1.0.jar` | 21 或更新 | 0.19.5 或更新 |
+| 26.1、26.1.1、26.1.2 | `qolbundle-0.1.0+26.1.2.jar` | `qolbundle-xray-addon-0.1.0+26.1.2.jar` | 25 或更新 | 0.19.5 或更新 |
+
+| | |
 |---|---|
-| Minecraft | Java 版 1.21.11 |
-| Fabric 加载器（Fabric Loader） | 0.19.5 或更新 |
-| [Fabric API](https://modrinth.com/mod/fabric-api) | 必需（基于 0.141.6+1.21.11 构建） |
-| Java | 21 或更新 |
+| [Fabric API](https://modrinth.com/mod/fabric-api) | 必需，要对应同一个 Minecraft 版本 |
 | [Mod Menu](https://modrinth.com/mod/modmenu) | 可选，在模组列表里加一个设置按钮（基于 17.0.1 构建） |
 | QoL Bundle: X-ray add-on | 可选，单独的 jar；需要 QoL 全家桶（请用相同版本） |
 
 QoL 全家桶只在客户端运行。服务器不需要安装，模组也不会注册自己的网络频道。
 
-## 兼容性
+<details>
+<summary><b>兼容性</b>（点开查看）</summary>
 
 - **Sodium（钠）、Iris 和光影包：** 还没有完整测试过。如果画面有问题，最可能出在这些地方：放置大师的半透明方块、后视镜、Freecam 的地下画面（装了 Sodium 时用的是另一种方式），以及画在世界里的线和墙（区块边界、史莱姆区块、落点标记、X-ray 线框）。开着光影包时夜视（Fullbright）可能不起作用。
 - **多人游戏：** 目前只在单人游戏里测试过。依赖服务器消息或其他玩家的模块（重生点、聊天里的 @ 提醒、传送门连接、PvP 模块）在装了特殊插件的服务器上可能表现不同。
@@ -675,16 +731,19 @@ QoL 全家桶只在客户端运行。服务器不需要安装，模组也不会�
 - **按键：** K、F6、F7、F8、V、左 Alt、[ 和 ] 可能已经被别的模组占用，可以在 选项 → 按键控制 → 按键绑定 → QoL 全家桶 里改。
 - **发给服务器的东西：** 放置大师从不修改发出的内容，只会拦下一次点击。快捷栏配置切换用普通的背包点击移动物品，每刻一次。AFK 自动操作器按的是你自己的攻击键和使用键；鞘翅一键起飞按的是你的跳跃键，放烟花和你自己右键使用一样。
 
+</details>
+
 ## 安装
 
-1. 为 Minecraft 1.21.11 安装 [Fabric 加载器](https://fabricmc.net/use/) 0.19.5 或更新版本。
-2. 下载 1.21.11 版的 [Fabric API](https://modrinth.com/mod/fabric-api)，放进 `mods` 文件夹。
-3. 下载 `qolbundle-0.1.0.jar`，放进同一个 `mods` 文件夹。
+1. 为你的 Minecraft 版本安装 [Fabric 加载器](https://fabricmc.net/use/) 0.19.5 或更新版本。
+2. 下载这个 Minecraft 版本对应的 [Fabric API](https://modrinth.com/mod/fabric-api)，放进 `mods` 文件夹。
+3. 下载对应你的 Minecraft 版本的 QoL 全家桶 jar（见“运行需求”里的表），放进同一个 `mods` 文件夹。
 4. 可选：装 [Mod Menu](https://modrinth.com/mod/modmenu)，模组列表里就有设置按钮。
-5. 可选，只有想要 X-ray 时才装：`qolbundle-xray-addon-0.1.0.jar`。
+5. 可选，只有想要 X-ray 时才装：同一个 Minecraft 版本的 X-ray 附属包。
 6. 启动游戏，进入世界后按 **K**。
 
-## 常见问题
+<details>
+<summary><b>常见问题</b>（点开查看）</summary>
 
 **服务器需要装 QoL 全家桶吗？**
 不需要。它是纯客户端模组，进没装它的服务器也能用。
@@ -710,7 +769,10 @@ QoL 全家桶只在客户端运行。服务器不需要安装，模组也不会�
 **能把设置搬到另一台电脑，或者发给朋友吗？**
 可以，用设置界面底部的 **复制分享码** 和 **导入分享码**。
 
-## 已知限制
+</details>
+
+<details>
+<summary><b>已知限制</b>（点开查看）</summary>
 
 - 0.1.0 版本是在单人游戏里测试的，还没有在公服上测试过，也没有和 Sodium、Iris、光影包一起深入测试过。PvP 模块还没有在和真人的实战中试过。
 - 放置大师：箱子、床、告示牌、旗帜这类方块只有线框和箭头，没有半透明方块。
@@ -725,6 +787,8 @@ QoL 全家桶只在客户端运行。服务器不需要安装，模组也不会�
 - 聊天记录和村民交易只存在内存里：聊天记录关掉游戏就没了，村民交易离开世界就没了。
 - 鞘翅飞行仪表盘按"每秒掉 1 点耐久"计算剩余飞行时间，鞘翅有耐久附魔时实际能飞得更久。
 - 落地伤害预告按垂直往下掉来估算，不预测你在空中的横向移动。
+
+</details>
 
 ## 致谢
 
