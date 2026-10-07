@@ -31,6 +31,10 @@ public class ArmorHudModule extends Module {
 	private final BoolSetting showHands = add(new BoolSetting("show_hands", true));
 	private final BoolSetting showBar = add(new BoolSetting("show_bar", true));
 	private final BoolSetting showFreeSlots = add(new BoolSetting("show_free_slots", true));
+	//? if >=26.1 {
+	/*// Made on first use: from 26.1 on, items cannot be made while mods are being loaded.
+	private static ItemStack chestIcon;
+	*///?} else
 	private static final ItemStack CHEST_ICON = new ItemStack(net.minecraft.world.item.Items.CHEST);
 	private int freeSlots;
 
@@ -79,6 +83,12 @@ public class ArmorHudModule extends Module {
 			int rowWidth = 16 + 3 + client.font.width(text);
 			int x = layout.xFor(anchor, rowWidth);
 			int y = top + stacks.size() * ROW_HEIGHT;
+			//? if >=26.1 {
+			/*if (chestIcon == null) {
+				chestIcon = new ItemStack(net.minecraft.world.item.Items.CHEST);
+			}
+			context.renderItem(chestIcon, anchor.right ? x + rowWidth - 16 : x, y);
+			*///?} else
 			context.renderItem(CHEST_ICON, anchor.right ? x + rowWidth - 16 : x, y);
 			int color = freeSlots <= 3 ? 0xFFFF5555 : freeSlots <= 9 ? 0xFFFFFF55 : 0xFF55FF55;
 			context.drawString(client.font, text, anchor.right ? x : x + 19, y + 4, color);
