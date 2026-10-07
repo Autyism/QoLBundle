@@ -1917,6 +1917,15 @@ public final class Scenarios {
 				client.gameRenderer.getMainCamera().position().distanceTo(client.player.getEyePosition()) < 0.5);
 	}
 
+	//? if <1.21.6 {
+	/*/^* Before 1.21.6 there is no ready-made call for this; it is what the pause screen's button did (single player). ^/
+	private static void leaveWorld(Minecraft client, Component reason) {
+		client.level.disconnect();
+		client.disconnect(new net.minecraft.client.gui.screens.GenericMessageScreen(reason));
+		client.setScreen(new TitleScreen());
+	}
+
+	*///?}
 	/** Leaves the current world and enters another one (created on first use). */
 	private static void switchWorld(SelfTest.Script s, String name, boolean flat) {
 		s.run("leave the world", client -> client.schedule(() -> client.disconnectFromWorld(Component.literal("self-test world switch"))));

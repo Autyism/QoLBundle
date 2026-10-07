@@ -4,7 +4,18 @@ import io.github.autyism.qolbundle.module.Module;
 import io.github.autyism.qolbundle.module.ModuleCategory;
 import io.github.autyism.qolbundle.module.setting.BoolSetting;
 import io.github.autyism.qolbundle.module.setting.IntSetting;
+//? if >=1.21.6 {
 import net.minecraft.client.renderer.fog.FogData;
+//?} else {
+/*import com.mojang.blaze3d.shaders.FogShape;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.FogParameters;
+import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.material.FogType;
+*///?}
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -37,6 +48,7 @@ public class FluidVisionModule extends Module {
 		return lavaFrames;
 	}
 
+	//? if >=1.21.6 {
 	/** Called by the water fog mixin after the game has set its own values. */
 	public static void adjustWaterFog(FogData data, float viewDistance) {
 		FluidVisionModule module = instance;
@@ -64,4 +76,40 @@ public class FluidVisionModule extends Module {
 		data.cloudEnd = data.environmentalEnd;
 		module.lavaFrames++;
 	}
+	//?} else {
+	/*/^* Called by the water fog mixin with the fog the game worked out (one call for the sky, one for the terrain). ^/
+	public static FogParameters adjustWaterFog(FogParameters fog, Camera camera, FogRenderer.FogMode mode, float viewDistance) {
+		FluidVisionModule module = instance;
+		if (module == null || !module.isEnabled() || !module.water.get() || !isWaterFog(fog, camera)) {
+			return fog;
+		}
+		// As above: what is left is the normal distance fog (for the sky it starts right at the eye).
+		float start = mode == FogRenderer.FogMode.FOG_SKY ? 0F
+				: Math.min(viewDistance - 16F, viewDistance - Mth.clamp(viewDistance / 10F, 4F, 64F));
+		module.waterFrames++;
+		return new FogParameters(Math.max(fog.start(), start), Math.max(fog.end(), viewDistance), FogShape.CYLINDER,
+				fog.red(), fog.green(), fog.blue(), fog.alpha());
+	}
+
+	/^* Whether the game used its under-water fog: in water and not blinded (blindness and darkness come first). ^/
+	private static boolean isWaterFog(FogParameters fog, Camera camera) {
+		if (fog == FogParameters.NO_FOG || camera.getFluidInCamera() != FogType.WATER) {
+			return false;
+		}
+		return !(camera.getEntity() instanceof LivingEntity living
+				&& (living.hasEffect(MobEffects.BLINDNESS) || living.hasEffect(MobEffects.DARKNESS)));
+	}
+
+	/^* Called by the lava fog mixin with the fog the game worked out (one call for the sky, one for the terrain). ^/
+	public static FogParameters adjustLavaFog(FogParameters fog, Camera camera) {
+		FluidVisionModule module = instance;
+		if (module == null || !module.isEnabled() || !module.lava.get() || fog == FogParameters.NO_FOG
+				|| camera.getFluidInCamera() != FogType.LAVA) {
+			return fog;
+		}
+		module.lavaFrames++;
+		return new FogParameters(Math.max(fog.start(), 1F), Math.max(fog.end(), module.lavaDistance.get()), fog.shape(),
+				fog.red(), fog.green(), fog.blue(), fog.alpha());
+	}
+	*///?}
 }

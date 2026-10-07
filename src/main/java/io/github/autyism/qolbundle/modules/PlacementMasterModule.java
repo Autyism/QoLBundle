@@ -309,8 +309,11 @@ public class PlacementMasterModule extends Module {
 		/*PoseStack matrices = context.poseStack();
 		*///?} elif >=1.21.9 {
 		PoseStack matrices = context.matrices();
-		//?} else {
+		//?} elif >=1.21.6 {
 		/*PoseStack matrices = context.matrixStack();
+		*///?} else {
+		/*// The game makes its pose stack only after this moment (Fabric has none yet); a new one starts the same.
+		PoseStack matrices = new PoseStack();
 		*///?}
 		matrices.pushPose();
 		matrices.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);

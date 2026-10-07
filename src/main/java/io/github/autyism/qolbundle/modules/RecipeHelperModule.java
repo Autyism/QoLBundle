@@ -265,6 +265,8 @@ public class RecipeHelperModule extends Module {
 		int labelWidth = textRenderer.width(label);
 		int y = Math.max(2, top - CHIP_HEIGHT - 3);
 		int x = left;
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.push(context, io.github.autyism.qolbundle.hud.GuiDepth.OVER_SLOTS);*/
 		context.fill(x, y, x + labelWidth + 6, y + CHIP_HEIGHT, 0xC0000000);
 		context.drawString(textRenderer, label, x + 3, y + 6, RED);
 		x += labelWidth + 8;
@@ -276,10 +278,15 @@ public class RecipeHelperModule extends Module {
 			entry.y = y;
 			context.fill(x, y, x + entry.width, y + CHIP_HEIGHT, 0xC0000000);
 			context.renderOutline(x, y, entry.width, CHIP_HEIGHT, colorOf(entry));
+			//? if >=1.21.6 {
 			context.renderItem(entry.accepts.get(icon % entry.accepts.size()), x + 2, y + 2);
+			//?} else
+			/*io.github.autyism.qolbundle.hud.GuiDepth.item(context, entry.accepts.get(icon % entry.accepts.size()), x + 2, y + 2);*/
 			context.drawString(textRenderer, amount, x + 20, y + 6, 0xFFFFFFFF);
 			x += entry.width + 2;
 		}
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.pop(context);*/
 
 		int details = pinnedDetails >= 0 && pinnedDetails < missing.size() ? pinnedDetails : missing.indexOf(chipAt(mouseX, mouseY));
 		if (details >= 0) {
@@ -369,11 +376,15 @@ public class RecipeHelperModule extends Module {
 		int height = lines.size() * 10 + 5;
 		x = Math.max(2, Math.min(x, context.guiWidth() - width - 8));
 		y = Math.max(2, Math.min(y, context.guiHeight() - height - 2));
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.push(context, io.github.autyism.qolbundle.hud.GuiDepth.PANEL);*/
 		context.fill(x, y, x + width + 6, y + height, 0xF0100010);
 		context.renderOutline(x, y, width + 6, height, 0xFF5000A0);
 		for (int i = 0; i < lines.size(); i++) {
 			context.drawString(textRenderer, lines.get(i), x + 3, y + 3 + i * 10, 0xFFFFFFFF);
 		}
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.pop(context);*/
 	}
 
 	// ---- pointing the way ----------------------------------------------------------------------

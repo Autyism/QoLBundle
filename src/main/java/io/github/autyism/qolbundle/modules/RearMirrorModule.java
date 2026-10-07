@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
+//? if >=1.21.6
 import com.mojang.blaze3d.textures.GpuTextureView;
 import io.github.autyism.qolbundle.QoLBundleClient;
 import io.github.autyism.qolbundle.hud.HudAnchor;
@@ -35,10 +36,16 @@ import org.jspecify.annotations.Nullable;
 public class RearMirrorModule extends Module {
 	/** The kept picture, handed to the GUI as a texture. It only points at the buffer below and owns nothing. */
 	private static final class Picture extends AbstractTexture {
+		//? if >=1.21.6 {
 		void point(@Nullable GpuTexture texture, @Nullable GpuTextureView view) {
 			this.texture = texture;
 			this.textureView = view;
 		}
+		//?} else {
+		/*void point(@Nullable GpuTexture texture) {
+			this.texture = texture;
+		}
+		*///?}
 
 		@Override
 		public void close() {
@@ -131,7 +138,10 @@ public class RearMirrorModule extends Module {
 			picture = new Picture();
 			client.getTextureManager().register(TEXTURE, picture);
 		}
+		//? if >=1.21.6 {
 		picture.point(buffer.getColorTexture(), buffer.getColorTextureView());
+		//?} else
+		/*picture.point(buffer.getColorTexture());*/
 		RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(source, buffer.getColorTexture(), 0, 0, 0, 0, 0, width, height);
 		hasPicture = true;
 		captures++;
@@ -146,7 +156,10 @@ public class RearMirrorModule extends Module {
 		hasPicture = false;
 		if (!enabled && buffer != null) {
 			if (picture != null) {
+				//? if >=1.21.6 {
 				picture.point(null, null);
+				//?} else
+				/*picture.point(null);*/
 			}
 			buffer.destroyBuffers();
 			buffer = null;
@@ -167,6 +180,12 @@ public class RearMirrorModule extends Module {
 		// The picture is stored bottom-up, hence v from 1 to 0. Flipped left-right it reads like a
 		// real mirror: what is behind your left shoulder is on the left.
 		float u1 = flip.get() ? 1F : 0F;
+		//? if >=1.21.6 {
 		context.blit(TEXTURE, left + 2, top + 2, left + 2 + width, top + 2 + height, u1, 1F - u1, 1F, 0F);
+		//?} else {
+		/*// The same corners through the older call: a region of "minus one" texture size runs u (and v) backwards.
+		context.blit(net.minecraft.client.renderer.RenderType::guiTextured, TEXTURE, left + 2, top + 2, u1, 1F, width, height,
+				flip.get() ? -1 : 1, -1, 1, 1);
+		*///?}
 	}
 }

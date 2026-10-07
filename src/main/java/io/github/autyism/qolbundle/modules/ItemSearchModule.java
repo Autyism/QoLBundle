@@ -118,6 +118,8 @@ public class ItemSearchModule extends Module {
 		HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 		int left = accessor.qolbundle$getX();
 		int top = accessor.qolbundle$getY();
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.push(context, io.github.autyism.qolbundle.hud.GuiDepth.OVER_SLOTS);*/
 		for (Slot slot : screen.getMenu().slots) {
 			if (!slot.isActive()) {
 				continue;
@@ -134,6 +136,8 @@ public class ItemSearchModule extends Module {
 				context.fill(x, y, x + 16, y + 16, 0xB0101010);
 			}
 		}
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.pop(context);*/
 	}
 
 	/** True when every word of the query is found in one of the item's names. */
