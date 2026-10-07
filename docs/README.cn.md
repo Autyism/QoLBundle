@@ -1,4 +1,4 @@
-<p align="center"><img src="icon.png" width="128" alt="icon"></p>
+<p align="center"><img src="icon_transparent.png" width="128" alt="icon"></p>
 <h1 align="center">QoL Bundle</h1>
 <p align="center">39 个纯客户端的 QoL 小功能装进一个模组，每个都有自己的开关和设置。</p>
 
