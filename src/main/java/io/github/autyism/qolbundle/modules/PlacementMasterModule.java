@@ -20,11 +20,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+//? if <26.1
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.Sheets;
+//? if >=26.1 {
+/*import com.mojang.blaze3d.vertex.QuadInstance;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.LightCoordsUtil;
+import java.util.ArrayList;
+*///?} else {
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
+//?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -283,11 +295,17 @@ public class PlacementMasterModule extends Module {
 		}
 		BlockState state = placement.state;
 		BlockPos pos = placement.pos;
+		//? if >=26.1 {
+		/*BlockStateModel model = client.getModelManager().getBlockStateModelSet().get(state);
+		*///?} else
 		BlockStateModel model = client.getBlockRenderer().getBlockModel(state);
 		ClientLevel world = client.level;
 		boolean wrong = isLocking() && conflicts(state);
 		float alpha = opacity.get() / 100F;
 		Vec3 camera = client.gameRenderer.getMainCamera().position();
+		//? if >=26.1 {
+		/*PoseStack matrices = context.poseStack();
+		*///?} else
 		PoseStack matrices = context.matrices();
 		matrices.pushPose();
 		matrices.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
@@ -295,6 +313,37 @@ public class PlacementMasterModule extends Module {
 		matrices.translate(0.5, 0.5, 0.5);
 		matrices.scale(0.998F, 0.998F, 0.998F);
 		matrices.translate(-0.5, -0.5, -0.5);
+		//? if >=26.1 {
+		/*context.submitNodeCollector().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
+			List<BlockStateModelPart> parts = new ArrayList<>();
+			model.collectParts(RandomSource.create(42L), parts);
+			for (BlockStateModelPart part : parts) {
+				for (int side = -1; side < 6; side++) {
+					for (BakedQuad quad : part.getQuads(side < 0 ? null : Direction.from3DDataValue(side))) {
+						float red = 1F;
+						float green = 1F;
+						float blue = 1F;
+						if (quad.materialInfo().isTinted()) {
+							BlockTintSource source = client.getBlockColors().getTintSource(state, quad.materialInfo().tintIndex());
+							int tint = source == null ? -1 : source.colorInWorld(state, world, pos);
+							red = (tint >> 16 & 0xFF) / 255F;
+							green = (tint >> 8 & 0xFF) / 255F;
+							blue = (tint & 0xFF) / 255F;
+						}
+						if (wrong) {
+							green *= 0.35F;
+							blue *= 0.35F;
+						}
+						QuadInstance instance = new QuadInstance();
+						instance.setColor(ARGB.colorFromFloat(alpha, red, green, blue));
+						instance.setLightCoords(LightCoordsUtil.FULL_BRIGHT);
+						instance.setOverlayCoords(OverlayTexture.NO_OVERLAY);
+						consumer.putBakedQuad(entry, quad, instance);
+					}
+				}
+			}
+		});
+		*///?} else {
 		context.commandQueue().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
 			for (BlockModelPart part : model.collectParts(RandomSource.create(42L))) {
 				for (int side = -1; side < 6; side++) {
@@ -317,6 +366,7 @@ public class PlacementMasterModule extends Module {
 				}
 			}
 		});
+		//?}
 		matrices.popPose();
 	}
 

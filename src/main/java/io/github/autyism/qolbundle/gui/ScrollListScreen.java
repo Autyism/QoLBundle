@@ -114,8 +114,13 @@ public abstract class ScrollListScreen extends Screen {
 	}
 
 	@Override
+	//? if >=26.1 {
+	/*public void extractRenderState(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+		super.extractRenderState(context, mouseX, mouseY, deltaTicks);
+	*///?} else {
 	public void render(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
 		super.render(context, mouseX, mouseY, deltaTicks);
+	//?}
 		context.drawCenteredString(this.font, this.title, this.width / 2, 11, WHITE);
 
 		int left = rowLeft();

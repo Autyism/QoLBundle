@@ -13,6 +13,9 @@ import org.spongepowered.asm.mixin.injection.At;
  */
 @Mixin(LevelRenderer.class)
 public class WorldRendererMixin {
+	//? if >=26.1 {
+	/*@ModifyExpressionValue(method = "update", require = 0, at = @At(value = "INVOKE",
+	*///?} else
 	@ModifyExpressionValue(method = "renderLevel", require = 0, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/player/LocalPlayer;isSpectator()Z"))
 	private boolean qolbundle$freecamSeesLikeSpectator(boolean spectator) {

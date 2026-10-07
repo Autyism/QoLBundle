@@ -64,6 +64,9 @@ public class InfoHudModule extends Module {
 			lines.add(Component.translatable(key + "fps", client.getFps()));
 		}
 		if (showGameTime.get()) {
+			//? if >=26.1 {
+			/*long time = client.level.getOverworldClockTime();
+			*///?} else
 			long time = client.level.getDayTime();
 			long day = time / 24000L;
 			long ofDay = Math.floorMod(time, 24000L);

@@ -340,6 +340,7 @@ public class RecipeHelperModule extends Module {
 		if (chest.isEnderChest()) {
 			text = Component.translatable(key + "in_ender_chest", source.count);
 		} else {
+			//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 			Component block = ChestMemoryModule.itemOf(chest.blockId).getName();
 			String position = chest.pos.getX() + ", " + chest.pos.getY() + ", " + chest.pos.getZ();
 			if (chest.dimension.equals(here)) {

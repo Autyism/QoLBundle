@@ -281,8 +281,13 @@ public final class Scenarios {
 			if (client.getLevelSource().levelExists(WORLD_NAME)) {
 				client.createWorldOpenFlows().openWorld(WORLD_NAME, () -> client.setScreen(new TitleScreen()));
 			} else {
+				//? if >=26.1 {
+				/*LevelSettings info = new LevelSettings(WORLD_NAME, GameType.CREATIVE,
+						new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true, WorldDataConfiguration.DEFAULT);
+				*///?} else {
 				LevelSettings info = new LevelSettings(WORLD_NAME, GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
 						new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
+				//?}
 				// Superflat, no structures, fixed seed: the same world every time.
 				client.createWorldOpenFlows().createFreshLevel(WORLD_NAME, info,
 						new WorldOptions(0L, false, false), WorldPresets::createFlatWorldDimensions, client.screen);
@@ -376,6 +381,9 @@ public final class Scenarios {
 		s.run("grab the mouse as a focused window would", client -> {
 			// The game only mines while the mouse is grabbed, and only grabs it when the window has
 			// focus. The test window is usually in the background, so tell the game it is focused.
+			//? if >=26.1 {
+			/*setWindowFocused(client, true);
+			*///?} else
 			client.setWindowActive(true);
 			client.mouseHandler.grabMouse();
 		});
@@ -390,11 +398,26 @@ public final class Scenarios {
 			client.options.keyAttack.setDown(false);
 			// Give the mouse back, and tell the game the truth about window focus again.
 			client.mouseHandler.releaseMouse();
+			//? if >=26.1 {
+			/*setWindowFocused(client, GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
+			*///?} else
 			client.setWindowActive(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
 		});
 		s.command("gamemode creative @a");
 	}
 
+	//? if >=26.1 {
+	/*/^* Tells the game the window has (or has lost) focus, through the same callback GLFW itself uses. ^/
+	private static void setWindowFocused(Minecraft client, boolean focused) {
+		long handle = client.getWindow().handle();
+		org.lwjgl.glfw.GLFWWindowFocusCallback callback = GLFW.glfwSetWindowFocusCallback(handle, null);
+		GLFW.glfwSetWindowFocusCallback(handle, callback);
+		if (callback != null) {
+			callback.invoke(handle, focused);
+		}
+	}
+
+	*///?}
 	private static void fallDamage(SelfTest.Script s) {
 		FallDamageModule module = module("fall_damage");
 		isolate(s, module);
@@ -1764,8 +1787,13 @@ public final class Scenarios {
 			if (client.getLevelSource().levelExists(name)) {
 				client.createWorldOpenFlows().openWorld(name, () -> client.setScreen(new TitleScreen()));
 			} else {
+				//? if >=26.1 {
+				/*LevelSettings info = new LevelSettings(name, GameType.CREATIVE,
+						new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false), true, WorldDataConfiguration.DEFAULT);
+				*///?} else {
 				LevelSettings info = new LevelSettings(name, GameType.CREATIVE, false, Difficulty.PEACEFUL, true,
 						new GameRules(FeatureFlags.DEFAULT_FLAGS), WorldDataConfiguration.DEFAULT);
+				//?}
 				client.createWorldOpenFlows().createFreshLevel(name, info, new WorldOptions(20261001L, false, false),
 						flat ? WorldPresets::createFlatWorldDimensions : WorldPresets::createNormalWorldDimensions, client.screen);
 			}

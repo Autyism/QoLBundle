@@ -326,6 +326,7 @@ public class ChestMemoryModule extends Module {
 	/** The shown name when it says more than the plain item name (renamed items, enchanted books, potions). */
 	private static String labelOf(ItemStack stack) {
 		String shown = stack.getHoverName().getString();
+		//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 		return shown.equals(stack.getItem().getName().getString()) ? "" : shown;
 	}
 
@@ -403,6 +404,7 @@ public class ChestMemoryModule extends Module {
 
 	private static boolean matches(StoredItem item, String query) {
 		Item type = itemOf(item.id);
+		//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 		String shown = item.label.isEmpty() ? type.getName().getString() : item.label;
 		return ItemNames.matches(ItemNames.searchText(type.getDescriptionId(), shown, true), query);
 	}
@@ -413,6 +415,7 @@ public class ChestMemoryModule extends Module {
 	}
 
 	public static Component displayName(StoredItem item) {
+		//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 		return item.label.isEmpty() ? itemOf(item.id).getName() : Component.literal(item.label);
 	}
 

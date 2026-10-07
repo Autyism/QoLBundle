@@ -833,6 +833,7 @@ public class DiagnosticsModule extends Module {
 			sorted.sort(Comparator.comparingInt((Map.Entry<String, Integer> entry) -> entry.getValue()).reversed());
 			for (int i = 0; i < sorted.size() && i < 3; i++) {
 				int count = sorted.get(i).getValue();
+				//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 				lines.add(Component.translatable(key + "rate", ChestMemoryModule.itemOf(sorted.get(i).getKey()).getName(), count,
 						perMinute(count, seconds), perHour(count, seconds)));
 			}
@@ -861,6 +862,7 @@ public class DiagnosticsModule extends Module {
 			}
 			for (int i = 0; i < gains.size() && i < 3; i++) {
 				int count = gains.get(i).getValue();
+				//~ if >=26.1 '.getName()' -> '.components().getOrDefault(net.minecraft.core.component.DataComponents.ITEM_NAME, net.minecraft.network.chat.CommonComponents.EMPTY)'
 				lines.add(Component.translatable(key + "rate", ChestMemoryModule.itemOf(gains.get(i).getKey()).getName(), count,
 						perMinute(count, chestSeconds), perHour(count, chestSeconds)));
 			}

@@ -35,8 +35,23 @@ public abstract class CameraMixin {
 	@Shadow
 	public abstract float xRot();
 
+	//? if >=26.1 {
+	/*@Shadow
+	private Entity entity;
+
+	@Shadow
+	public abstract float getCameraEntityPartialTicks(net.minecraft.client.DeltaTracker deltaTracker);
+
+	// Right after the camera is put at the eyes and before the view frustum is worked out from it,
+	// so that chunks are culled for where the camera really looks.
+	@Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;alignWithEntity(F)V", shift = At.Shift.AFTER))
+	private void qolbundle$freecam(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
+		Entity focusedEntity = this.entity;
+		float tickProgress = getCameraEntityPartialTicks(deltaTracker);
+	*///?} else {
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void qolbundle$freecam(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
+	//?}
 		FreecamModule freecam = FreecamModule.current();
 		if (freecam != null) {
 			Vec3 pos = freecam.getCameraPos(tickProgress);

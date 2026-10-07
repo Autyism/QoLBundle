@@ -55,6 +55,9 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+//? if >=26.1 {
+/*import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+*///?} else
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.DeltaTracker;
@@ -99,8 +102,13 @@ public class QoLBundleClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
+		//? if >=26.1 {
+		/*LevelRenderEvents.BEFORE_GIZMOS.register(this::onRenderWorld);
+		LevelRenderEvents.COLLECT_SUBMITS.register(this::onSubmitWorld);
+		*///?} else {
 		WorldRenderEvents.BEFORE_DEBUG_RENDER.register(this::onRenderWorld);
 		WorldRenderEvents.BEFORE_ENTITIES.register(this::onSubmitWorld);
+		//?}
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ConfigManager.save());
 
 		if (SelfTest.isRequested()) {

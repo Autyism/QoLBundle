@@ -33,14 +33,44 @@ public class GameRendererMixin {
 		if (mirror != null && mirror.wantsPicture()) {
 			mirror.beginRear();
 			try {
+				//? if >=26.1 {
+				/*qolbundle$extractView(renderer, tickCounter); // turns the camera round, see CameraMixin
+				*///?} else
 				renderer.updateCamera(tickCounter); // turns the camera round, see CameraMixin
 				original.call(renderer, tickCounter);
 				mirror.keepPicture();
 			} finally {
 				mirror.endRear();
+				//? if >=26.1 {
+				/*qolbundle$extractView(renderer, tickCounter); // and back
+				*///?} else
 				renderer.updateCamera(tickCounter); // and back
 			}
 		}
 		original.call(renderer, tickCounter);
 	}
+
+	//? if >=26.1 {
+	/*@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Minecraft minecraft;
+
+	@org.spongepowered.asm.mixin.Shadow
+	@org.spongepowered.asm.mixin.Final
+	private net.minecraft.client.Camera mainCamera;
+
+	@org.spongepowered.asm.mixin.Shadow
+	private void extractCamera(DeltaTracker deltaTracker, float worldPartialTicks, float cameraEntityPartialTicks) {
+		throw new AssertionError();
+	}
+
+	/^* The camera and what it sees are worked out before drawing starts; do that again for another view. ^/
+	@org.spongepowered.asm.mixin.Unique
+	private void qolbundle$extractView(GameRenderer renderer, DeltaTracker tickCounter) {
+		renderer.update(tickCounter, true);
+		float worldPartialTicks = tickCounter.getGameTimeDeltaPartialTick(false);
+		extractCamera(tickCounter, worldPartialTicks, mainCamera.getCameraEntityPartialTicks(tickCounter));
+		minecraft.levelRenderer.extractLevel(tickCounter, mainCamera, worldPartialTicks);
+	}
+	*///?}
 }

@@ -295,6 +295,9 @@ public class ChatEnhancementsModule extends Module {
 		List<GuiMessage> merged = new ArrayList<>(((ChatHudAccessor) chatHud).qolbundle$getMessages());
 		merged.add(new GuiMessage(client.gui.getGuiTicks(),
 				Component.translatable(getTranslationKey() + ".restored").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
+				//? if >=26.1 {
+				/*null, net.minecraft.client.multiplayer.chat.GuiMessageSource.SYSTEM_CLIENT, GuiMessageTag.system()));
+				*///?} else
 				null, GuiMessageTag.system()));
 		merged.addAll(saved.lines);
 		List<String> sent = saved.sentHistory.isEmpty() ? List.copyOf(chatHud.getRecentChat()) : saved.sentHistory;
