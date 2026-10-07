@@ -52,8 +52,13 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+//? if >=1.21.6 {
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+//?} else {
+/*import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+*///?}
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 //? if >=26.1 {
 /*import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
@@ -77,7 +82,11 @@ public class QoLBundleClient implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("QoLBundle");
 
 	/** The "QoL Bundle" section in Options > Controls > Key Binds. */
+	//? if >=1.21.9 {
 	public static final KeyMapping.Category KEY_CATEGORY = KeyMapping.Category.register(id("main"));
+	//?} else {
+	/*public static final String KEY_CATEGORY = "key.category.qolbundle.main";
+	*///?}
 	private static KeyMapping openSettingsKey;
 
 	public static Identifier id(String path) {
@@ -101,7 +110,11 @@ public class QoLBundleClient implements ClientModInitializer {
 			}
 		});
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
+		//? if >=1.21.6 {
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, id("hud"), this::onRenderHud);
+		//?} else {
+		/*HudLayerRegistrationCallback.EVENT.register(layers -> layers.attachLayerBefore(IdentifiedLayer.CHAT, id("hud"), this::onRenderHud));
+		*///?}
 		// The moment the game collects its own debug shapes; ours are drawn the same way.
 		//? if >=26.2 {
 		/*LevelRenderEvents.BEFORE_GIZMOS.register(this::onRenderWorld);
@@ -199,6 +212,9 @@ public class QoLBundleClient implements ClientModInitializer {
 	}
 
 	private void onRenderWorld(WorldRenderContext context) {
+		//? if <1.21.11 {
+		/*io.github.autyism.qolbundle.render.legacy.GizmoRenderer.beginFrame();
+		*///?}
 		for (Module module : ModuleRegistry.all()) {
 			if (module.isEnabled()) {
 				module.onRenderWorld(context);

@@ -24,8 +24,11 @@ import org.spongepowered.asm.mixin.injection.At;
 public class WorldRendererCullingMixin {
 	//? if >=26.2 {
 	/*@ModifyExpressionValue(method = "extractRenderState", require = 0, at = @At(value = "FIELD",
-	*///?} else
+	*///?} elif >=1.21.9 {
 	@ModifyExpressionValue(method = "cullTerrain", require = 0, at = @At(value = "FIELD",
+	//?} else {
+	/*@ModifyExpressionValue(method = "setupRender", require = 0, at = @At(value = "FIELD",
+	*///?}
 			target = "Lnet/minecraft/client/Minecraft;smartCull:Z"))
 	private boolean qolbundle$noHiddenChunkSkippingInFreecam(boolean cullingEnabled) {
 		return cullingEnabled && FreecamModule.current() == null;

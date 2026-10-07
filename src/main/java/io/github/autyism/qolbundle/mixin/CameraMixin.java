@@ -48,10 +48,13 @@ public abstract class CameraMixin {
 	private void qolbundle$freecam(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
 		Entity focusedEntity = this.entity;
 		float tickProgress = getCameraEntityPartialTicks(deltaTracker);
-	*///?} else {
+	*///?} elif >=1.21.11 {
 	@Inject(method = "setup", at = @At("TAIL"))
 	private void qolbundle$freecam(Level area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
-	//?}
+	//?} else {
+	/*@Inject(method = "setup", at = @At("TAIL"))
+	private void qolbundle$freecam(net.minecraft.world.level.BlockGetter area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
+	*///?}
 		FreecamModule freecam = FreecamModule.current();
 		if (freecam != null) {
 			Vec3 pos = freecam.getCameraPos(tickProgress);

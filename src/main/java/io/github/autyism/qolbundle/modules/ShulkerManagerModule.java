@@ -205,6 +205,8 @@ public class ShulkerManagerModule extends Module {
 		HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 		int left = accessor.qolbundle$getX();
 		int top = accessor.qolbundle$getY();
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.push(context, io.github.autyism.qolbundle.hud.GuiDepth.OVER_SLOTS);*/
 		for (Slot slot : screen.getMenu().slots) {
 			ItemStack box = slot.getItem();
 			if (!slot.isActive() || !isBox(box)) {
@@ -232,10 +234,15 @@ public class ShulkerManagerModule extends Module {
 					context.pose().pushMatrix();
 					context.pose().translate(x + 8, y);
 					context.pose().scale(0.5F, 0.5F);
+					//? if >=1.21.6 {
 					context.renderItem(shown, 0, 0);
+					//?} else
+					/*io.github.autyism.qolbundle.hud.GuiDepth.item(context, shown, 0, 0);*/
 					context.pose().popMatrix();
 				}
 			}
 		}
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.pop(context);*/
 	}
 }

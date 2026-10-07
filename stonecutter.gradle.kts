@@ -23,6 +23,54 @@ stonecutter parameters {
         }
     }
 
+    // Before 1.21.11: no gizmos (the mod brings the same calls, package render.legacy), no jspecify, and some
+    // classes and getters had other names.
+    oneWay(current.parsed < "1.21.11",
+        "\\bnet\\.minecraft\\.gizmos\\." to "io.github.autyism.qolbundle.render.legacy.",
+        "\\borg\\.jspecify\\.annotations\\.Nullable\\b" to "org.jetbrains.annotations.Nullable",
+        "\\bimport net\\.minecraft\\.util\\.Util;" to "import net.minecraft.Util;",
+        "\\.dimension\\(\\)\\.identifier\\(\\)" to ".dimension().location()",
+        "(\\.|float )yRot\\(\\)" to "$1getYRot()",
+        "(\\.|float )xRot\\(\\)" to "$1getXRot()",
+        "\\bnet\\.minecraft\\.world\\.entity\\.npc\\.villager\\." to "net.minecraft.world.entity.npc.",
+        "\\bnet\\.minecraft\\.world\\.entity\\.animal\\.pig\\.Pig\\b" to "net.minecraft.world.entity.animal.Pig",
+        "\\bnet\\.minecraft\\.world\\.level\\.gamerules\\.GameRules\\b" to "net.minecraft.world.level.GameRules",
+        "\\bSheets\\.translucentBlockItemSheet\\(\\)" to "Sheets.translucentItemSheet()",
+        "\\bextends Button\\.Plain\\b" to "extends Button",
+    )
+    // 1.21.9-1.21.10: GUI outline call renamed; and Fabric API for 1.21.9 has no world-drawing events, so on these
+    // two versions the mod uses its own (render.legacy, same names and calls) and one jar runs on both.
+    oneWay(current.parsed >= "1.21.9" && current.parsed < "1.21.11",
+        "\\.renderOutline\\(" to ".submitOutline(",
+        "\\bnet\\.fabricmc\\.fabric\\.api\\.client\\.rendering\\.v1\\.world\\.(WorldRenderContext|WorldRenderEvents)\\b" to "io.github.autyism.qolbundle.render.legacy.$1",
+    )
+    // Before 1.21.9: Fabric's older world-rendering package, no Avatar (players were just Player), and the
+    // window handle had another getter. Self-test only: key presses were plain numbers, the chat screen took one
+    // argument, and (1.21.6-1.21.8) leaving a world went through the pause screen.
+    oneWay(current.parsed < "1.21.9",
+        "\\brendering\\.v1\\.world\\.WorldRenderContext\\b" to "rendering.v1.WorldRenderContext",
+        "\\brendering\\.v1\\.world\\.WorldRenderEvents\\b" to "rendering.v1.WorldRenderEvents",
+        "\\bnet\\.minecraft\\.world\\.entity\\.Avatar\\b" to "net.minecraft.world.entity.player.Player",
+        "\\bAvatar\\b" to "Player",
+        "\\.getWindow\\(\\)\\.handle\\(\\)" to ".getWindow().getWindow()",
+        "\\.keyPressed\\(new KeyEvent\\(([^()]*)\\)\\)" to ".keyPressed($1)",
+        "\\bnew ChatScreen\\(\"\", false\\)" to "new ChatScreen(\"\")",
+    )
+    oneWay(current.parsed >= "1.21.6" && current.parsed < "1.21.9",
+        "\\bclient\\.disconnectFromWorld\\(" to "net.minecraft.client.gui.screens.PauseScreen.disconnectFromWorld(client, ",
+    )
+    // Before 1.21.6: the GUI was moved with a 3D PoseStack, the camera's position had a getter, and
+    // screenshots had no size option. Self-test only: no ready-made "leave the world" (Scenarios has its own).
+    oneWay(current.parsed < "1.21.6",
+        "\\bcontext\\.pose\\(\\)\\.pushMatrix\\(\\)" to "context.pose().pushPose()",
+        "\\bcontext\\.pose\\(\\)\\.popMatrix\\(\\)" to "context.pose().popPose()",
+        "\\bcontext\\.pose\\(\\)\\.translate\\(([^;]*)\\);" to "context.pose().translate($1, 0F);",
+        "\\bcontext\\.pose\\(\\)\\.scale\\(([^;]*)\\);" to "context.pose().scale($1, 1F);",
+        "\\bcontext\\.pose\\(\\)\\.rotate\\(([^;]*)\\);" to "context.pose().mulPose(com.mojang.math.Axis.ZP.rotation($1));",
+        "\\.getMainCamera\\(\\)\\.position\\(\\)" to ".getMainCamera().getPosition()",
+        "\\b(client\\.getMainRenderTarget\\(\\)|framebuffer), 1, message ->" to "$1, message ->",
+        "\\bclient\\.disconnectFromWorld\\(" to "leaveWorld(client, ",
+    )
     // 26.1: GUI drawing renamed (same arguments). These calls only ever go to GuiGraphics in this code.
     oneWay(current.parsed >= "26.1",
         "\\bGuiGraphics\\b" to "GuiGraphicsExtractor",

@@ -12,6 +12,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+//? if >=1.21.9
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.CommonComponents;
@@ -110,12 +111,21 @@ public class ChestMemoryScreen extends Screen {
 		return true;
 	}
 
+	//? if >=1.21.9 {
 	@Override
 	public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
 		if (super.mouseClicked(click, doubled)) {
 			return true;
 		}
 		int index = rowAt(click.x(), click.y());
+	//?} else {
+	/*@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button)) {
+			return true;
+		}
+		int index = rowAt(mouseX, mouseY);
+	*///?}
 		if (index >= 0) {
 			choose(index);
 			return true;

@@ -307,8 +307,14 @@ public class PlacementMasterModule extends Module {
 		Vec3 camera = client.gameRenderer.getMainCamera().position();
 		//? if >=26.1 {
 		/*PoseStack matrices = context.poseStack();
-		*///?} else
+		*///?} elif >=1.21.9 {
 		PoseStack matrices = context.matrices();
+		//?} elif >=1.21.6 {
+		/*PoseStack matrices = context.matrixStack();
+		*///?} else {
+		/*// The game makes its pose stack only after this moment (Fabric has none yet); a new one starts the same.
+		PoseStack matrices = new PoseStack();
+		*///?}
 		matrices.pushPose();
 		matrices.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
 		// A hair smaller than a real block, so its faces do not flicker against the neighbours.
@@ -380,7 +386,7 @@ public class PlacementMasterModule extends Module {
 			}
 		}
 		buffers.endBatch(Sheets.translucentBlockItemSheet());
-		*///?} else {
+		*///?} elif >=1.21.9 {
 		context.commandQueue().submitCustomGeometry(matrices, Sheets.translucentBlockItemSheet(), (entry, consumer) -> {
 			for (BlockModelPart part : model.collectParts(RandomSource.create(42L))) {
 				for (int side = -1; side < 6; side++) {
@@ -403,7 +409,31 @@ public class PlacementMasterModule extends Module {
 				}
 			}
 		});
-		//?}
+		//?} else {
+		/*// No queue before 1.21.9: straight into the buffer the game empties after its debug shapes, as above.
+		com.mojang.blaze3d.vertex.VertexConsumer consumer = context.consumers().getBuffer(Sheets.translucentBlockItemSheet());
+		PoseStack.Pose entry = matrices.last();
+		for (BlockModelPart part : model.collectParts(RandomSource.create(42L))) {
+			for (int side = -1; side < 6; side++) {
+				for (BakedQuad quad : part.getQuads(side < 0 ? null : Direction.from3DDataValue(side))) {
+					float red = 1F;
+					float green = 1F;
+					float blue = 1F;
+					if (quad.isTinted()) {
+						int tint = client.getBlockColors().getColor(state, world, pos, quad.tintIndex());
+						red = (tint >> 16 & 0xFF) / 255F;
+						green = (tint >> 8 & 0xFF) / 255F;
+						blue = (tint & 0xFF) / 255F;
+					}
+					if (wrong) {
+						green *= 0.35F;
+						blue *= 0.35F;
+					}
+					consumer.putBulkData(entry, quad, red, green, blue, alpha, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+				}
+			}
+		}
+		*///?}
 		matrices.popPose();
 	}
 

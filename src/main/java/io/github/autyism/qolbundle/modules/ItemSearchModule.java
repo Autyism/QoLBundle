@@ -76,6 +76,7 @@ public class ItemSearchModule extends Module {
 		Screens.getButtons(screen).add(box);
 
 		// While typing, keys must not reach the inventory ("e" would close it, numbers would move items).
+		//? if >=1.21.9 {
 		ScreenKeyboardEvents.allowKeyPress(screen).register((current, input) -> {
 			if (!box.isFocused() || input.isEscape()) {
 				return true;
@@ -88,6 +89,20 @@ public class ItemSearchModule extends Module {
 			}
 			return false;
 		});
+		//?} else {
+		/*ScreenKeyboardEvents.allowKeyPress(screen).register((current, key, scancode, modifiers) -> {
+			if (!box.isFocused() || key == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE) {
+				return true;
+			}
+			if (key == com.mojang.blaze3d.platform.InputConstants.KEY_RETURN || key == com.mojang.blaze3d.platform.InputConstants.KEY_NUMPADENTER) {
+				box.setFocused(false);
+				current.setFocused(null);
+			} else {
+				box.keyPressed(key, scancode, modifiers);
+			}
+			return false;
+		});
+		*///?}
 		ScreenEvents.afterRender(screen).register((current, context, mouseX, mouseY, tickDelta) -> highlight(context, screen));
 		ScreenEvents.remove(screen).register(current -> {
 			if (field == box) {
@@ -103,6 +118,8 @@ public class ItemSearchModule extends Module {
 		HandledScreenAccessor accessor = (HandledScreenAccessor) screen;
 		int left = accessor.qolbundle$getX();
 		int top = accessor.qolbundle$getY();
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.push(context, io.github.autyism.qolbundle.hud.GuiDepth.OVER_SLOTS);*/
 		for (Slot slot : screen.getMenu().slots) {
 			if (!slot.isActive()) {
 				continue;
@@ -119,6 +136,8 @@ public class ItemSearchModule extends Module {
 				context.fill(x, y, x + 16, y + 16, 0xB0101010);
 			}
 		}
+		//? if <1.21.6
+		/*io.github.autyism.qolbundle.hud.GuiDepth.pop(context);*/
 	}
 
 	/** True when every word of the query is found in one of the item's names. */

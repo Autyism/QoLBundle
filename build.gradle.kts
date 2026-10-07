@@ -57,6 +57,12 @@ val templateProps = mapOf(
     "loader_compat" to prop("mod.loader_compat"),
     "java_version" to requiredJava.majorVersion,
     "mixin_java" to "JAVA_${requiredJava.majorVersion}",
+    // Mixins that only exist for some versions (their sources are empty on the others)
+    "extra_mixins" to when {
+        sc.current.parsed < "1.21.9" -> ",\n\t\t\"LegacyDebugRendererMixin\""
+        sc.current.parsed < "1.21.11" -> ",\n\t\t\"DebugRendererMixin\",\n\t\t\"WorldRenderEventsMixin\""
+        else -> ""
+    },
 )
 
 tasks.named<ProcessResources>("processResources") {

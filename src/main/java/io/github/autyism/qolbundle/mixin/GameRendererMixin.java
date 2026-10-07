@@ -42,16 +42,18 @@ public class GameRendererMixin {
 			try {
 				//? if >=26.1 {
 				/*qolbundle$extractView(renderer, tickCounter); // turns the camera round, see CameraMixin
-				*///?} else
+				*///?} elif >=1.21.11 {
 				renderer.updateCamera(tickCounter); // turns the camera round, see CameraMixin
+				//?}
 				original.call(renderer, tickCounter);
 				mirror.keepPicture();
 			} finally {
 				mirror.endRear();
 				//? if >=26.1 {
 				/*qolbundle$extractView(renderer, tickCounter); // and back
-				*///?} else
+				*///?} elif >=1.21.11 {
 				renderer.updateCamera(tickCounter); // and back
+				//?}
 			}
 		}
 		original.call(renderer, tickCounter);
