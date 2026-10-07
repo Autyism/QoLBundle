@@ -15,6 +15,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+//? if <26.3
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -160,6 +161,9 @@ public class ElytraTakeoffModule extends Module {
 			case FIRE -> {
 				if (player.getOffhandItem().is(Items.FIREWORK_ROCKET)) {
 					client.gameMode.useItem(player, InteractionHand.OFF_HAND);
+					//? if >=26.3 {
+					/*player.swing(InteractionHand.OFF_HAND, player.getOffhandItem().getInteractAnimation(), false);
+					*///?} else
 					player.swing(InteractionHand.OFF_HAND);
 					finish();
 				} else {
@@ -171,6 +175,9 @@ public class ElytraTakeoffModule extends Module {
 					slotToRestore = player.getInventory().getSelectedSlot();
 					player.getInventory().setSelectedSlot(rocketSlot);
 					client.gameMode.useItem(player, InteractionHand.MAIN_HAND);
+					//? if >=26.3 {
+					/*player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getInteractAnimation(), false);
+					*///?} else
 					player.swing(InteractionHand.MAIN_HAND);
 					step = Step.RESTORE_SLOT;
 				}

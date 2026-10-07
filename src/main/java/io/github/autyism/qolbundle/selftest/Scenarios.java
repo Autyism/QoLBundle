@@ -94,6 +94,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+//? if <26.3
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -398,7 +399,9 @@ public final class Scenarios {
 			client.options.keyAttack.setDown(false);
 			// Give the mouse back, and tell the game the truth about window focus again.
 			client.mouseHandler.releaseMouse();
-			//? if >=26.1 {
+			//? if >=26.3 {
+			/*setWindowFocused(client, realWindowFocus(client));
+			*///?} elif >=26.1 {
 			/*setWindowFocused(client, GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
 			*///?} else
 			client.setWindowActive(GLFW.glfwGetWindowAttrib(client.getWindow().handle(), GLFW.GLFW_FOCUSED) == GLFW.GLFW_TRUE);
@@ -413,7 +416,26 @@ public final class Scenarios {
 	}
 
 	*///?}
-	//? if >=26.1 {
+	//? if >=26.3 {
+	/*/^* Tells the game the window has (or has lost) focus, with the same event SDL sends. ^/
+	private static void setWindowFocused(Minecraft client, boolean focused) {
+		try (org.lwjgl.sdl.SDL_Event event = org.lwjgl.sdl.SDL_Event.calloc()) {
+			event.type(focused ? org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_FOCUS_GAINED : org.lwjgl.sdl.SDLEvents.SDL_EVENT_WINDOW_FOCUS_LOST);
+			client.getWindow().handleEvent(event);
+		}
+	}
+
+	/^* Whether the window really has the keyboard focus right now. ^/
+	private static boolean realWindowFocus(Minecraft client) {
+		return (org.lwjgl.sdl.SDLVideo.SDL_GetWindowFlags(client.getWindow().handle()) & org.lwjgl.sdl.SDLVideo.SDL_WINDOW_INPUT_FOCUS) != 0;
+	}
+
+	/^* A key press as SDL reports it: where the key is, and the key code it has on this keyboard. ^/
+	private static KeyEvent keyEvent(int key) {
+		return new KeyEvent(key, org.lwjgl.sdl.SDLKeyboard.SDL_GetKeyFromScancode(key, (short) 0, false), 0);
+	}
+
+	*///?} elif >=26.1 {
 	/*/^* Tells the game the window has (or has lost) focus, through the same callback GLFW itself uses. ^/
 	private static void setWindowFocused(Minecraft client, boolean focused) {
 		long handle = client.getWindow().handle();
@@ -1542,6 +1564,9 @@ public final class Scenarios {
 					throw new IllegalStateException("no pig");
 				}
 				client.gameMode.attack(client.player, pigs.get(0));
+				//? if >=26.3 {
+				/*client.player.swing(InteractionHand.MAIN_HAND, client.player.getMainHandItem().getAttackAnimation(), false);
+				*///?} else
 				client.player.swing(InteractionHand.MAIN_HAND);
 			});
 			s.waitTicks(25);

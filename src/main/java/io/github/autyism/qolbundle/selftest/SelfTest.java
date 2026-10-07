@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.server.IntegratedServer;
+//? if <26.3
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
@@ -78,11 +79,21 @@ public final class SelfTest {
 	 * key bindings, which does not need these callbacks.
 	 */
 	private static void ignoreRealInput(Minecraft client) {
+		//? if >=26.3 {
+		/*// SDL: real key presses, typed text, mouse buttons and the wheel are dropped before they reach the game.
+		for (int type : new int[] {org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN, org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP,
+				org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_EDITING, org.lwjgl.sdl.SDLEvents.SDL_EVENT_TEXT_INPUT,
+				org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_DOWN, org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_BUTTON_UP,
+				org.lwjgl.sdl.SDLEvents.SDL_EVENT_MOUSE_WHEEL}) {
+			org.lwjgl.sdl.SDLEvents.SDL_SetEventEnabled(type, false);
+		}
+		*///?} else {
 		long window = client.getWindow().handle();
 		GLFW.glfwSetMouseButtonCallback(window, null);
 		GLFW.glfwSetScrollCallback(window, null);
 		GLFW.glfwSetKeyCallback(window, null);
 		GLFW.glfwSetCharModsCallback(window, null);
+		//?}
 	}
 
 	public static boolean isRequested() {

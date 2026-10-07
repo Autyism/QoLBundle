@@ -71,4 +71,22 @@ stonecutter parameters {
         // self-test only: the flat preset helper is gone (Scenarios has its own)
         "\\bWorldPresets::createFlatWorldDimensions\\b" to "Scenarios::flatDimensions",
     )
+    // 26.3: input goes through SDL. Keyboard keys are SDL scancodes of key type KEYBOARD, mouse buttons are
+    // numbered from 1, and there is no GLFW. InputConstants names the same physical keys on every version.
+    oneWay(current.parsed >= "26.3",
+        "\\bInputConstants\\.Type\\.KEYSYM\\b" to "InputConstants.Type.KEYBOARD",
+        "\\bGLFW\\.GLFW_KEY_LEFT_ALT\\b" to "com.mojang.blaze3d.platform.InputConstants.KEY_LALT",
+        "\\bGLFW\\.GLFW_KEY_LEFT_BRACKET\\b" to "com.mojang.blaze3d.platform.InputConstants.KEY_LBRACKET",
+        "\\bGLFW\\.GLFW_KEY_RIGHT_BRACKET\\b" to "com.mojang.blaze3d.platform.InputConstants.KEY_RBRACKET",
+        "\\bGLFW\\.GLFW_KEY_(K|V|F6|F7|F8)\\b" to "com.mojang.blaze3d.platform.InputConstants.KEY_$1",
+        "\\bclick\\.button\\(\\) == 0\\b" to "click.button() == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT",
+        // self-test only: a key press carries the key's SDL code too (see Scenarios.keyEvent)
+        "\\bnew KeyEvent\\(GLFW\\.GLFW_KEY_(UP|DOWN|TAB), 0, 0\\)" to "keyEvent(com.mojang.blaze3d.platform.InputConstants.KEY_$1)",
+        // blaze3d's GPU classes moved to renderpearl
+        "\\bcom\\.mojang\\.blaze3d\\.textures\\." to "com.mojang.renderpearl.api.textures.",
+        "\\bcom\\.mojang\\.blaze3d\\.GpuFormat\\b" to "com.mojang.renderpearl.api.GpuFormat",
+        "\\bRedStoneWireBlock\\b" to "RedstoneWireBlock",
+        // GameRendererMixin: renderLevel() takes no arguments any more
+        "\\boriginal\\.call\\(renderer, tickCounter\\)" to "original.call(renderer)",
+    )
 }
