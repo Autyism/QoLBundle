@@ -15,7 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(WaterFogEnvironment.class)
 public class WaterFogModifierMixin {
 	@Inject(method = "setupFog", at = @At("TAIL"))
+	//? if >=1.21.11 {
 	private void qolbundle$clearWater(FogData data, Camera camera, ClientLevel world, float viewDistance, DeltaTracker tickCounter, CallbackInfo ci) {
+	//?} else {
+	/*private void qolbundle$clearWater(FogData data, net.minecraft.world.entity.Entity entity, net.minecraft.core.BlockPos pos, ClientLevel world, float viewDistance, DeltaTracker tickCounter, CallbackInfo ci) {
+	*///?}
 		FluidVisionModule.adjustWaterFog(data, viewDistance);
 	}
 }

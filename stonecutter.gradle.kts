@@ -23,6 +23,24 @@ stonecutter parameters {
         }
     }
 
+    // Before 1.21.11: no gizmos (the mod brings the same calls, package render.legacy), no jspecify, and some
+    // classes and getters had other names.
+    oneWay(current.parsed < "1.21.11",
+        "\\bnet\\.minecraft\\.gizmos\\." to "io.github.autyism.qolbundle.render.legacy.",
+        "\\borg\\.jspecify\\.annotations\\.Nullable\\b" to "org.jetbrains.annotations.Nullable",
+        "\\bimport net\\.minecraft\\.util\\.Util;" to "import net.minecraft.Util;",
+        "\\.dimension\\(\\)\\.identifier\\(\\)" to ".dimension().location()",
+        "(\\.|float )yRot\\(\\)" to "$1getYRot()",
+        "(\\.|float )xRot\\(\\)" to "$1getXRot()",
+        "\\bnet\\.minecraft\\.world\\.entity\\.npc\\.villager\\." to "net.minecraft.world.entity.npc.",
+        "\\bnet\\.minecraft\\.world\\.entity\\.animal\\.pig\\.Pig\\b" to "net.minecraft.world.entity.animal.Pig",
+        "\\bnet\\.minecraft\\.world\\.level\\.gamerules\\.GameRules\\b" to "net.minecraft.world.level.GameRules",
+        "\\bSheets\\.translucentBlockItemSheet\\(\\)" to "Sheets.translucentItemSheet()",
+        "\\bextends Button\\.Plain\\b" to "extends Button",
+    )
+    oneWay(current.parsed >= "1.21.9" && current.parsed < "1.21.11",
+        "\\.renderOutline\\(" to ".submitOutline(",
+    )
     // 26.1: GUI drawing renamed (same arguments). These calls only ever go to GuiGraphics in this code.
     oneWay(current.parsed >= "26.1",
         "\\bGuiGraphics\\b" to "GuiGraphicsExtractor",

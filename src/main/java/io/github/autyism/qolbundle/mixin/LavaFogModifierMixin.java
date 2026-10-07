@@ -15,7 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LavaFogEnvironment.class)
 public class LavaFogModifierMixin {
 	@Inject(method = "setupFog", at = @At("TAIL"))
+	//? if >=1.21.11 {
 	private void qolbundle$thinLavaFog(FogData data, Camera camera, ClientLevel world, float viewDistance, DeltaTracker tickCounter, CallbackInfo ci) {
+	//?} else {
+	/*private void qolbundle$thinLavaFog(FogData data, net.minecraft.world.entity.Entity entity, net.minecraft.core.BlockPos pos, ClientLevel world, float viewDistance, DeltaTracker tickCounter, CallbackInfo ci) {
+	*///?}
 		FluidVisionModule.adjustLavaFog(data);
 	}
 }

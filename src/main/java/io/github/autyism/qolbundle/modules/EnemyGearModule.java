@@ -111,6 +111,7 @@ public class EnemyGearModule extends Module {
 			case BOW -> Component.translatable(key + "bow");
 			case CROSSBOW -> Component.translatable(key + "crossbow");
 			case BLOCK -> Component.translatable(key + "block");
+			//~ if <1.21.11 'TRIDENT, SPEAR' -> 'SPEAR'
 			case TRIDENT, SPEAR -> Component.translatable(key + "throw", inUse.getHoverName());
 			default -> Component.translatable(key + "other", inUse.getHoverName());
 		};

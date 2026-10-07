@@ -21,7 +21,7 @@
 		"RecipeBookWidgetAccessor",
 		"WaterFogModifierMixin",
 		"WorldRendererCullingMixin",
-		"WorldRendererMixin"
+		"WorldRendererMixin"${extra_mixins}
 	],
 	"injectors": {
 		"defaultRequire": 1

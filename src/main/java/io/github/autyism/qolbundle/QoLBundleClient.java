@@ -199,6 +199,9 @@ public class QoLBundleClient implements ClientModInitializer {
 	}
 
 	private void onRenderWorld(WorldRenderContext context) {
+		//? if <1.21.11 {
+		/*io.github.autyism.qolbundle.render.legacy.GizmoRenderer.beginFrame();
+		*///?}
 		for (Module module : ModuleRegistry.all()) {
 			if (module.isEnabled()) {
 				module.onRenderWorld(context);
