@@ -1,4 +1,4 @@
-<p align="center"><img src="icon.png" width="128" alt="icon"></p>
+<p align="center"><img src="icon_transparent.png" width="128" alt="icon"></p>
 <h1 align="center">QoL Bundle</h1>
 <p align="center">39 client-side quality-of-life modules in one mod, each with its own switch and settings.</p>
 <div align="center">
