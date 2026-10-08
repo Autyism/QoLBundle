@@ -13,7 +13,7 @@
 
 ## Some Features
 
-| HUD and info |Description|
+| Feature |Description|
 |:---|:---|
 |**Sound compass**|Shows direction of sound source|
 |**Throw Landing Preview**|When holding projectile, shows if landing area is safe.|
